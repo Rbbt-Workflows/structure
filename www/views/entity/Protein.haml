@@ -1,0 +1,295 @@
+- entity_card = EntityCard.new(entity)
+- entity_card.name = entity
+- entity_card.long_name = "#{entity.gene.name} Protein Isoform"  if entity.gene
+- colors = %w(red blue green yellow black white purple)
+- entity_card.meta do
+  %dl
+    %dt Gene
+    %dd= entity.gene.ensembl.link
+
+    %dt Uniprot
+    %dd
+      %a(href="http://www.uniprot.org/uniprot/#{entity.uniprot}")= entity.uniprot
+
+- entity_card.description do
+  = link_css '/stylesheets/protein'
+
+  %dl.tabs
+    %dt Controls
+    %dd
+      .controls
+        %ul.controls
+          %li
+            %a.clear(href="#") clear
+            %a.aligned(href="#") mark alignment
+
+        = action_parameters nil, {:klass => ''}, :action => '#' do
+          - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
+          - input :color, :select, "Color to use", 'green', :select_options => colors
+
+    %dt SVG
+    %dd
+      .svg
+        = tool :isoform_svg, :protein => entity, :sequence => entity.sequence, :height => 200
+      .sequence
+        = tool :sequence, :protein => entity, :sequence => entity.sequence, :svg => '.isoform_svg_tool svg', :height => 200
+
+    %dt JMOL
+    %dd
+      .jmol
+        = tool :jmol, :protein => entity
+
+    %dt Appris
+    %dd.Appris
+      %select(name='color')
+        - colors.each do |c|
+          %option(value=c)= c
+      %dl
+        - entity.appris_residues.each do |type, list|
+          %dt= Misc.humanize type
+          %dd
+            %ul.clean_list
+              - list.each do |range|
+                %li
+                  %a.appris_highlight(href="#" attr-start="#{range['start']}" attr-end="#{range['end']}") Highlight
+                  == (#{range['start']}..#{range['end']})
+
+    %dt COSMIC mutations
+    %dd.COSMIC
+      = fragment do
+
+        %ul.highlight
+          %li
+            %a.highlight(href="#") highlight
+          %li
+            %select(name='color')
+              - colors.each do |c|
+                %option(value=c)= c
+
+
+        - header "Genomic Mutation", "GenomicMutation", {:organism => "Hsa/jun2011", :watson => true}
+        - filter "Primary site"
+        = table :id => "COSMIC mutations for #{ entity }" do
+
+          - tsv = TSV.setup(entity.gene.COSMIC_rsids, :key_field => "Mutation ID", :fields => [], :type => :double)
+          - tsv.attach CMD.cmd('grep -v "_ENST"', :in => COSMIC.mutations.open, :pipe => true), :fields => ["Genomic Mutation", "Primary site", "Site subtype", "Primary histology", "Histology subtype"]
+
+          - mutations = GenomicMutation.setup(tsv.column("Genomic Mutation").values.flatten, "COSMIC mutations over #{entity.gene}", "Hsa/jun2011", false)
+          - mutation_isoforms = Misc.process_to_hash(mutations){|list| list.mutated_isoforms}
+          - tsv.add_field "Change" do |key, values|
+            - mutation = values[0].first
+            - mis = mutation_isoforms[mutation]
+            - mi = mis.select_by(:protein){|p| p == entity}.select_by(:consequence){|c| c != "SYNONYMOUS"}.first unless mis.nil?
+            - mi.nil? ? [""] : [mi.change]
+
+          - tsv = tsv.reorder("Genomic Mutation", tsv.fields - ["Genomic Mutation"])
+          - tsv.namespace = "Hsa/jun2011"
+          - tsv.entity_options = {:watson => true}
+          - tsv.select("Change"){|c| ! c.flatten.empty?}
+
+        :javascript
+          $('.COSMIC ul.highlight > li > a.highlight').click(function(){
+            var table = $(this).parents('dd').first().find('table');
+            var url = table.attr('attr-url');
+            var filter = table.attr('attr-filter');
+
+            url = add_parameter(url, '_format', 'json')
+            url = add_parameter(url, '_page', 'all')
+            url = add_parameter(url, '_column', 'Change')
+            if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
+
+            $.ajax({
+              url: url,
+              success: function(data){
+                data = JSON.parse(data);
+                var change_positions = [];
+                for (mutation in data){
+                  var changes = data[mutation];
+                  for (i in changes){
+                    var c = changes[i];
+                    if (m = c.match(/(\d+)/)){
+                      change_positions.push(parseInt(m[1]));
+                    }
+                  }
+                }
+                var isoform_svg= $('.isoform_svg_tool');
+                var jmol = $('.jmol_tool');
+                var sequence = $('.sequence_tool');
+                var color = table.parent('dd').find('select').val();
+
+                if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_sequence_positions', change_positions, color); }
+                isoform_svg.isoform_svg_tool('mark_position', change_positions, color);
+                sequence.sequence_tool('mark_positions', change_positions, color);
+              }
+            })
+
+            return false;
+          })
+
+    - if entity.uniprot
+      - uniprot_alignment, ensembl_alignment = SmithWaterman.align(UniProt.sequence(entity.uniprot), entity.sequence)
+      - alignment_map = Structure.alignment_map(uniprot_alignment, ensembl_alignment)
+
+      %dt UniProt mutations
+      %dd.UniProt
+        = fragment do
+
+          %ul.highlight
+            %li
+              %a.highlight(href="#") highlight
+            %li
+              %select(name='color')
+                - colors.each do |c|
+                  %option(value=c)= c
+
+
+          = table :id => "UniProt mutations for #{ entity }" do
+            - tsv = UniProt.annotated_variants.tsv(:persist => true, :type => :double, :key_field => "UniProt Variant ID", :zipped => true)
+            - tsv = tsv.select("UniProt/SwissProt Accession" => entity.uniprot)
+
+            - tsv.add_field "Aligned Change" do |key, values|
+              - change = values["Amino Acid Mutation"]
+              - change = change.first if Array === change
+              - if change.nil? or change.empty?
+                - [""]
+              - else
+                - wt, pos, mut = change.match(/([A-Z])(\d+)([A-Z*])/).values_at 1, 2, 3
+                - pos = alignment_map[pos.to_i]
+                - [[wt, pos, mut] * ""]
+            - tsv
+
+          :javascript
+            $('.UniProt ul.highlight > li > a.highlight').click(function(){
+              var table = $(this).parents('dd').first().find('table');
+              var url = table.attr('attr-url');
+              var filter = table.attr('attr-filter');
+
+              url = add_parameter(url, '_format', 'json')
+              url = add_parameter(url, '_page', 'all')
+              url = add_parameter(url, '_column', 'Aligned Change')
+              if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
+
+              $.ajax({
+                url: url,
+                success: function(data){
+                  data = JSON.parse(data);
+                  var change_positions = [];
+                  for (mutation in data){
+                    var changes = data[mutation];
+                    for (i in changes){
+                      var c = changes[i];
+                      if (m = c.match(/(\d+)/)){
+                        change_positions.push(parseInt(m[1]));
+                      }
+                    }
+                  }
+                  var isoform_svg= $('.isoform_svg_tool');
+                  var jmol = $('.jmol_tool');
+                  var sequence = $('.sequence_tool');
+                  var color = table.parent('dd').find('select').val();
+
+                  if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_sequence_positions', change_positions, color); }
+                  isoform_svg.isoform_svg_tool('mark_position', change_positions, color);
+                  sequence.sequence_tool('mark_positions', change_positions, color);
+                }
+              })
+
+              return false;
+            })
+
+      %dt UniProt features
+      %dd.UniProt_features
+        %select(name='color')
+          - colors.each do |c|
+            %option(value=c)= c
+        %ul
+          - features = UniProt.features(entity.uniprot)
+          - feature_types = {}
+          - features.each{|info| feature_types[info[:type]] ||= [] ; feature_types[info[:type]] << info}
+          %dl
+            - feature_types.sort_by{|k,v| k}.each do |type, list|
+              %dt= type
+              %dd
+                - list.sort_by{|info| info[:start].to_i}.each do |info|
+                  - type, start, eend, description = info.values_at :type, :start, :end, :description
+                  - start = alignment_map[start]
+                  - eend = alignment_map[eend]
+                  - next if start.nil? or eend.nil?
+                  %li
+                    %a.feature_highlight(href="#" attr-start="#{start}" attr-end="#{eend}") Highlight
+                    == #{ type } (#{start}..#{eend}): #{description}
+
+  :javascript
+    deffer(function(){
+      require_js("/js/protein.js");
+
+      $('.controls > ul.controls > li > a.clear').click(function(){
+        var isoform_svg= $('.isoform_svg_tool');
+        var jmol = $('.jmol_tool');
+        var sequence = $('.sequence_tool');
+
+        if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('clear'); }
+
+        isoform_svg.isoform_svg_tool('clear');
+        sequence.sequence_tool('clear');
+
+        return false;
+      })
+
+      $('.controls > ul.controls > li > a.aligned').click(function(){
+        var jmol = $('.jmol_tool');
+        var isoform_svg= $('.isoform_svg_tool');
+
+        if(jmol.jmol_tool('is_pdb_loaded')){ 
+          var map = jmol.jmol_tool('alignment_map');
+          jmol.jmol_tool('mark_aligned_region', 'blue');
+          isoform_svg.isoform_svg_tool('mark_aligned_region', map, 'blue');
+        }
+        return false;
+      })
+
+      var form = $('.controls > .action_parameters > form');
+      var submit = form.find('input[type=submit]');
+      submit.click(function(){
+        var list = form.find('select[name=list]').val();
+        var color = form.find('select[name=color]').val();
+
+        var jmol = $('.jmol_tool');
+        if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_genomic_mutations', list, color); }
+
+        var isoform_svg= $('.isoform_svg_tool');
+        isoform_svg.isoform_svg_tool('mark_genomic_mutations', list, color);
+
+        var sequence= $('.sequence_tool');
+        sequence.sequence_tool('mark_genomic_mutations', list, color);
+
+        return false
+      })
+
+      $('a.appris_highlight, a.feature_highlight').click(function(){
+        var link = $(this)
+        var color = link.closest('dd').find('select').val();
+        var start = parseInt(link.attr('attr-start'));
+        var end = parseInt(link.attr('attr-end'));
+
+        var jmol = $('.jmol_tool');
+        var isoform_svg= $('.isoform_svg_tool');
+        var sequence= $('.sequence_tool');
+
+        if (start == end){
+          if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_sequence_positions', [start], color) }
+          isoform_svg.isoform_svg_tool('mark_position', start, color)
+          sequence.sequence_tool('mark_position', start, color)
+        }else{
+          if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_sequence_range', start, end, color) }
+          isoform_svg.isoform_svg_tool('mark_region', start, end, color)
+          sequence.sequence_tool('mark_region', start, end, color)
+        }
+        return false
+      })
+    })
+
+- entity_card.action_controller = default_action_controller entity
+
+
+= entity_card_render entity_card

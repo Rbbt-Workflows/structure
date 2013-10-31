@@ -1,0 +1,34 @@
+= link_css '/stylesheets/sequence'
+.sequence_tool
+  %span.sequence(width="100%")= sequence
+  %span.marks(width="100%")
+    - size = sequence.length
+    - marks = size / 10
+    - str = ""
+    - marks.times do |mark|
+      - txt = "|"
+      - str << ("_" * (10 - txt.length)) << txt
+    = str
+  %span.counts(width="100%")
+    - size = sequence.length
+    - marks = size / 10
+    - str = ""
+    - marks.times do |mark|
+      - mark = (mark + 1) * 10
+      - txt = mark.to_s
+      - str << ("_" * (10 - txt.length)) << txt
+    = str
+
+  :javascript
+
+    deffer(function(){
+      require_js("/js/sequence.js", function(){
+        var tool = $('.sequence_tool').last().sequence_tool({protein:"#{ protein }", sequence: "#{sequence}"});
+        var svg = $('#{svg}')
+        var start  = parseInt(svg.find('rect.ac').attr('x')); // + parseInt(svg.closest('div.svg').css('padding-left')) - parseInt(tool.css('padding-left'));
+        var end    = svg.attr('width')
+        tool.sequence_tool('place', start, end - start)
+      })
+    })
+
+

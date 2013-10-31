@@ -1,0 +1,50 @@
+structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
+ workflow.rb
+ workflow.md
+ test_workflow.rb
+ lib=lib {
+  interactome_3d.rb
+  pdb_helper.rb
+  old_stuff.rb
+  cosmic_feature_analysis.rb
+  sinatra.rb
+  ssw.rb
+ }
+ share=share{
+  software=software/opt/ssw filter="*"{
+   ssw.c
+   ssw.h
+  }
+ }
+ www=www {
+  views=views {
+   compass=compass{
+    jmol.sass
+    isoform_svg.sass
+    sequence.sass
+    protein.sass
+   }
+   public=public{
+    js=js{
+     jquery-jmol=jquery-jmol{
+      jmol-accent.js
+      jmol-accent.save.js
+      jquery.jmol.js
+     }
+     jmol.js
+     isoform_svg.js
+     sequence.js
+     protein.js
+    }
+   }
+   tools=tools{
+    jmol.haml
+    isoform_svg.haml
+    sequence.haml
+   }
+   entity=entity{
+    Protein.haml
+   }
+  }
+ }
+}
