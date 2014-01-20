@@ -45,7 +45,7 @@
         - colors.each do |c|
           %option(value=c)= c
       %dl
-        - entity.appris_residues.each do |type, list|
+        - (entity.appris_residues || []).each do |type, list|
           %dt= Misc.humanize type
           %dd
             %ul.clean_list
