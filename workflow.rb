@@ -1,36 +1,50 @@
 require 'rbbt'
 require 'rbbt/util/misc'
 require 'rbbt/workflow'
+Workflow.require_workflow "COSMIC"
+
 require 'rbbt/sources/organism'
 require 'rbbt/sources/uniprot'
 require 'ssw'
 require 'interactome_3d'
 require 'pdb_helper'
+require 'uniprot'
+require 'appris'
+require 'neighbours'
+
+require 'COSMIC'
 
 Workflow.require_workflow 'Genomics'
 Workflow.require_workflow 'Translation'
 Workflow.require_workflow 'PdbTools'
 Workflow.require_workflow 'Appris'
 
+require 'rbbt/entity/mutated_isoform'
+
 module Structure
   extend Workflow
 
-  def self.alignment_map(alignment1, alignment2)
+  def self.alignment_map(alignment_source, alignment_target)
     map = {}
 
-    offset1, alignment1 = alignment1.match(/^(_*)(.*)/).values_at 1, 2
-    offset2, alignment2 = alignment2.match(/^(_*)(.*)/).values_at 1, 2
-
-    gaps1 = 0 
-    gaps2 = 0
-    alignment1.chars.zip(alignment2.chars).each_with_index do |p,i|
-      char1, char2 = p
-      gaps1 += 1 if char1 == '-'
-      gaps2 += 1 if char2 == '-'
-      map[i + offset1.length + gaps1] = i + offset2.length + gaps2 if char1 == char2  and char1 != "-"
+    offset_source, alignment_source = alignment_source.match(/^(_*)(.*)/).values_at( 1, 2)
+    offset_target, alignment_target = alignment_target.match(/^(_*)(.*)/).values_at( 1, 2)
+ 
+    gaps_source = 0 
+    gaps_target = 0
+    alignment_source.chars.zip(alignment_target.chars).each_with_index do |p,i|
+      char_source, char_target = p
+      gaps_source += 1 if char_source == '-'
+      gaps_target += 1 if char_target == '-'
+      map[i + offset_source.length - gaps_source] = i + offset_target.length - gaps_target if char_source == char_source  and char_source != "-"
     end
     
     map
+  end
+
+  def self.sequence_map(source_sequence, target_sequence)
+    source_alignment, target_alignment = SmithWaterman.align(source_sequence, target_sequence)
+    Structure.alignment_map(source_alignment, target_alignment)
   end
 
   def self.match_position(protein_position, protein_alignment, chain_alignment)
@@ -39,6 +53,21 @@ module Structure
     else
       alignment_map(protein_alignment, chain_alignment)[protein_position]
     end
+  end
+
+  def self.mutated_isoforms_to_residue_list(mutated_isoforms)
+    residues = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => "Hsa")
+
+    MutatedIsoform.setup(mutated_isoforms, "Hsa")
+    mutated_isoforms.each do |mi|
+      next unless mi.consequence == "MISS-SENSE"
+      protein = mi.protein
+      position = mi.position
+      residues[protein] ||=[]
+      residues[protein] << position
+    end
+
+    residues
   end
 
   input :sequence, :text, "Protein sequence"
@@ -53,7 +82,7 @@ module Structure
       chain = line[20..21].strip
       aapos = line[22..25].to_i
       aa    = line[17..19]
-      
+
       next if aapos < 0
 
       chains[chain] ||= Array.new
@@ -82,7 +111,7 @@ module Structure
   input :chain, :string, "PDB chain"
   input :positions, :array, "Position within PDB chain"
   input :sequence, :text, "Protein sequence"
-  task :pdb_chain_position_in_sequence => :array do |pdb, pdbfile, chain, chain_position, protein_sequence|
+  task :pdb_chain_position_in_sequence => :array do |pdb, pdbfile, chain, positions, protein_sequence|
     atoms = PDBHelper.atoms(pdb, pdbfile)
 
     chains = {}
@@ -90,7 +119,7 @@ module Structure
       pdb_chain = line[20..21].strip
       aapos = line[22..25].to_i
       aa    = line[17..19]
-      
+
       next if aapos < 0
 
       chains[pdb_chain] ||= Array.new
@@ -100,8 +129,7 @@ module Structure
     chain_sequence = chains[chain].collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
     protein_alignment, chain_alignment = SmithWaterman.align(protein_sequence, chain_sequence)
 
-    protein_positions = protein_position.split(/,/).collect{|p| p.strip.to_i}
-    Structure.match_position(chain_positions, chain_alignment, protein_alignment)
+    Structure.match_position(positions, chain_alignment, protein_alignment)
   end
   export_exec :pdb_chain_position_in_sequence
 
@@ -117,7 +145,7 @@ module Structure
 
     pdbfile ||= Open.read("http://www.pdb.org/pdb/files/#{ pdb }.pdb.gz")
 
-    neighbours = PdbTools.job(:pdb_close_positions, name, :pdb => pdbfile, :distance => distance).run
+    neighbours = PdbTools.job(:pdb_close_positions, name, :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
 
     positions_in_chains = neighbours.values_at(*alignments).flatten.uniq
 
@@ -185,6 +213,180 @@ module Structure
       []
     end.select{|file| file.index uniprot}
   end
+
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  task :annotate_residues_UNIPROT => :tsv do |residues|
+    tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
+
+    iso2uni = Organism.protein_identifiers("Hsa").index :target => "UniProt/SwissProt Accession", :persist => true
+    iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
+
+
+    residues.each do |isoform, list|
+      uniprot = iso2uni[isoform]
+      next if uniprot.nil?
+
+      features = Structure.corrected_uniprot_features(uniprot, iso2sequence[isoform])
+      overlapping = [[],[],[],[]]
+      list.flatten.each do |position|
+        position = position.to_i
+        features.select{|info|
+          case info[:type]
+          when "VAR_SEQ", "CONFLICT", "CHAIN", "UNSURE"
+            false
+          when "DISULFID", "CROSSLNK", "VARIANT"
+            info[:start] == position or info[:end] == position
+          else
+            info[:start] <= position and info[:end] >= position
+          end
+        }.each{|info|
+          overlapping[0] << position
+          overlapping[1] << info[:type]
+          overlapping[2] << [info[:start], info[:end]] * ":"
+          overlapping[3] << (info[:description] || "").strip.sub(/\.$/,'')
+        }
+      end
+
+      tsv[isoform] = overlapping
+    end
+
+    tsv
+  end
+
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  task :annotate_residues_Appris => :tsv do |residues|
+    tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
+
+    iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
+
+    residues.each do |isoform, list|
+
+      features = Structure.appris_features(isoform)
+
+      overlapping = [[],[],[],[]]
+      list.flatten.each do |position|
+        position = position.to_i
+        features.select{|info|
+          info[:start] <= position and info[:end] >= position
+        }.each{|info|
+          overlapping[0] << position
+          overlapping[1] << info[:type]
+          overlapping[2] << [info[:start], info[:end]] * ":"
+          overlapping[3] << (info[:description] || "").strip.sub(/\.$/,'')
+        }
+      end
+
+      tsv[isoform] = overlapping
+    end
+
+    tsv
+  end
+
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  task :annotate_variants_COSMIC => :tsv do |residues|
+
+    cosmic_residue_mutations = Structure.COSMIC_residues
+    
+    isoform_matched_variants = {}
+    residues.each do |protein, positions|
+      positions.flatten.each do |position|
+        matching_mutations = cosmic_residue_mutations[[protein, position]*":"]
+        next if matching_mutations.nil? or matching_mutations.empty?
+        isoform_matched_variants[protein] ||= []
+        isoform_matched_variants[protein].concat matching_mutations
+      end
+    end
+
+    cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
+
+    res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double)
+
+    isoform_matched_variants.each do |protein, mutations|
+      values = []
+      mutations.each do |mutation|
+        values << [mutation].concat(cosmic_mutation_annotations[mutation])
+      end
+
+      res[protein] = Misc.zip_fields(values)
+    end
+
+    res
+  end
+
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  task :annotate_variants_UNIPROT => :tsv do |residues|
+
+    uniprot_residue_mutations = Structure.UniProt_residues
+    
+    isoform_matched_variants = {}
+    residues.each do |protein, positions|
+      positions.flatten.each do |position|
+        matching_mutations = uniprot_residue_mutations[[protein, position]*":"]
+        next if matching_mutations.nil? or matching_mutations.empty?
+        isoform_matched_variants[protein] ||= []
+        isoform_matched_variants[protein].concat matching_mutations
+      end
+    end
+
+    uniprot_mutation_annotations = Structure.UniProt_mutation_annotations
+
+    res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => uniprot_mutation_annotations.fields, :type => :double)
+
+    isoform_matched_variants.each do |protein, mutations|
+      values = []
+      mutations.each do |mutation|
+        values << uniprot_mutation_annotations[mutation]
+      end
+
+      res[protein] = Misc.zip_fields(values)
+    end
+
+    res
+  end
+
+  input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
+  input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+  input :organism, :string, "Organism code", "Hsa"
+  task :mutated_isoform_annotation => :string do |mis,muts,organism|
+    if mis.nil? 
+      Workflow.require_workflow "Sequence"
+      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
+      mis = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism).run.values.compact.flatten
+    end
+    residues = Structure.mutated_isoforms_to_residue_list(mis)
+
+    Open.write(file(:uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => residues).run.to_s)
+    Open.write(file(:appris), Structure.job(:annotate_residues_Appris, name, :residues => residues).run.to_s)
+    Open.write(file(:COSMIC), Structure.job(:annotate_variants_COSMIC, name, :residues => residues).run.to_s)
+    Open.write(file(:uniprot_variants), Structure.job(:annotate_variants_UNIPROT, name, :residues => residues).run.to_s)
+
+    "DONE"
+  end
+
+  input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
+  task :mutated_isoform_neighbour_annotation => :string do |mis|
+    residues = Structure.mutated_isoforms_to_residue_list(mis)
+
+    neighbour_residues = {}
+    residues.each do |protein, list|
+      ddd "NEIGH of #{ protein }"
+      list = list.flatten
+      neighbours = Structure.neighbours(protein, list.flatten)
+      next if neighbours.nil? or neighbours.empty?
+
+      neighbour_residues[protein] = neighbours
+    end
+    residues.annotate neighbour_residues
+    neighbour_residues.type = :flat
+
+    Open.write(file(:neighbour_uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
+    Open.write(file(:neighbour_appris), Structure.job(:annotate_residues_Appris, name, :residues => neighbour_residues).clean.run.to_s)
+    Open.write(file(:neighbour_COSMIC), Structure.job(:annotate_variants_COSMIC, name, :residues => neighbour_residues).clean.run.to_s)
+
+    "DONE"
+  end
+
+
 end
 
 require 'cosmic_feature_analysis'

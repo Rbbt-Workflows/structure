@@ -238,12 +238,14 @@ end:
 
     end
 
+    # read_seq is query and ref_seq is target
     def self.align(read_seq, ref_seq)
-      s_out, s_in = File.pipe
-      SmithWaterman.ssw_aa(read_seq, ref_seq, read_seq.length, ref_seq.length, s_in.fileno)
-      s_in.close
+      s_out = Misc.open_pipe do |s_in|
+        SmithWaterman.ssw_aa(read_seq, ref_seq, read_seq.length, ref_seq.length, s_in.fileno)
+      end
       txt = s_out.read
-      puts txt
+      s_out.close
+
       begin
         target_start, target, target_end = txt.match(/Target:\s+(\d+)\s+([A-Z\-?*]+)\s+(\d+)/).values_at 1, 2, 3
         query_start, query, query_end = txt.match(/Query:\s+(\d+)\s+([A-Z\-?*]+)\s+(\d+)/).values_at 1, 2, 3
@@ -255,21 +257,4 @@ end:
       [("_" * (query_start.to_i - 1)) + query,
       ("_" * (target_start.to_i - 1)) + target]
     end
-end
-
-
-if __FILE__ == $0
-  read_seq = "LKLCDVQPMQYFDLTCQLLGKAEVDGASFLLKVWDGTPSWRVLIQD" 
-  ref_seq = "LKLCDVQPMQYLTCQLLGKAEVDGASFKVWDGTRTPFPSWRVLIQD" 
-
-  Misc.benchmark(1) do
-    #SmithWatterman.ssw_aa(read_seq, ref_seq, read_seq.length, ref_seq.length)
-    ddd SmithWaterman.align(read_seq, ref_seq)
-  end
-
-  Misc.benchmark(1) do
-    #SmithWatterman.ssw_aa(read_seq, ref_seq, read_seq.length, ref_seq.length)
-    ddd Misc.fast_align(read_seq, ref_seq)
-  end
-
 end
