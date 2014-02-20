@@ -1,3 +1,5 @@
+Workflow.require_workflow 'Appris'
+
 module Structure
   def self.isoform2transcript
     @isoform2transcript ||= Organism.transcripts("Hsa").index :target => "Ensembl Transcript ID", :fields => "Ensembl Protein ID", :persist => true

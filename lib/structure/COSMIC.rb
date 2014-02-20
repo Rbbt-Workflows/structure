@@ -1,3 +1,6 @@
+
+Workflow.require_workflow "COSMIC"
+
 module Structure
   def self.COSMIC_residues
     @COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::mutations", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|

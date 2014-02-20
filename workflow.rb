@@ -1,7 +1,6 @@
 require 'rbbt'
 require 'rbbt/util/misc'
 require 'rbbt/workflow'
-Workflow.require_workflow "COSMIC"
 
 require 'rbbt/sources/organism'
 require 'rbbt/sources/uniprot'
@@ -16,7 +15,6 @@ require 'structure/COSMIC'
 Workflow.require_workflow 'Genomics'
 Workflow.require_workflow 'Translation'
 Workflow.require_workflow 'PdbTools'
-Workflow.require_workflow 'Appris'
 
 require 'rbbt/entity/mutated_isoform'
 
