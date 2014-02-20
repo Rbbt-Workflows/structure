@@ -21,7 +21,7 @@ module Structure
 
 
   def self.UniProt_residues
-    @UniProt_residues ||= Persist.persist("UniProt_residues", :tsv, :dir => Rbbt.var.persistence.find(:lib)) do
+    @UniProt_residues ||= Persist.persist_tsv(nil, "UniProt::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persist.find(:lib)) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["UniProt Variant ID"], :type => :flat)
 
                            uni2ensp = Organism.protein_identifiers("Hsa").index :target => "Ensembl Protein ID", :fields => ["UniProt/SwissProt Accession"], :persist => true
@@ -30,25 +30,30 @@ module Structure
                            db = UniProt.annotated_variants.tsv(:fields => ["Amino Acid Mutation", "UniProt Variant ID"], :persist => true, :type => :double)
                            db.monitor = {:desc => "Processing UniProt", :step => 10000}
 
-                           db.through do |uniprot,values|
-                             ensp = uni2ensp[uniprot]
-                             next if ensp.nil?
-                             ensp_sequence = ensp2sequence[ensp]
-                             next if ensp_sequence.nil?
-                             uniprot_sequence = UniProt.sequence(uniprot)
-                             map = Structure.sequence_map(uniprot_sequence, ensp_sequence)
+                           db.with_unnamed do
+                             db.through do |uniprot,values|
+                               ensp = uni2ensp[uniprot]
+                               next if ensp.nil?
+                               ensp_sequence = ensp2sequence[ensp]
+                               next if ensp_sequence.nil?
+                               uniprot_sequence = UniProt.sequence(uniprot)
+                               map = Structure.sequence_map(uniprot_sequence, ensp_sequence)
 
-                             values.zip_fields.each do |change,vid|
-                               match = change.match(/^([A-Z])(\d+)([A-Z])$/)
-                               next if match.nil?
-                               ref, pos, mut = match.values_at 1,2,3
-                               pos = map[pos]
-                               next if pos.nil?
-                               isoform_residue_mutations[[ensp,pos]*":"] ||= []
-                               isoform_residue_mutations[[ensp,pos]*":"] << vid
+                               Misc.zip_fields(values).each do |change,vid|
+                                 match = change.match(/^([A-Z])(\d+)([A-Z])$/)
+                                 next if match.nil?
+                                 ref, pos, mut = match.values_at 1,2,3
+                                 pos = map[pos]
+                                 next if pos.nil?
+                                 isoform_residue_mutations[[ensp,pos]*":"] ||= []
+                                 isoform_residue_mutations[[ensp,pos]*":"] << vid
+                               end
                              end
 
-                             isoform_residue_mutations
+                             data.merge! isoform_residue_mutations
+                             isoform_residue_mutations.annotate data
+
+                             data
                            end
     end
   end
@@ -61,7 +66,7 @@ module Structure
                                           'SNP ID',
                                           'Disease'
                                         ]
-                                       UniProt.annotated_variants.tsv(:key_field => "Variant ID", :fields => fields, :persist => true, :type => :list)
+                                       UniProt.annotated_variants.tsv(:key_field => "UniProt Variant ID", :fields => fields, :persist => true, :type => :list)
                                      end
   end
 end

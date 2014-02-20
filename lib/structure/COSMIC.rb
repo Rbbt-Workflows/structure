@@ -1,21 +1,28 @@
 module Structure
   def self.COSMIC_residues
-    @COSMIC_residues ||= Persist.persist("COSMIC_residues", :tsv, :dir => Rbbt.var.persistence.find(:lib)) do
+    @COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::mutations", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Genomic Mutations"], :type => :flat)
 
                            db = COSMIC.knowledge_base.get_database('mutation_isoforms')
+
                            db.monitor = {:desc => "Processing COSMIC", :step => 10000}
-                           db.through  do |mutation, mis|
-                             protein_residues = {}
-                             mis.each do |mi|
-                               next unless mi =~ /(ENSP\d+):([A-Z])(\d+)([A-Z])$/ and $2 != $4
-                               residue = $3.to_i
-                               protein = $1
-                               isoform_residue_mutations[[protein, residue] * ":"] ||= []
-                               isoform_residue_mutations[[protein, residue] * ":"] << mutation
-                             end
+                           db.with_unnamed do
+                            db.through  do |mutation, mis|
+                              protein_residues = {}
+                              mis.each do |mi|
+                                next unless mi =~ /(ENSP\d+):([A-Z])(\d+)([A-Z])$/ and $2 != $4
+                                residue = $3.to_i
+                                protein = $1
+                                isoform_residue_mutations[[protein, residue] * ":"] ||= []
+                                isoform_residue_mutations[[protein, residue] * ":"] << mutation
+                              end
+                            end
                            end
-                           isoform_residue_mutations
+
+                           data.merge! isoform_residue_mutations
+                           isoform_residue_mutations.annotate data
+
+                           data
                          end
   end
 

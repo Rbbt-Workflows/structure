@@ -5,14 +5,13 @@ Workflow.require_workflow "COSMIC"
 
 require 'rbbt/sources/organism'
 require 'rbbt/sources/uniprot'
-require 'ssw'
-require 'interactome_3d'
-require 'pdb_helper'
-require 'uniprot'
-require 'appris'
-require 'neighbours'
-
-require 'COSMIC'
+require 'structure/ssw'
+require 'structure/interactome_3d'
+require 'structure/pdb_helper'
+require 'structure/uniprot'
+require 'structure/appris'
+require 'structure/neighbours'
+require 'structure/COSMIC'
 
 Workflow.require_workflow 'Genomics'
 Workflow.require_workflow 'Translation'
@@ -56,6 +55,7 @@ module Structure
   end
 
   def self.mutated_isoforms_to_residue_list(mutated_isoforms)
+    MutatedIsoform.setup(mutated_isoforms, "Hsa")
     residues = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => "Hsa")
 
     MutatedIsoform.setup(mutated_isoforms, "Hsa")
@@ -216,7 +216,7 @@ module Structure
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_UNIPROT => :tsv do |residues|
-    tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
+    tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
 
     iso2uni = Organism.protein_identifiers("Hsa").index :target => "UniProt/SwissProt Accession", :persist => true
     iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
@@ -252,10 +252,11 @@ module Structure
 
     tsv
   end
+  export_asynchronous :annotate_residues_UNIPROT
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_Appris => :tsv do |residues|
-    tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
+    tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
 
     iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
 
@@ -281,6 +282,7 @@ module Structure
 
     tsv
   end
+  export_asynchronous :annotate_residues_Appris
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_variants_COSMIC => :tsv do |residues|
@@ -312,6 +314,7 @@ module Structure
 
     res
   end
+  export_asynchronous :annotate_variants_COSMIC
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_variants_UNIPROT => :tsv do |residues|
@@ -343,16 +346,20 @@ module Structure
 
     res
   end
+  export_asynchronous :annotate_residues_UNIPROT
 
   input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
   input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
-  input :organism, :string, "Organism code", "Hsa"
+  input :organism, :string, "Organism code", "Hsa/jan2013"
   task :mutated_isoform_annotation => :string do |mis,muts,organism|
     if mis.nil? 
       Workflow.require_workflow "Sequence"
       raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-      mis = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism).run.values.compact.flatten
+      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
+      tsv = job.run
+      mis = tsv.values.compact.flatten
     end
+
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
     Open.write(file(:uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => residues).run.to_s)
@@ -362,6 +369,7 @@ module Structure
 
     "DONE"
   end
+  export_asynchronous :mutated_isoform_annotation
 
   input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
   task :mutated_isoform_neighbour_annotation => :string do |mis|
@@ -369,7 +377,6 @@ module Structure
 
     neighbour_residues = {}
     residues.each do |protein, list|
-      ddd "NEIGH of #{ protein }"
       list = list.flatten
       neighbours = Structure.neighbours(protein, list.flatten)
       next if neighbours.nil? or neighbours.empty?
@@ -385,11 +392,13 @@ module Structure
 
     "DONE"
   end
+  export_asynchronous :mutated_isoform_neighbour_annotation
 
 
 end
 
-require 'cosmic_feature_analysis'
+#require 'structure/cosmic_feature_analysis'
+
 
 if defined? Entity and defined? MutatedIsoform and Entity === MutatedIsoform
   module MutatedIsoform

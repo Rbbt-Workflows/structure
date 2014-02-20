@@ -4,16 +4,18 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  test_workflow.rb
  ToDo.md
  lib=lib {
-  uniprot.rb
-  appris.rb
-  COSMIC.rb
-  neighbours.rb
-  interactome_3d.rb
-  pdb_helper.rb
-  old_stuff.rb
-  cosmic_feature_analysis.rb
-  sinatra.rb
-  ssw.rb
+  structure=structure{
+   uniprot.rb
+   COSMIC.rb
+   appris.rb
+   neighbours.rb
+   interactome_3d.rb
+   pdb_helper.rb
+   old_stuff.rb
+   cosmic_feature_analysis.rb
+   sinatra.rb
+   ssw.rb
+   }
  }
  share=share{
   software=software/opt/ssw filter="*"{

@@ -7,7 +7,6 @@ module Structure
     @appris_dataset ||= begin
                           Rbbt.share.data["appris_data.fir_spa_thu_cra.gen19.v2.tsv"].find(:lib).tsv :key_field => "Ensembl Transcript ID", :persist => true
                         end
-    @appris_dataset
   end
 
   def self.appris_features(isoform)
