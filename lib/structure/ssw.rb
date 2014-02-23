@@ -239,11 +239,12 @@ end:
     end
 
     # read_seq is query and ref_seq is target
-    def self.align(read_seq, ref_seq)
+    def self.align(query_sequence, target_sequence)
       s_out = Misc.open_pipe do |s_in|
-        SmithWaterman.ssw_aa(read_seq, ref_seq, read_seq.length, ref_seq.length, s_in.fileno)
+        SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
       end
       txt = s_out.read
+      Log.log(txt, 0)
       s_out.close
 
       begin

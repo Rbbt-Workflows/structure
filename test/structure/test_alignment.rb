@@ -9,7 +9,7 @@ require 'structure/alignment'
 require 'awesome_print'
 
 
-class TestSSW < Test::Unit::TestCase
+class TestClass < Test::Unit::TestCase
   def test_alignment_map
     ensp = Protein.setup("ENSP00000308495", "Ensembl Protein ID", "Hsa")
     uniprot = "G3V5T7"
@@ -18,9 +18,10 @@ class TestSSW < Test::Unit::TestCase
     ensp_sequence = ensp.sequence
     uniprot_alignment, ensp_alignment = SmithWaterman.align(uniprot_sequence, ensp_sequence)
 
-    ensp_alignment.chars.each_with_index do |c,i|
-      next if c == "-" or uniprot_alignment[i] == "-"
-      assert_equal c, uniprot_alignment[i]
+    map = Structure.alignment_map(uniprot_alignment, ensp_alignment)
+    
+    map.each do |u,e|
+      assert_equal ensp_sequence[e-1], uniprot_sequence[u-1]
     end
   end
 end

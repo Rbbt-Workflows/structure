@@ -5,12 +5,16 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  ToDo.md
  lib=lib {
   structure=structure{
+   alignment.rb
+   pdb_helper.rb
+   pdb_alignment.rb
+
+   neighbours.rb
+
    uniprot.rb
    COSMIC.rb
    appris.rb
-   neighbours.rb
    interactome_3d.rb
-   pdb_helper.rb
    old_stuff.rb
    cosmic_feature_analysis.rb
    sinatra.rb
@@ -54,4 +58,8 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
   }
  }
+ test=test{
+  test_ssw.rb
+  test_uniprot.rb
+  }
 }

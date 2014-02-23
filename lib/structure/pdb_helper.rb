@@ -2,14 +2,36 @@ require 'rbbt-util'
 module PDBHelper
   def self.pdb_stream(pdb = nil, pdbfile = nil)
     return pdbfile if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
-    return Open.read(pdb) if pdb and Open.remote?(pdb) or Open.exists?(pdb)
-    return Open.read("http://www.pdb.org/pdb/files/#{ pdb }.pdb.gz") unless pdb.nil?
+    return Open.read(pdb) if pdb and (Open.remote?(pdb) or Open.exists?(pdb))
+    return Open.read("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=1E3K") unless pdb.nil?
 
     raise "No valid pdb provided: #{ pdb }"
   end
 
   def self.atoms(pdb = nil, pdbfile = nil)
-    CMD.cmd('sed -n -e "1,/ENDMDL/p"|grep "^ATOM"', :in => pdb_stream(pdb, pdbfile)).read
+    CMD.cmd('sed -n -e "1,/END/p"|grep "^ATOM"', :in => pdb_stream(pdb, pdbfile)).read
+  end
+
+  def self.pdb_chain_sequences(pdb, pdbfile)
+    atoms = PDBHelper.atoms(pdb, pdbfile)
+
+    chains = {}
+    atoms.split("\n").each do |line|
+      chain = line[20..21].strip
+      aapos = line[22..25].to_i
+      aa    = line[17..19]
+
+      next if aapos < 0
+
+      chains[chain] ||= Array.new
+      chains[chain][aapos-1] = aa
+    end
+
+    chains.each do |chain,chars|
+      chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
+    end
+
+    chains
   end
 
   def self.pdb_atom_distance(distance, pdb = nil, pdbfile = nil)
