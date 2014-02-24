@@ -82,7 +82,7 @@ The pdb can be specified as a url or a PDB code, or a pdbfile can be provided di
   input :distance, :float, "Distance", 5
   task :neighbour_map => :tsv do |pdb, pdbfile, distance|
     tsv = PDBHelper.pdb_close_residues(distance, pdb, pdbfile)
-    TSV.setup tsv, :key_field => "Residue", :fields => ["Neighbours"]
+    TSV.setup tsv, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat
   end
   export_asynchronous :neighbour_map
 
@@ -136,6 +136,8 @@ and `double` (separated by '|') are supported.
 
     missing = []
     residues.each do |isoform, list|
+      list = Array === list ? list.flatten : [list]
+
       uniprot = iso2uni[isoform]
       if uniprot.nil?
         missing << isoform
@@ -144,7 +146,7 @@ and `double` (separated by '|') are supported.
 
       features = Structure.corrected_uniprot_features(uniprot, iso2sequence[isoform])
       overlapping = [[],[],[],[]]
-      list.flatten.each do |position|
+      list.each do |position|
         position = position.to_i
         features.select{|info|
           case info[:type]
@@ -189,11 +191,12 @@ and `double` (separated by '|') are supported.
     iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
 
     residues.each do |isoform, list|
+      list = Array === list ? list.flatten : [list]
 
       features = Structure.appris_features(isoform)
 
       overlapping = [[],[],[],[]]
-      list.flatten.each do |position|
+      list.each do |position|
         position = position.to_i
         features.select{|info|
           info[:start] <= position and info[:end] >= position
@@ -228,8 +231,10 @@ The result is the proteins along with the overlapping features and some informat
       cosmic_residue_mutations = Structure.COSMIC_residues
 
       isoform_matched_variants = {}
-      residues.each do |protein, positions|
-        positions.flatten.each do |position|
+      residues.each do |protein,list|
+        list = Array === list ? list.flatten : [list]
+
+        list.each do |position|
           matching_mutations = cosmic_residue_mutations[[protein, position]*":"]
           next if matching_mutations.nil? or matching_mutations.empty?
           isoform_matched_variants[protein] ||= []
@@ -270,8 +275,11 @@ The result is the proteins along with the overlapping features and some informat
       uniprot_residue_mutations = Structure.UniProt_residues
 
       isoform_matched_variants = {}
-      residues.each do |protein, positions|
-        positions.flatten.each do |position|
+      residues.each do |protein, list|
+        list = Array === list ? list.flatten : [list]
+
+
+        list.each do |position|
           matching_mutations = uniprot_residue_mutations[[protein, position]*":"]
           next if matching_mutations.nil? or matching_mutations.empty?
           isoform_matched_variants[protein] ||= []
@@ -374,11 +382,7 @@ consider only the features of neighbouring residues, no the residue itself.
           neighbour_residues[protein][0] << partner
           neighbour_residues[protein][1] << residues * ";"
         end
-
-        neighbour_residues[protein] = neighbours
       end
-      residues.annotate neighbour_residues
-      neighbour_residues.type = :flat
       neighbour_residues
     end
     export_asynchronous :mutated_isoform_neighbour_annotation

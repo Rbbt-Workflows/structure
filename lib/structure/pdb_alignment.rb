@@ -10,9 +10,6 @@ module Structure
 
       chain_alignment, protein_alignment = SmithWaterman.align(chain_sequence, protein_sequence)
 
-      Log.debug("length: #{chain_sequence.length}")
-      pos = 487
-      Log.debug("AA #{ pos }: #{ chain_sequence[pos-1] }")
       alignments[chain] = Structure.match_position(protein_positions, protein_alignment, chain_alignment)
     end
 
@@ -25,7 +22,7 @@ module Structure
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
     chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
 
-    chain_sequence = chains[chain] #.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
+    chain_sequence = chains[chain] 
 
     protein_alignment, chain_alignment = SmithWaterman.align(protein_sequence, chain_sequence)
 
@@ -56,7 +53,7 @@ module Structure
 
   def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
 
-    positions_in_pdb = Structure.job(:sequence_position_in_pdb, "TEST", :pdbfile => pdbfile, :sequence => sequence, :positions => positions).exec
+    positions_in_pdb = Structure.job(:sequence_position_in_pdb, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :positions => positions).exec
 
     Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
 
@@ -77,8 +74,9 @@ module Structure
 
     neighbours_in_pdb = positions_in_pdb[chain].collect do |position|
       position_in_chain = [chain, position] * ":"
-      Log.debug "Position in chain: #{ position_in_chain }"
-      (neighbour_map[position_in_chain] ||  []) + (inverse_neighbour_map[position_in_chain] || [])
+      neigh = neighbour_map[position_in_chain]
+      ineigh = inverse_neighbour_map[position_in_chain]
+      (neigh || []) + (ineigh || [])
     end.compact.flatten
   end
 end

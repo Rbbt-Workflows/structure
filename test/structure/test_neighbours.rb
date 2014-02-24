@@ -33,13 +33,11 @@ class TestClass < Test::Unit::TestCase
     partner =  "ENSP00000336528"
     Protein.setup(partner, "Ensembl Protein ID", "Hsa")
 
-
     Log.debug "AA at #{ position }: #{protein.sequence[position-1]}"
 
-    require 'pp'
     res = Structure.interface_neighbours_i3d(protein, [position])
     assert res.include? partner
-    assert_equal ["D", "R", "R"], res[partner].sort.collect{|pos| partner.sequence[pos-1] }
+    assert_equal ["D", "R", "R"].sort, res[partner].sort.collect{|pos| partner.sequence[pos-1] }
   end
 end
 

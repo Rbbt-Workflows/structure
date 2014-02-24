@@ -1,18 +1,23 @@
 require 'rbbt-util'
 module PDBHelper
   def self.pdb_stream(pdb = nil, pdbfile = nil)
-    return pdbfile if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
-    return Open.read(pdb) if pdb and (Open.remote?(pdb) or Open.exists?(pdb))
-    return Open.read("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=1E3K") unless pdb.nil?
+    return StringIO.new(pdbfile) if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
+    return Open.open(pdb) if pdb and (Open.remote?(pdb) or Open.exists?(pdb))
+    return Open.open("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=#{pdb}") unless pdb.nil?
 
     raise "No valid pdb provided: #{ pdb }"
   end
 
   def self.atoms(pdb = nil, pdbfile = nil)
-    CMD.cmd('sed -n -e "1,/END/p"|grep "^ATOM"', :in => pdb_stream(pdb, pdbfile)).read
+    io = pdb_stream(pdb,pdbfile)
+    str = ""
+    while line = io.gets and not line =~ /^END/
+      str << line if line =~ /^ATOM/
+    end
+    str
   end
 
-  def self.pdb_chain_sequences(pdb, pdbfile)
+  def self.pdb_chain_sequences(pdb = nil, pdbfile = nil)
     atoms = PDBHelper.atoms(pdb, pdbfile)
 
     chains = {}
@@ -84,10 +89,4 @@ module PDBHelper
     close_residues.each do |aa1, list| list.uniq! end
     close_residues
   end
-end
-
-if __FILE__ == $0
-  require 'rbbt/workflow'
-  Workflow.require_workflow 'pdb_tools'
-  ddd PDBHelper.pdb_close_residues(5, "1ryu")
 end

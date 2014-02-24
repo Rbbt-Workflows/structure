@@ -19,7 +19,6 @@ class TestClass < Test::Unit::TestCase
     pdb_url =  "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=model&pdb=O75469-P19793-MDL-1xvp.pdb3-D-0-C-0.pdb"
 
     assert_equal [487], Structure.sequence_position_in_pdb(protein_sequence, [position], pdb_url, nil)["B"]
-
   end
 end
 
