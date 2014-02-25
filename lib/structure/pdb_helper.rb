@@ -11,8 +11,12 @@ module PDBHelper
   def self.atoms(pdb = nil, pdbfile = nil)
     io = pdb_stream(pdb,pdbfile)
     str = ""
-    while line = io.gets and not line =~ /^END/
-      str << line if line =~ /^ATOM/
+    begin
+      while line = io.gets and not line =~ /^END/
+        str << line if line =~ /^ATOM/
+      end
+    ensure
+      io.close
     end
     str
   end
@@ -26,7 +30,7 @@ module PDBHelper
       aapos = line[22..25].to_i
       aa    = line[17..19]
 
-      next if aapos < 0
+      next if aapos <= 0
 
       chains[chain] ||= Array.new
       chains[chain][aapos-1] = aa

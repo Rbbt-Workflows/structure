@@ -22,14 +22,14 @@ module Structure
   
 
   def self.neighbours_i3d(protein, positions, only_pdb = false)
-    Log.info("PROCESSING #{Term::ANSIColor.red(protein)} -- #{Misc.fingerprint positions}")
+    Log.info("PROCESSING #{Log.color :red, protein} -- #{Misc.fingerprint positions}")
 
     uniprot = ISO2UNI[protein]
     sequence = protein.sequence
 
     if uniprot and  I3D_PROTEINS.include? uniprot
 
-      field_positions = ["CHAIN", "FILENAME"].collect{|f| I3D_INTERACTIONS.identify_field f}
+      field_positions = ["CHAIN", "FILENAME"].collect{|f| I3D_PROTEINS.identify_field f}
       Misc.zip_fields(I3D_PROTEINS[uniprot]).each do |values|
 
         # Be more careful with identifying positions in the wrong chain do to

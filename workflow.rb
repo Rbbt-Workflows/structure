@@ -311,7 +311,7 @@ The results for the different annotation types are save as job files
     EOF
     input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
     input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
-    input :organism, :string, "Organism code", "Hsa/jan2013"
+    input :organism, :string, "Organism code", "Hsa"
     task :mutated_isoform_annotation => :string do |mis,muts,organism|
       if mis.nil? 
         Workflow.require_workflow "Sequence"
@@ -339,10 +339,20 @@ The results for the different annotation types are save as job files. This metho
 consider only the features of neighbouring residues, no the residue itself.
     EOF
     input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
-    task :mutated_isoform_neighbour_annotation => :string do |mis|
+    input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+    input :organism, :string, "Organism code", "Hsa"
+    task :mutated_isoform_neighbour_annotation => :string do |mis,muts,organism|
+      if mis.nil? 
+        Workflow.require_workflow "Sequence"
+        raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
+        job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
+        tsv = job.run
+        mis = tsv.values.compact.flatten
+      end
+
       residues = Structure.mutated_isoforms_to_residue_list(mis)
 
-      neighbour_residues = {}
+      neighbour_residues = TSV.setup({}, :type => :flat, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :namespace => organism)
       residues.each do |protein, list|
         list = list.flatten
         neighbours = Structure.neighbours_i3d(protein, list.flatten)
@@ -350,8 +360,6 @@ consider only the features of neighbouring residues, no the residue itself.
 
         neighbour_residues[protein] = neighbours
       end
-      residues.annotate neighbour_residues
-      neighbour_residues.type = :flat
 
       Open.write(file(:neighbour_uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
       Open.write(file(:neighbour_appris), Structure.job(:annotate_residues_Appris, name, :residues => neighbour_residues).clean.run.to_s)
@@ -369,10 +377,22 @@ The results for the different annotation types are save as job files. This metho
 consider only the features of neighbouring residues, no the residue itself.
     EOF
     input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
-    task :mutated_isoform_interface_residues => :tsv do |mis|
+    input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+    input :organism, :string, "Organism code", "Hsa"
+    task :mutated_isoform_interface_residues => :tsv do |mis,muts,organism|
+      if mis.nil? 
+        Workflow.require_workflow "Sequence"
+        raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
+        job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
+        tsv = job.run
+        mis = tsv.values.compact.flatten
+      end
+
       residues = Structure.mutated_isoforms_to_residue_list(mis)
 
-      neighbour_residues = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Partner Ensembl Protein ID", "Residues"], :type => :double,  :unnamed => true)
+      neighbour_residues = TSV.setup({}, :key_field => "Ensembl Protein ID", 
+                                     :fields => ["Partner Ensembl Protein ID", "Residues"], 
+                                     :type => :double,  :unnamed => true)
       residues.each do |protein, list|
         list = list.flatten.compact.sort
         neighbours = Structure.interface_neighbours_i3d(protein, list)
@@ -385,7 +405,7 @@ consider only the features of neighbouring residues, no the residue itself.
       end
       neighbour_residues
     end
-    export_asynchronous :mutated_isoform_neighbour_annotation
+    export_asynchronous :mutated_isoform_interface_residues
   end
 
   #require 'structure/cosmic_feature_analysis'

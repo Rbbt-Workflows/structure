@@ -59,10 +59,11 @@ module Structure
 
     chain ||=  positions_in_pdb.sort{|c,p| p.length}.last.first
 
-    #neighbour_map = Persist.persist("PDB Neighbours", :marshal, :other => {:distance => distance, :pdbfile => pdbfile}, :dir => Rbbt.var.persist.find(:lib)) do
-    #  PDBHelper.pdb_close_residues(distance, nil, pdbfile)
-    #end
+    return [] if positions_in_pdb[chain].nil?
+
     neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
+
+    return [] if neighbour_map.nil?
 
     inverse_neighbour_map = {}
     neighbour_map.each do |k,vs|
@@ -71,6 +72,7 @@ module Structure
         inverse_neighbour_map[v] << k
       end
     end
+
 
     neighbours_in_pdb = positions_in_pdb[chain].collect do |position|
       position_in_chain = [chain, position] * ":"
