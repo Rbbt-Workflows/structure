@@ -41,6 +41,8 @@ module Structure
     residues
   end
 
+  #{{{ ALIGNMENTS
+
   # In structure/pdb_alignment
   desc <<-EOF
 Translate the positions inside a given amino-acid sequence to positions in the sequence of a PDB by
@@ -201,21 +203,21 @@ and `double` (separated by '|') are supported.
         features.select{|info|
           info[:start] <= position and info[:end] >= position
         }.each{|info|
-            overlapping[0] << position
-            overlapping[1] << info[:type]
-            overlapping[2] << [info[:start], info[:end]] * ":"
-            overlapping[3] << (info[:description] || "").strip.sub(/\.$/,'')
-          }
-        end
-
-        tsv[isoform] = overlapping
+          overlapping[0] << position
+          overlapping[1] << info[:type]
+          overlapping[2] << [info[:start], info[:end]] * ":"
+          overlapping[3] << (info[:description] || "").strip.sub(/\.$/,'')
+        }
       end
 
-      tsv
+      tsv[isoform] = overlapping
     end
-    export_asynchronous :annotate_residues_Appris
 
-    desc <<-EOF
+    tsv
+  end
+  export_asynchronous :annotate_residues_Appris
+
+  desc <<-EOF
 Given a set of proteins and resudies inside these proteins, finds the mutations registered in COSMIC that affect those residues, and provide
 some annotations from the samples that contained them
 
@@ -224,43 +226,51 @@ as key, and residues as values. Types `flat` (separated by more tabs),
 and `double` (separated by '|') are supported.
 
 The result is the proteins along with the overlapping features and some information about them
-    EOF
-    input :residues, :tsv, "Proteins and their affected residues", nil
-    task :annotate_variants_COSMIC => :tsv do |residues|
+  EOF
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  task :annotate_variants_COSMIC => :tsv do |residues|
 
-      cosmic_residue_mutations = Structure.COSMIC_residues
+    cosmic_residue_mutations = Structure.COSMIC_residues
 
-      isoform_matched_variants = {}
-      residues.each do |protein,list|
-        list = Array === list ? list.flatten : [list]
+    isoform_matched_variants = {}
+    residues.each do |protein,list|
+      list = Array === list ? list.flatten : [list]
 
-        list.each do |position|
-          matching_mutations = cosmic_residue_mutations[[protein, position]*":"]
-          next if matching_mutations.nil? or matching_mutations.empty?
-          isoform_matched_variants[protein] ||= []
-          isoform_matched_variants[protein].concat matching_mutations
-        end
+      list.each do |position|
+        matching_mutations = cosmic_residue_mutations[[protein, position]*":"]
+        next if matching_mutations.nil? or matching_mutations.empty?
+        isoform_matched_variants[protein] ||= []
+        isoform_matched_variants[protein].concat matching_mutations
       end
-
-      cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
-
-      res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double)
-
-      isoform_matched_variants.each do |protein, mutations|
-        values = []
-        mutations.each do |mutation|
-          values << [mutation].concat(cosmic_mutation_annotations[mutation] || [])
-        end
-
-        res[protein] = Misc.zip_fields(values)
-      end
-
-      res
     end
-    export_asynchronous :annotate_variants_COSMIC
+
+    cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
+
+    res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double)
+
+    isoform_matched_variants.each do |protein, mutations|
+      values = []
+      mutations.each do |mutation|
+        begin
+          annotations = cosmic_mutation_annotations[mutation]
+          aa_mutation = (annotations.first || []).compact.first
+          raise "No AA mutation" if aa_mutation.nil?
+          residue = aa_mutation.match(/(\d+)/)[1]
+          values << [residue,mutation].concat(annotations || [])
+        rescue
+          Log.exception $!
+        end
+      end
+
+      res[protein] = Misc.zip_fields(values)
+    end
+
+    res
+  end
+  export_asynchronous :annotate_variants_COSMIC
 
 
-    desc <<-EOF
+  desc <<-EOF
 Given a set of proteins and resudies inside these proteins, finds the known variants that overlap, as annotated in UniProt.
 
 The proteins and residues are specified as a TSV file, with Ensembl Protein IDs
@@ -268,156 +278,195 @@ as key, and residues as values. Types `flat` (separated by more tabs),
 and `double` (separated by '|') are supported.
 
 The result is the proteins along with the overlapping features and some information about them
-    EOF
-    input :residues, :tsv, "Proteins and their affected residues", nil
-    task :annotate_variants_UNIPROT => :tsv do |residues|
+  EOF
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  task :annotate_variants_UNIPROT => :tsv do |residues|
 
-      uniprot_residue_mutations = Structure.UniProt_residues
+    uniprot_residue_mutations = Structure.UniProt_residues
+    ppp uniprot_residue_mutations.summary
 
-      isoform_matched_variants = {}
-      residues.each do |protein, list|
-        list = Array === list ? list.flatten : [list]
+    isoform_matched_variants = {}
+    residues.each do |protein, list|
+      list = Array === list ? list.flatten : [list]
 
 
-        list.each do |position|
-          matching_mutations = uniprot_residue_mutations[[protein, position]*":"]
-          next if matching_mutations.nil? or matching_mutations.empty?
-          isoform_matched_variants[protein] ||= []
-          isoform_matched_variants[protein].concat matching_mutations
-        end
+      list.each do |position|
+        matching_mutations = uniprot_residue_mutations[[protein, position]*":"]
+        next if matching_mutations.nil? or matching_mutations.empty?
+        isoform_matched_variants[protein] ||= []
+        isoform_matched_variants[protein].concat matching_mutations
       end
-
-      uniprot_mutation_annotations = Structure.UniProt_mutation_annotations
-
-      res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => uniprot_mutation_annotations.fields, :type => :double)
-
-      isoform_matched_variants.each do |protein, mutations|
-        values = []
-        mutations.each do |mutation|
-          values << uniprot_mutation_annotations[mutation]
-        end
-
-        res[protein] = Misc.zip_fields(values)
-      end
-
-      res
     end
-    export_asynchronous :annotate_variants_UNIPROT
 
-    desc <<-EOF
+    uniprot_mutation_annotations = Structure.UniProt_mutation_annotations
+
+    res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue"] + uniprot_mutation_annotations.fields, :type => :double)
+
+    isoform_matched_variants.each do |protein, mutations|
+      values = []
+      mutations.each do |mutation|
+        begin
+          annotations = uniprot_mutation_annotations[mutation]
+          aa_mutation = annotations.first
+          raise "No AA mutation" if aa_mutation.nil?
+          residue = aa_mutation.match(/(\d+)/)[1]
+          values << [residue].concat(annotations || [])
+        rescue
+          Log.exception $!
+        end
+      end
+
+      res[protein] = Misc.zip_fields(values)
+    end
+
+    res
+  end
+  export_asynchronous :annotate_variants_UNIPROT
+
+
+
+  #{{{ MUTATED ISOFORMS ANALYSIS
+
+
+  desc <<-EOF
 Given a set of protein mutations, finds the affected protein features and variants in Appris, COSMIC, UniProt
 
 The results for the different annotation types are save as job files
-    EOF
-    input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
-    input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
-    input :organism, :string, "Organism code", "Hsa"
-    task :mutated_isoform_annotation => :string do |mis,muts,organism|
-      if mis.nil? 
-        Workflow.require_workflow "Sequence"
-        raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-        job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
-        tsv = job.run
-        mis = tsv.values.compact.flatten
-      end
-
-      residues = Structure.mutated_isoforms_to_residue_list(mis)
-
-      Open.write(file(:uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => residues).run.to_s)
-      Open.write(file(:appris), Structure.job(:annotate_residues_Appris, name, :residues => residues).run.to_s)
-      Open.write(file(:COSMIC), Structure.job(:annotate_variants_COSMIC, name, :residues => residues).run.to_s)
-      Open.write(file(:uniprot_variants), Structure.job(:annotate_variants_UNIPROT, name, :residues => residues).run.to_s)
-
-      "DONE"
+  EOF
+  input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
+  input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+  input :organism, :string, "Organism code", "Hsa"
+  task :mutated_isoform_annotation => :string do |mis,muts,organism|
+    if mis.nil? 
+      Workflow.require_workflow "Sequence"
+      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
+      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
+      tsv = job.run
+      mis = tsv.values.compact.flatten
     end
-    export_asynchronous :mutated_isoform_annotation
 
-    desc <<-EOF
+    residues = Structure.mutated_isoforms_to_residue_list(mis)
+
+    Open.write(file(:uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => residues).run.to_s)
+    Open.write(file(:appris), Structure.job(:annotate_residues_Appris, name, :residues => residues).run.to_s)
+    Open.write(file(:COSMIC), Structure.job(:annotate_variants_COSMIC, name, :residues => residues).run.to_s)
+    Open.write(file(:uniprot_variants), Structure.job(:annotate_variants_UNIPROT, name, :residues => residues).run.to_s)
+
+    "DONE"
+  end
+  export_asynchronous :mutated_isoform_annotation
+
+  helper :residue_neighbours do |residues|
+    all_neighbours = nil
+    residues.each do |protein, list|
+      list = list.flatten.compact.uniq
+      neighbours = Structure.neighbours_i3d(protein, list)
+      next if neighbours.nil? or neighbours.empty?
+      if all_neighbours.nil?
+        all_neighbours = neighbours
+      else
+        all_neighbours.merge! neighbours
+      end
+    end
+
+    all_neighbours
+  end
+
+  desc <<-EOF
 Given a set of protein mutations, finds the neighbouring protein features and variants in Appris, COSMIC, UniProt.
 
 The results for the different annotation types are save as job files. This method
 consider only the features of neighbouring residues, no the residue itself.
-    EOF
-    input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
-    input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
-    input :organism, :string, "Organism code", "Hsa"
-    task :mutated_isoform_neighbour_annotation => :string do |mis,muts,organism|
-      if mis.nil? 
-        Workflow.require_workflow "Sequence"
-        raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-        job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
-        tsv = job.run
-        mis = tsv.values.compact.flatten
-      end
-
-      residues = Structure.mutated_isoforms_to_residue_list(mis)
-
-      neighbour_residues = TSV.setup({}, :type => :flat, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :namespace => organism)
-      residues.each do |protein, list|
-        list = list.flatten
-        neighbours = Structure.neighbours_i3d(protein, list.flatten)
-        next if neighbours.nil? or neighbours.empty?
-
-        neighbour_residues[protein] = neighbours
-      end
-
-      Open.write(file(:neighbour_uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
-      Open.write(file(:neighbour_appris), Structure.job(:annotate_residues_Appris, name, :residues => neighbour_residues).clean.run.to_s)
-      Open.write(file(:neighbour_COSMIC), Structure.job(:annotate_variants_COSMIC, name, :residues => neighbour_residues).clean.run.to_s)
-
-      "DONE"
+  EOF
+  input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
+  input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+  input :organism, :string, "Organism code", "Hsa"
+  task :mutated_isoform_neighbour_annotation => :tsv do |mis,muts,organism|
+    if mis.nil? 
+      Workflow.require_workflow "Sequence"
+      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
+      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
+      tsv = job.run
+      mis = tsv.values.compact.flatten
     end
-    export_asynchronous :mutated_isoform_neighbour_annotation
 
-    desc <<-EOF
+    residues = Structure.mutated_isoforms_to_residue_list(mis)
+
+    neighbours = self.residue_neighbours residues
+    #neighbour_residues = TSV.setup({}, :type => :flat, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :namespace => organism)
+    #residues.each do |protein, list|
+    #  list = list.flatten
+    #  neighbours = Structure.neighbours_i3d(protein, list.flatten)
+    #  next if neighbours.nil? or neighbours.empty?
+
+    #  neighbour_residues[protein] = neighbours
+    #end
+    neighbour_residues = {}
+    residues.annotate neighbour_residues
+    neighbours.each do |iso,values|
+      protein, _pos = iso.split ":"
+      positions = values.last.split ";"
+      neighbour_residues[protein] = positions
+    end
+
+    Open.write(file(:neighbour_uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
+    Open.write(file(:neighbour_uniprot_variants), Structure.job(:annotate_variants_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
+    Open.write(file(:neighbour_appris), Structure.job(:annotate_residues_Appris, name, :residues => neighbour_residues).clean.run.to_s)
+    Open.write(file(:neighbour_COSMIC), Structure.job(:annotate_variants_COSMIC, name, :residues => neighbour_residues).clean.run.to_s)
+
+    neighbours
+  end
+  export_asynchronous :mutated_isoform_neighbour_annotation
+
+  desc <<-EOF
 Given a set of protein mutations, finds residues that affect protein interfaces, as represented
 in PDB models of protein complexes in Interactome3d
 
 The results for the different annotation types are save as job files. This method
 consider only the features of neighbouring residues, no the residue itself.
-    EOF
-    input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
-    input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
-    input :organism, :string, "Organism code", "Hsa"
-    task :mutated_isoform_interface_residues => :tsv do |mis,muts,organism|
-      if mis.nil? 
-        Workflow.require_workflow "Sequence"
-        raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-        job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
-        tsv = job.run
-        mis = tsv.values.compact.flatten
-      end
-
-      residues = Structure.mutated_isoforms_to_residue_list(mis)
-
-      neighbour_residues = TSV.setup({}, :key_field => "Ensembl Protein ID", 
-                                     :fields => ["Partner Ensembl Protein ID", "Residues"], 
-                                     :type => :double,  :unnamed => true)
-      residues.each do |protein, list|
-        list = list.flatten.compact.sort
-        neighbours = Structure.interface_neighbours_i3d(protein, list)
-        next if neighbours.nil? or neighbours.empty?
-        neighbours.each do |partner,residues|
-          neighbour_residues[protein] ||= [[],[]]
-          neighbour_residues[protein][0] << partner
-          neighbour_residues[protein][1] << residues * ";"
-        end
-      end
-      neighbour_residues
+  EOF
+  input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
+  input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+  input :organism, :string, "Organism code", "Hsa"
+  task :mutated_isoform_interface_residues => :tsv do |mis,muts,organism|
+    if mis.nil? 
+      Workflow.require_workflow "Sequence"
+      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
+      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
+      tsv = job.run
+      mis = tsv.values.compact.flatten
     end
-    export_asynchronous :mutated_isoform_interface_residues
-  end
 
-  #require 'structure/cosmic_feature_analysis'
+    residues = Structure.mutated_isoforms_to_residue_list(mis)
 
-
-  if defined? Entity and defined? MutatedIsoform and Entity === MutatedIsoform
-    module MutatedIsoform
-      property :pdbs_and_positions => :single do
-        return [] if pdbs.nil?
-        pdbs.collect do |pdb, info|
-          [pdb, Structure.job(:sequence_position_in_pdb, "Protein: #{ self }", :sequence => protein.sequence, :organism => organism, :position => position, :pdb => pdb).run]
-        end
+    neighbour_residues = TSV.setup({}, :key_field => "Ensembl Protein ID", 
+                                   :fields => ["Partner Ensembl Protein ID", "Residues"], 
+                                   :type => :double,  :unnamed => true)
+    residues.each do |protein, list|
+      list = list.flatten.compact.sort
+      neighbours = Structure.interface_neighbours_i3d(protein, list)
+      next if neighbours.nil? or neighbours.empty?
+      neighbours.each do |partner,residues|
+        neighbour_residues[protein] ||= [[],[]]
+        neighbour_residues[protein][0] << partner
+        neighbour_residues[protein][1] << residues * ";"
       end
     end
+    neighbour_residues
   end
+  export_asynchronous :mutated_isoform_interface_residues
+end
+
+#require 'structure/cosmic_feature_analysis'
+
+
+if defined? Entity and defined? MutatedIsoform and Entity === MutatedIsoform
+  module MutatedIsoform
+    property :pdbs_and_positions => :single do
+      return [] if pdbs.nil?
+      pdbs.collect do |pdb, info|
+        [pdb, Structure.job(:sequence_position_in_pdb, "Protein: #{ self }", :sequence => protein.sequence, :organism => organism, :position => position, :pdb => pdb).run]
+      end
+    end
+  end
+end

@@ -21,7 +21,7 @@ module Structure
 
 
   def self.UniProt_residues
-    @UniProt_residues ||= Persist.persist_tsv(nil, "UniProt::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persist.find(:lib)) do |data|
+    @UniProt_residues ||= Persist.persist_tsv(UniProt.annotated_variants, "UniProt::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["UniProt Variant ID"], :type => :flat)
 
                            uni2ensp = Organism.protein_identifiers("Hsa").index :target => "Ensembl Protein ID", :fields => ["UniProt/SwissProt Accession"], :persist => true
@@ -43,18 +43,20 @@ module Structure
                                  match = change.match(/^([A-Z])(\d+)([A-Z])$/)
                                  next if match.nil?
                                  ref, pos, mut = match.values_at 1,2,3
-                                 pos = map[pos]
+                                 pos = map[pos.to_i]
                                  next if pos.nil?
                                  isoform_residue_mutations[[ensp,pos]*":"] ||= []
                                  isoform_residue_mutations[[ensp,pos]*":"] << vid
                                end
                              end
-
-                             data.merge! isoform_residue_mutations
-                             isoform_residue_mutations.annotate data
-
-                             data
                            end
+
+                           Log.info "Merging data"
+                           data.merge! isoform_residue_mutations
+                           Log.info "Annotating database"
+                           isoform_residue_mutations.annotate data
+
+                           data
     end
   end
 

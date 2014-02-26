@@ -14,7 +14,7 @@ module Structure
       char_source, char_target = p
       gaps_source += 1 if char_source == '-'
       gaps_target += 1 if char_target == '-'
-      map[i + 1 + offset_source.length - gaps_source] = i + 1 + offset_target.length - gaps_target if char_source == char_source  and char_source != "-"
+      map[i + 1 + offset_source.length - gaps_source] = i + 1 + offset_target.length - gaps_target if char_source == char_target  and char_source != "-"
     end
     
     map
