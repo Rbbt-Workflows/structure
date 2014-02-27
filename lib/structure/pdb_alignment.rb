@@ -100,11 +100,11 @@ module Structure
 
     chain ||=  positions_in_pdb.sort{|c,p| p.length}.last.first
 
-    return [] if positions_in_pdb[chain].nil?
+    return {} if positions_in_pdb[chain].nil?
 
     neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
 
-    return [] if neighbour_map.nil?
+    return {} if neighbour_map.nil?
 
     inverse_neighbour_map = {}
     neighbour_map.each do |k,vs|

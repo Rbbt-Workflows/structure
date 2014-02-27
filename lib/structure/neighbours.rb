@@ -10,10 +10,11 @@ module Structure
   I3D_INTERACTIONS_REVERSE = Interactome3d.interactions_tsv.tsv :merge => true, :key_field => "PROT2", :zipped => true, :unnamed => true, :persist => true
 
   def self.neighbours_i3d(protein, positions, only_pdb = false)
-    Log.info("PROCESSING #{Log.color :red, protein} -- #{Misc.fingerprint positions}")
 
     uniprot = ISO2UNI[protein]
     sequence = protein.sequence
+    tsv = TSV.setup({}, :key_field => "Isoform residue", :fields => ["PDB", "Neighbours"], :type => :list)
+    return tsv if sequence.nil?
 
     if uniprot and  I3D_PROTEINS.include? uniprot
 
@@ -38,7 +39,6 @@ module Structure
         #Try another PDB unless at least one neighbour is found
         next if neighbours_in_pdb.nil? or neighbours_in_pdb.empty?
 
-        tsv = TSV.setup({}, :key_field => "Isoform residue", :fields => ["PDB", "Neighbours"], :type => :list)
         neighbours_in_pdb.each do |pos, neigh|
           seq_pos = pdb_positions_to_sequence([pos], sequence, chain, url, nil)
           next if seq_pos.nil? or seq_pos.empty?
@@ -50,15 +50,14 @@ module Structure
         return tsv 
       end
     else
-      return nil if only_pdb
+      return tsv if only_pdb
     end
 
-    tsv = TSV.setup({}, :key_field => "Isoform residue", :fields => ["PDB", "Neighbours"])
     positions.each do |p| 
       new = []
       new << p-1 if p > 1
-      new << p+1 if p< sequence.length 
-      tsv[p] = [[nil], new * ";"]
+      new << p+1 if p < sequence.length 
+      tsv[[protein,p]*":"] = [[nil], new * ";"]
     end
 
     tsv
@@ -76,8 +75,6 @@ module Structure
 
 
   def self.interface_neighbours_i3d(protein, positions)
-
-    Log.info("PROCESSING #{Term::ANSIColor.red(protein)} -- #{Misc.fingerprint positions}")
 
     uniprot = ISO2UNI[protein]
     sequence = protein.sequence

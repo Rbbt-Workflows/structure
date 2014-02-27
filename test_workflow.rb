@@ -7,7 +7,7 @@ require 'rbbt/workflow'
 Workflow.require_workflow "Structure"
 
 class TestStructure < Test::Unit::TestCase
-  def _test_neighbours_annotations
+  def test_neighbours_annotations
     mis = ["ENSP00000419692:S427V"]
     job =  Structure.job(:mutated_isoform_neighbour_annotation, nil, :mutated_isoforms => mis)
     job.clean
@@ -21,7 +21,7 @@ class TestStructure < Test::Unit::TestCase
     assert job.file(:neighbour_appris).tsv.unzip(0, true)["ENSP00000419692:432"]["Appris Features"].include? 'firestar'
   end
   
-  def test_uniprot_variants
+  def _test_uniprot_variants
     r = TSV.setup({})
     r["ENSP00000236709"] = [218]
     job =  Structure.job(:annotate_variants_UNIPROT, nil, :residues => r)

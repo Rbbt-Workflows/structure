@@ -253,6 +253,7 @@ The result is the proteins along with the overlapping features and some informat
       mutations.each do |mutation|
         begin
           annotations = cosmic_mutation_annotations[mutation]
+          raise "No annotations for #{ mutation } in #{cosmic_mutation_annotations.persistence_path}" if annotations.nil?
           aa_mutation = (annotations.first || []).compact.first
           raise "No AA mutation" if aa_mutation.nil?
           residue = aa_mutation.match(/(\d+)/)[1]
@@ -283,7 +284,6 @@ The result is the proteins along with the overlapping features and some informat
   task :annotate_variants_UNIPROT => :tsv do |residues|
 
     uniprot_residue_mutations = Structure.UniProt_residues
-    ppp uniprot_residue_mutations.summary
 
     isoform_matched_variants = {}
     residues.each do |protein, list|
@@ -307,9 +307,8 @@ The result is the proteins along with the overlapping features and some informat
       mutations.each do |mutation|
         begin
           annotations = uniprot_mutation_annotations[mutation]
-          aa_mutation = annotations.first
-          raise "No AA mutation" if aa_mutation.nil?
-          residue = aa_mutation.match(/(\d+)/)[1]
+          raise "No annotations for #{ mutation } in #{uniprot_mutation_annotations.persistence_path}" if annotations.nil?
+          residue = annotations.first
           values << [residue].concat(annotations || [])
         rescue
           Log.exception $!
@@ -357,12 +356,12 @@ The results for the different annotation types are save as job files
   export_asynchronous :mutated_isoform_annotation
 
   helper :residue_neighbours do |residues|
-    all_neighbours = nil
+    all_neighbours = {}
     residues.each do |protein, list|
       list = list.flatten.compact.uniq
       neighbours = Structure.neighbours_i3d(protein, list)
       next if neighbours.nil? or neighbours.empty?
-      if all_neighbours.nil?
+      if all_neighbours.empty?
         all_neighbours = neighbours
       else
         all_neighbours.merge! neighbours
@@ -393,14 +392,7 @@ consider only the features of neighbouring residues, no the residue itself.
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
     neighbours = self.residue_neighbours residues
-    #neighbour_residues = TSV.setup({}, :type => :flat, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :namespace => organism)
-    #residues.each do |protein, list|
-    #  list = list.flatten
-    #  neighbours = Structure.neighbours_i3d(protein, list.flatten)
-    #  next if neighbours.nil? or neighbours.empty?
 
-    #  neighbour_residues[protein] = neighbours
-    #end
     neighbour_residues = {}
     residues.annotate neighbour_residues
     neighbours.each do |iso,values|
