@@ -24,29 +24,47 @@ module Structure
     @UniProt_residues ||= Persist.persist_tsv(UniProt.annotated_variants, "UniProt::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["UniProt Variant ID"], :type => :flat)
 
-                           uni2ensp = Organism.protein_identifiers("Hsa").index :target => "Ensembl Protein ID", :fields => ["UniProt/SwissProt Accession"], :persist => true
+                           #uni2ensp = Organism.protein_identifiers("Hsa").index :target => "Ensembl Protein ID", :fields => ["UniProt/SwissProt Accession"], :persist => true
+                           uni2ensp = Organism.protein_identifiers("Hsa").tsv :fields => ["Ensembl Protein ID"], :key_field => "UniProt/SwissProt Accession", :persist => true, :type => :flat, :merge => true
                            ensp2sequence = Organism.protein_sequence("Hsa").tsv :persist => true
 
                            db = UniProt.annotated_variants.tsv(:fields => ["Amino Acid Mutation", "UniProt Variant ID"], :persist => true, :type => :double)
-                           db.monitor = {:desc => "Processing UniProt", :step => 10000}
+                           db.monitor = {:desc => "Processing UniProt", :step => 1000}
 
                            db.with_unnamed do
                              db.through do |uniprot,values|
-                               ensp = uni2ensp[uniprot]
-                               next if ensp.nil?
-                               ensp_sequence = ensp2sequence[ensp]
-                               next if ensp_sequence.nil?
-                               uniprot_sequence = UniProt.sequence(uniprot)
-                               map = Structure.sequence_map(uniprot_sequence, ensp_sequence)
+                               Log.debug Log.color :red, uniprot
+                               begin
+                                 ensps = uni2ensp[uniprot]
+                                 raise "No translation to Ensembl: #{ uniprot }" if ensps.nil? or ensps.empty?
+                                 found = false
+                                 ensps.each do |ensp|
+                                   Log.debug Log.color :blue, ensp
+                                   begin
+                                     ensp_sequence = ensp2sequence[ensp]
+                                     raise "No sequence: #{ ensp } " if ensp_sequence.nil?
+                                     uniprot_sequence = UniProt.sequence(uniprot)
+                                     map = Structure.sequence_map(uniprot_sequence, ensp_sequence)
 
-                               Misc.zip_fields(values).each do |change,vid|
-                                 match = change.match(/^([A-Z])(\d+)([A-Z])$/)
-                                 next if match.nil?
-                                 ref, pos, mut = match.values_at 1,2,3
-                                 pos = map[pos.to_i]
-                                 next if pos.nil?
-                                 isoform_residue_mutations[[ensp,pos]*":"] ||= []
-                                 isoform_residue_mutations[[ensp,pos]*":"] << vid
+                                     Misc.zip_fields(values).each do |change,vid|
+                                       match = change.match(/^([A-Z])(\d+)([A-Z])$/)
+                                       raise "Unknown change: #{ ensp } #{change}" if match.nil?
+                                       ref, _pos, mut = match.values_at 1,2,3
+                                       pos = map[_pos.to_i]
+                                       raise "Unmapped position: #{ ensp } #{_pos}" if pos.nil?
+                                       isoform_residue_mutations[[ensp,pos]*":"] ||= []
+                                       isoform_residue_mutations[[ensp,pos]*":"] << vid
+                                       found = true
+                                     end
+                                   rescue
+                                     Log.debug $!.message
+                                     next
+                                   end
+                                 end
+                                 raise "No suitable mapings for #{ uniprot }" unless found
+                               rescue
+                                 Log.warn $!.message
+                                 next
                                end
                              end
                            end
@@ -68,7 +86,7 @@ module Structure
                                           'SNP ID',
                                           'Disease'
                                         ]
-                                       UniProt.annotated_variants.tsv(:key_field => "UniProt Variant ID", :fields => fields, :persist => true, :type => :double).to_list
+                                       UniProt.annotated_variants.tsv(:key_field => "UniProt Variant ID", :fields => fields, :persist => true, :type => :double, :zipped => true).to_list
                                      end
   end
 end

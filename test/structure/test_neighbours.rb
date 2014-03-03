@@ -39,10 +39,10 @@ class TestClass < Test::Unit::TestCase
 
     Log.debug "AA at #{ position }: #{protein.sequence[position-1]}"
 
-
     res = Structure.interface_neighbours_i3d(protein, [position])
-    assert res.include? partner
-    assert_equal ["D", "R", "R"].sort, res[partner].sort.collect{|pos| partner.sequence[pos-1] }
+    residue = [protein,position,partner] * ":"
+    assert res.include? residue
+    assert_equal ["D", "R", "R"].sort, res[residue]["Partner residues"].collect{|res|res.empty? ? [] : res.split(";") }.flatten.uniq.sort.collect{|pos| partner.sequence[pos.to_i-1] }
   end
 end
 

@@ -20,11 +20,15 @@ module Structure
 
 
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
-    chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
+    protein_alignment, chain_alignment = 
+      Persist.persist("SW PDB Alignment", :marshal,
+                      :dir => Rbbt.var.cache.persist.find(:lib),
+                      :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) {
 
+      chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
     chain_sequence = chains[chain] 
-
-    protein_alignment, chain_alignment = SmithWaterman.align(protein_sequence, chain_sequence)
+    SmithWaterman.align(protein_sequence, chain_sequence)
+    }
 
     Structure.match_position(positions, chain_alignment, protein_alignment)
   end

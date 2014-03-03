@@ -24,18 +24,17 @@ require 'rbbt/entity/mutated_isoform'
 module Structure
   extend Workflow
 
-
   def self.mutated_isoforms_to_residue_list(mutated_isoforms)
-    MutatedIsoform.setup(mutated_isoforms, "Hsa")
     residues = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => "Hsa")
 
-    MutatedIsoform.setup(mutated_isoforms, "Hsa")
-    mutated_isoforms.each do |mi|
-      next unless mi.consequence == "MISS-SENSE"
-      protein = mi.protein
-      position = mi.position
-      residues[protein] ||=[]
-      residues[protein] << position
+    Annotated.purge(mutated_isoforms).each do |mi|
+      protein, _sep, change = mi.partition ":"
+      if change.match(/([A-Z])(\d+)([A-Z])$/)
+        next if $1 == $3
+        position = $2
+        residues[protein] ||=[]
+        residues[protein] << position.to_i
+      end
     end
 
     residues
@@ -131,6 +130,7 @@ and `double` (separated by '|') are supported.
   EOF
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_UNIPROT => :tsv do |residues|
+    raise ParameterException, "No residues provided" if residues.nil?
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
 
     iso2uni = Organism.protein_identifiers("Hsa").index :target => "UniProt/SwissProt Accession", :persist => true
@@ -260,6 +260,7 @@ The result is the proteins along with the overlapping features and some informat
           values << [residue,mutation].concat(annotations || [])
         rescue
           Log.exception $!
+          next
         end
       end
 
@@ -291,7 +292,9 @@ The result is the proteins along with the overlapping features and some informat
 
 
       list.each do |position|
-        matching_mutations = uniprot_residue_mutations[[protein, position]*":"]
+        key = [protein, position]*":"
+
+        matching_mutations = uniprot_residue_mutations[key]
         next if matching_mutations.nil? or matching_mutations.empty?
         isoform_matched_variants[protein] ||= []
         isoform_matched_variants[protein].concat matching_mutations
@@ -308,7 +311,7 @@ The result is the proteins along with the overlapping features and some informat
         begin
           annotations = uniprot_mutation_annotations[mutation]
           raise "No annotations for #{ mutation } in #{uniprot_mutation_annotations.persistence_path}" if annotations.nil?
-          residue = annotations.first
+          residue = annotations.first.scan(/\d+/)
           values << [residue].concat(annotations || [])
         rescue
           Log.exception $!
@@ -357,15 +360,20 @@ The results for the different annotation types are save as job files
 
   helper :residue_neighbours do |residues|
     all_neighbours = {}
-    residues.each do |protein, list|
+
+    residues.with_monitor :desc => "Finding neighbours" do
+    residues.pthrough do |protein, list, mutex|
       list = list.flatten.compact.uniq
       neighbours = Structure.neighbours_i3d(protein, list)
       next if neighbours.nil? or neighbours.empty?
-      if all_neighbours.empty?
-        all_neighbours = neighbours
-      else
-        all_neighbours.merge! neighbours
+      mutex.synchronize do
+        if all_neighbours.empty?
+          all_neighbours = neighbours
+        else
+          all_neighbours.merge! neighbours
+        end
       end
+    end
     end
 
     all_neighbours
@@ -386,21 +394,33 @@ consider only the features of neighbouring residues, no the residue itself.
       raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
       job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
       tsv = job.run
-      mis = tsv.values.compact.flatten
+      tsv.unnamed = true
+      mis = tsv.values.compact.flatten.uniq
     end
 
+    log :residues, "Collecting isoforms and residues"
+    puts Time.now
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
+    log :neighbours, "Finding neighbours"
+    puts Time.now
     neighbours = self.residue_neighbours residues
 
     neighbour_residues = {}
     residues.annotate neighbour_residues
-    neighbours.each do |iso,values|
+
+    log :neighbour_residues, "Sorting residues"
+    neighbours.with_monitor :desc => "Sorting residues" do
+    neighbours.pthrough do |iso,values|
       protein, _pos = iso.split ":"
       positions = values.last.split ";"
-      neighbour_residues[protein] = positions
+      neighbour_residues[protein] ||= []
+      neighbour_residues[protein].concat positions
+      neighbour_residues[protein].uniq!
+    end
     end
 
+    log :annotation, "Annotating neighbours"
     Open.write(file(:neighbour_uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
     Open.write(file(:neighbour_uniprot_variants), Structure.job(:annotate_variants_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
     Open.write(file(:neighbour_appris), Structure.job(:annotate_residues_Appris, name, :residues => neighbour_residues).clean.run.to_s)
@@ -431,26 +451,20 @@ consider only the features of neighbouring residues, no the residue itself.
 
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
-    neighbour_residues = TSV.setup({}, :key_field => "Ensembl Protein ID", 
-                                   :fields => ["Partner Ensembl Protein ID", "Residues"], 
-                                   :type => :double,  :unnamed => true)
+    neighbour_residues = TSV.setup({}, :key_field => "Isoform:residue:partner", :fields => ["Partner", "PDB", "Partner residues"], :type => :double)
+
+    residues.with_monitor :desc => "Processing residues" do
     residues.each do |protein, list|
       list = list.flatten.compact.sort
       neighbours = Structure.interface_neighbours_i3d(protein, list)
       next if neighbours.nil? or neighbours.empty?
-      neighbours.each do |partner,residues|
-        neighbour_residues[protein] ||= [[],[]]
-        neighbour_residues[protein][0] << partner
-        neighbour_residues[protein][1] << residues * ";"
-      end
+      neighbour_residues.merge!(neighbours)
+    end
     end
     neighbour_residues
   end
   export_asynchronous :mutated_isoform_interface_residues
 end
-
-#require 'structure/cosmic_feature_analysis'
-
 
 if defined? Entity and defined? MutatedIsoform and Entity === MutatedIsoform
   module MutatedIsoform

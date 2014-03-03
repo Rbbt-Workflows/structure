@@ -4,7 +4,7 @@ require 'test/unit'
 require 'rbbt/workflow'
 
 Workflow.require_workflow "Structure"
-require 'uniprot'
+require 'structure/uniprot'
 
 
 class TestClass < Test::Unit::TestCase
