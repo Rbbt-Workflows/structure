@@ -117,11 +117,7 @@ The pdb can be specified as a url or a PDB code, or a pdbfile can be provided di
   export_exec :pdb_alignment_map
 
 
-
-
   #{{{ ANNOTATIONS
-
-
 
 
   desc <<-EOF
