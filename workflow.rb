@@ -18,6 +18,7 @@ require 'structure/COSMIC'
 Workflow.require_workflow 'Genomics'
 Workflow.require_workflow 'Translation'
 Workflow.require_workflow 'PdbTools'
+Workflow.require_workflow "Sequence"
 
 require 'rbbt/entity/mutated_isoform'
 
@@ -25,19 +26,21 @@ module Structure
   extend Workflow
 
   def self.mutated_isoforms_to_residue_list(mutated_isoforms)
-    residues = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => "Hsa")
+    log :mutated_isoform_to_residue_list, "Find residues affected in each isoform" do
+      residues = {}
 
-    Annotated.purge(mutated_isoforms).each do |mi|
-      protein, _sep, change = mi.partition ":"
-      if change.match(/([A-Z])(\d+)([A-Z])$/)
-        next if $1 == $3
-        position = $2
-        residues[protein] ||=[]
-        residues[protein] << position.to_i
+      Annotated.purge(mutated_isoforms).each do |mi|
+        protein, _sep, change = mi.partition ":"
+        if change.match(/([A-Z])(\d+)([A-Z])$/)
+          next if $1 == $3
+          position = $2
+          residues[protein] ||=[]
+          residues[protein] << position.to_i
+        end
       end
-    end
 
-    residues
+      TSV.setup(residues, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => "Hsa")
+    end
   end
 
   #{{{ ALIGNMENTS
@@ -233,7 +236,7 @@ The result is the proteins along with the overlapping features and some informat
     cosmic_residue_mutations = Structure.COSMIC_residues
 
     isoform_matched_variants = {}
-    residues.each do |protein,list|
+    residues.through do |protein,list|
       list = Array === list ? list.flatten : [list]
 
       list.each do |position|
@@ -256,7 +259,11 @@ The result is the proteins along with the overlapping features and some informat
           raise "No annotations for #{ mutation } in #{cosmic_mutation_annotations.persistence_path}" if annotations.nil?
           aa_mutation = (annotations.first || []).compact.first
           raise "No AA mutation" if aa_mutation.nil?
-          residue = aa_mutation.match(/(\d+)/)[1]
+          if aa_mutation.match(/(\d+)/)
+            residue = $1
+          else
+            raise "AA mutation does not have a position: #{ aa_mutation }" if aa_mutation.nil?
+          end
           values << [residue,mutation].concat(annotations || [])
         rescue
           Log.exception $!
@@ -326,9 +333,43 @@ The result is the proteins along with the overlapping features and some informat
   export_asynchronous :annotate_variants_UNIPROT
 
 
-
   #{{{ MUTATED ISOFORMS ANALYSIS
 
+  helper :residue_neighbours do |residues|
+    log :residue_neighbours, "Find neighbouring residues"
+    all_neighbours = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
+
+    residues.with_monitor :desc => "Finding neighbours" do
+      residues.through do |protein, list|
+        list = list.flatten.compact.uniq
+        neighbours = Structure.neighbours_i3d(protein, list)
+        next if neighbours.nil? or neighbours.empty?
+        if all_neighbours.empty?
+          all_neighbours = neighbours
+        else
+          all_neighbours.merge! neighbours
+        end
+      end
+    end
+
+    all_neighbours
+  end
+
+  helper :mutated_isoforms do |mutations,organism|
+    raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if mutations.nil? 
+
+    log :mutated_isoforms, "Extracting mutated_isoforms from genomic_mutations" do
+
+      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => mutations, :organism => organism)
+
+      mis = Set.new
+      job.run(true).path.traverse do |m,_mis|
+        mis.merge _mis
+      end
+
+      mis.to_a
+    end
+  end
 
   desc <<-EOF
 Given a set of protein mutations, finds the affected protein features and variants in Appris, COSMIC, UniProt
@@ -339,13 +380,7 @@ The results for the different annotation types are save as job files
   input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
   input :organism, :string, "Organism code", "Hsa"
   task :mutated_isoform_annotation => :string do |mis,muts,organism|
-    if mis.nil? 
-      Workflow.require_workflow "Sequence"
-      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
-      tsv = job.run
-      mis = tsv.values.compact.flatten
-    end
+    mis = mutated_isoforms muts, organism if mis.nil?
 
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
@@ -358,26 +393,6 @@ The results for the different annotation types are save as job files
   end
   export_asynchronous :mutated_isoform_annotation
 
-  helper :residue_neighbours do |residues|
-    all_neighbours = {}
-
-    residues.with_monitor :desc => "Finding neighbours" do
-    residues.pthrough do |protein, list, mutex|
-      list = list.flatten.compact.uniq
-      neighbours = Structure.neighbours_i3d(protein, list)
-      next if neighbours.nil? or neighbours.empty?
-      mutex.synchronize do
-        if all_neighbours.empty?
-          all_neighbours = neighbours
-        else
-          all_neighbours.merge! neighbours
-        end
-      end
-    end
-    end
-
-    all_neighbours
-  end
 
   desc <<-EOF
 Given a set of protein mutations, finds the neighbouring protein features and variants in Appris, COSMIC, UniProt.
@@ -389,28 +404,15 @@ consider only the features of neighbouring residues, no the residue itself.
   input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
   input :organism, :string, "Organism code", "Hsa"
   task :mutated_isoform_neighbour_annotation => :tsv do |mis,muts,organism|
-    if mis.nil? 
-      Workflow.require_workflow "Sequence"
-      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
-      tsv = job.run
-      tsv.unnamed = true
-      mis = tsv.values.compact.flatten.uniq
-    end
+    mis = mutated_isoforms muts, organism if mis.nil?
 
-    log :residues, "Collecting isoforms and residues"
-    puts Time.now
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
-    log :neighbours, "Finding neighbours"
-    puts Time.now
     neighbours = self.residue_neighbours residues
 
     neighbour_residues = {}
-    residues.annotate neighbour_residues
 
     log :neighbour_residues, "Sorting residues"
-    neighbours.with_monitor :desc => "Sorting residues" do
     neighbours.pthrough do |iso,values|
       protein, _pos = iso.split ":"
       positions = values.last.split ";"
@@ -418,7 +420,7 @@ consider only the features of neighbouring residues, no the residue itself.
       neighbour_residues[protein].concat positions
       neighbour_residues[protein].uniq!
     end
-    end
+    residues.annotate neighbour_residues
 
     log :annotation, "Annotating neighbours"
     Open.write(file(:neighbour_uniprot), Structure.job(:annotate_residues_UNIPROT, name, :residues => neighbour_residues).clean.run.to_s)
@@ -429,6 +431,7 @@ consider only the features of neighbouring residues, no the residue itself.
     neighbours
   end
   export_asynchronous :mutated_isoform_neighbour_annotation
+
 
   desc <<-EOF
 Given a set of protein mutations, finds residues that affect protein interfaces, as represented
@@ -441,20 +444,54 @@ consider only the features of neighbouring residues, no the residue itself.
   input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
   input :organism, :string, "Organism code", "Hsa"
   task :mutated_isoform_interface_residues => :tsv do |mis,muts,organism|
-    if mis.nil? 
-      Workflow.require_workflow "Sequence"
-      raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if muts.nil? 
-      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, name, :mutations => muts, :organism => organism)
-      tsv = job.run
-      mis = tsv.values.compact.flatten
+    mis = mutated_isoforms muts, organism if mis.nil?
+
+    residues = Structure.mutated_isoforms_to_residue_list(mis)
+
+    neighbour_residues = {}
+
+    residues.ppthrough_callback do |neig|
+      next if neig.nil?
+      neighbour_residues.merge!(neig)
     end
+
+    residues.with_monitor :desc => "Processing residues" do
+    residues.ppthrough(7) do |protein, list|
+      list = list.flatten.compact.sort
+      begin
+        neighbours = Structure.interface_neighbours_i3d(protein, list)
+        next if neighbours.nil? or neighbours.empty?
+        neighbours
+      rescue
+        Log.exception $!
+        next
+      end
+    end
+    end
+
+    TSV.setup(neighbour_residues, :key_field => "Isoform:residue:partner", :fields => ["Partner", "PDB", "Partner residues"], :type => :double)
+  end
+  export_asynchronous :mutated_isoform_interface_residues
+
+  desc <<-EOF
+Given a set of protein mutations, finds residues that affect protein interfaces, as represented
+in PDB models of protein complexes in Interactome3d
+
+The results for the different annotation types are save as job files. This method
+consider only the features of neighbouring residues, no the residue itself.
+  EOF
+  input :mutated_isoforms, :array, "e.g. ENSP0000001:A12V", nil
+  input :genomic_mutations, :array, "e.g. 1:173853127:T", nil
+  input :organism, :string, "Organism code", "Hsa"
+  task :mutated_isoform_interface_residues_old => :tsv do |mis,muts,organism|
+    mis = mutated_isoforms muts, organism if mis.nil?
 
     residues = Structure.mutated_isoforms_to_residue_list(mis)
 
     neighbour_residues = TSV.setup({}, :key_field => "Isoform:residue:partner", :fields => ["Partner", "PDB", "Partner residues"], :type => :double)
 
     residues.with_monitor :desc => "Processing residues" do
-    residues.each do |protein, list|
+    residues.pthrough do |protein, list|
       list = list.flatten.compact.sort
       neighbours = Structure.interface_neighbours_i3d(protein, list)
       next if neighbours.nil? or neighbours.empty?
