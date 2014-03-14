@@ -81,7 +81,9 @@ module PDBHelper
   end
 
   def self.pdb_close_residues(distance, pdb = nil, pdbfile = nil)
+
     atom_distances = pdb_atom_distance(distance, pdb, pdbfile)
+
     close_residues = {}
     atom_distances.each do |atom1, atom2, dist|
       aa1 = atom1.split(/\s+/).values_at(2,3) * ":"
@@ -91,6 +93,7 @@ module PDBHelper
     end
 
     close_residues.each do |aa1, list| list.uniq! end
+
     close_residues
   end
 end

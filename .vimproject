@@ -5,6 +5,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  ToDo.md
  lib=lib {
   structure=structure{
+   workflow=workflow{
+    alignments.rb
+    residues.rb
+   }
    ssw.rb
    alignment.rb
    pdb_helper.rb
@@ -18,8 +22,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    appris.rb
    cosmic_feature_analysis.rb
 
+   entity.rb
    sinatra.rb
-   }
+  }
  }
  share=share{
   software=software/opt/ssw filter="*"{
