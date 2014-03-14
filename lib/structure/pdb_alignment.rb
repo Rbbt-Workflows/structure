@@ -5,17 +5,18 @@ module Structure
   def self.sequence_position_in_pdb(protein_sequence, protein_positions, pdb, pdbfile)
     chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
 
+    protein_positions = [protein_positions] unless Array === protein_positions
     alignments = {}
     chains.each do |chain,chain_sequence|
 
       chain_alignment, protein_alignment = SmithWaterman.align(chain_sequence, protein_sequence)
 
-      alignments[chain] = Structure.match_position(protein_positions, protein_alignment, chain_alignment).compact
+      alignments[chain] = Structure.match_position(protein_positions, protein_alignment, chain_alignment)
     end
 
-    alignments.delete_if{|c,p| p.nil? or p.empty?}
+    #alignments.delete_if{|c,p| p.nil? or p.empty?}
 
-    alignments
+    TSV.setup(alignments, :key_field => "PDB Chain", :fields => protein_positions, :type => :list, :cast => :to_i)
   end
 
 
@@ -26,11 +27,13 @@ module Structure
                       :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) {
 
       chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
-    chain_sequence = chains[chain] 
-    SmithWaterman.align(protein_sequence, chain_sequence)
+      chain_sequence = chains[chain] 
+      SmithWaterman.align(protein_sequence, chain_sequence)
     }
 
-    Structure.match_position(positions, chain_alignment, protein_alignment)
+    seq_pos = Structure.match_position(positions, chain_alignment, protein_alignment)
+    res = Hash[*positions.zip(seq_pos).flatten]
+    TSV.setup(res, :key_field => "Chain position", :fields => ["Sequence position"], :type => :single)
   end
 
 
@@ -66,19 +69,51 @@ module Structure
     Structure.job(:pdb_chain_position_in_sequence, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :chain => target_chain, :positions => chain_positions[target_chain]).exec
   end
 
+  #def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
+
+  #  positions_in_pdb = Structure.job(:sequence_position_in_pdb, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :positions => positions).exec
+
+  #  Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
+
+  #  return [] if positions_in_pdb[chain].nil?
+
+  #  chain ||=  positions_in_pdb.sort{|c,p| p.length}.last.first
+
+  #  neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
+
+  #  return [] if neighbour_map.nil?
+
+  #  inverse_neighbour_map = {}
+  #  neighbour_map.each do |k,vs|
+  #    vs.each do |v|
+  #      inverse_neighbour_map[v] ||= []
+  #      inverse_neighbour_map[v] << k
+  #    end
+  #  end
+
+  #  neighbours_in_pdb = positions_in_pdb[chain].collect do |position|
+  #    position_in_chain = [chain, position] * ":"
+  #    neigh = neighbour_map[position_in_chain]
+  #    ineigh = inverse_neighbour_map[position_in_chain]
+  #    (neigh || []) + (ineigh || [])
+  #  end.compact.flatten
+  #end
+
   def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
 
     positions_in_pdb = Structure.job(:sequence_position_in_pdb, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :positions => positions).exec
 
     Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
 
-    return [] if positions_in_pdb[chain].nil?
+    chain ||=  positions_in_pdb.sort{|c,p| p.nil? ? 0 : p.length}.last.first
 
-    chain ||=  positions_in_pdb.sort{|c,p| p.length}.last.first
+    neighbours_in_pdb = TSV.setup({}, :key_field => "Sequence position", :fields => ["Neighbours"], :type => :flat)
+
+    return neighbours_in_pdb if positions_in_pdb[chain].nil?
 
     neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
 
-    return [] if neighbour_map.nil?
+    return neighbours_in_pdb if neighbour_map.nil?
 
     inverse_neighbour_map = {}
     neighbour_map.each do |k,vs|
@@ -88,42 +123,15 @@ module Structure
       end
     end
 
-    neighbours_in_pdb = positions_in_pdb[chain].collect do |position|
-      position_in_chain = [chain, position] * ":"
-      neigh = neighbour_map[position_in_chain]
-      ineigh = inverse_neighbour_map[position_in_chain]
-      (neigh || []) + (ineigh || [])
-    end.compact.flatten
-  end
-
-  def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
-
-    positions_in_pdb = Structure.job(:sequence_position_in_pdb, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :positions => positions).exec
-
-    Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
-
-    chain ||=  positions_in_pdb.sort{|c,p| p.length}.last.first
-
-    return {} if positions_in_pdb[chain].nil?
-
-    neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
-
-    return {} if neighbour_map.nil?
-
-    inverse_neighbour_map = {}
-    neighbour_map.each do |k,vs|
-      vs.each do |v|
-        inverse_neighbour_map[v] ||= []
-        inverse_neighbour_map[v] << k
-      end
-    end
-
-    neighbours_in_pdb = TSV.setup({}, :key_field => "Original", :fields => ["Neighbours"], :type => :flat)
     positions_in_pdb[chain].each do |position|
       position_in_chain = [chain, position] * ":"
       neigh = neighbour_map[position_in_chain]
       ineigh = inverse_neighbour_map[position_in_chain]
-      neighbours_in_pdb[position_in_chain] = (neigh || []) + (ineigh || [])
+      all_neighbours = (neigh || []) + (ineigh || []).uniq
+
+      position_in_sequence = Structure.pdb_chain_position_in_sequence(pdb, pdbfile, chain, [position], sequence).values.compact.flatten.first
+      all_neighbours_in_sequence = all_neighbours.collect{|n| c,p = n.split(":"); Structure.pdb_chain_position_in_sequence(pdb, pdbfile, c, [p], sequence).values.compact.flatten }.flatten.uniq
+      neighbours_in_pdb[position_in_sequence] = all_neighbours_in_sequence
     end
 
     neighbours_in_pdb

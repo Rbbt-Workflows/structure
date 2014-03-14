@@ -41,11 +41,11 @@ module Structure
         #Try another PDB unless at least one neighbour is found
         next if neighbours_in_pdb.nil? or neighbours_in_pdb.empty?
 
-        neighbours_in_pdb.each do |pos, neigh|
-          seq_pos = pdb_positions_to_sequence([pos], sequence, chain, url, nil)
-          next if seq_pos.nil? or seq_pos.empty?
-          seq_pos = seq_pos.first 
-          seq_neigh = pdb_positions_to_sequence(neigh, sequence, chain, url, nil) 
+        neighbours_in_pdb.each do |seq_pos, seq_neigh|
+          #seq_pos = pdb_positions_to_sequence([pos], sequence, chain, url, nil)
+          #next if seq_pos.nil? or seq_pos.empty?
+          #seq_pos = seq_pos.first 
+          #seq_neigh = pdb_positions_to_sequence(neigh, sequence, chain, url, nil) 
           tsv[[protein, seq_pos] * ":"] = [protein, seq_pos, url, seq_neigh * ";"]
         end
 
