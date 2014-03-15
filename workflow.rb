@@ -64,6 +64,27 @@ module Structure
     end
   end
 
+  helper :residue_neighbours do |residues|
+    log :residue_neighbours, "Find neighbouring residues"
+    all_neighbours = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
+
+    residues.with_monitor :desc => "Finding neighbours" do
+      residues.pthrough do |protein, list|
+        list = list.flatten.compact.uniq
+        neighbours = Structure.neighbours_i3d(protein, list)
+        next if neighbours.nil? or neighbours.empty?
+        if all_neighbours.empty?
+          all_neighbours = neighbours
+        else
+          all_neighbours.merge! neighbours
+        end
+      end
+    end
+
+    all_neighbours
+  end
+
+
   input :genomic_mutations, :array, "Genomic Mutations"
   input :mutated_isoforms, :array, "Protein Mutations"
   input :database, :select, "Database of annotations", "UniProt", :select_options => ["UniProt", "COSMIC", "Appris"]
@@ -150,27 +171,7 @@ module Structure
       mi_annotations
     end
   end
-
-
-  helper :residue_neighbours do |residues|
-    log :residue_neighbours, "Find neighbouring residues"
-    all_neighbours = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
-
-    residues.with_monitor :desc => "Finding neighbours" do
-      residues.pthrough do |protein, list|
-        list = list.flatten.compact.uniq
-        neighbours = Structure.neighbours_i3d(protein, list)
-        next if neighbours.nil? or neighbours.empty?
-        if all_neighbours.empty?
-          all_neighbours = neighbours
-        else
-          all_neighbours.merge! neighbours
-        end
-      end
-    end
-
-    all_neighbours
-  end
+  export_asynchronous :annotated_variants
 
 
   input :genomic_mutations, :array, "Genomic Mutations"
@@ -288,6 +289,7 @@ module Structure
       mi_annotations
     end
   end
+  export_asynchronous :annotated_variant_neighbours
 
   input :genomic_mutations, :array, "Genomic Mutations"
   input :mutated_isoforms, :array, "Protein Mutations"
@@ -362,6 +364,7 @@ module Structure
       mi_annotations
     end
   end
+  export_asynchronous :variant_interfaces
 end
 
 require 'structure/workflow/alignments'
