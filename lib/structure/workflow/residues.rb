@@ -1,12 +1,5 @@
 module Structure
  
-  desc <<-EOF
-Given a set of proteins and resudies inside these proteins, finds the protein features that overlap, as annotated in UniProt.
-
-The proteins and residues are specified as a TSV file, with Ensembl Protein IDs
-as key, and residues as values. Types `flat` (separated by more tabs),
-and `double` (separated by '|') are supported.
-  EOF
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_UNIPROT => :tsv do |residues|
     raise ParameterException, "No residues provided" if residues.nil?
@@ -58,13 +51,6 @@ and `double` (separated by '|') are supported.
   end
   export_asynchronous :annotate_residues_UNIPROT
 
-  desc <<-EOF
-Given a set of proteins and resudies inside these proteins, finds the protein features that overlap, as annotated in Appris.
-
-The proteins and residues are specified as a TSV file, with Ensembl Protein IDs
-as key, and residues as values. Types `flat` (separated by more tabs),
-and `double` (separated by '|') are supported.
-  EOF
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_Appris => :tsv do |residues|
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
@@ -96,16 +82,6 @@ and `double` (separated by '|') are supported.
   end
   export_asynchronous :annotate_residues_Appris
 
-  desc <<-EOF
-Given a set of proteins and resudies inside these proteins, finds the mutations registered in COSMIC that affect those residues, and provide
-some annotations from the samples that contained them
-
-The proteins and residues are specified as a TSV file, with Ensembl Protein IDs
-as key, and residues as values. Types `flat` (separated by more tabs),
-and `double` (separated by '|') are supported.
-
-The result is the proteins along with the overlapping features and some information about them
-  EOF
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_variants_COSMIC => :tsv do |residues|
 
@@ -155,15 +131,6 @@ The result is the proteins along with the overlapping features and some informat
   export_asynchronous :annotate_variants_COSMIC
 
 
-  desc <<-EOF
-Given a set of proteins and resudies inside these proteins, finds the known variants that overlap, as annotated in UniProt.
-
-The proteins and residues are specified as a TSV file, with Ensembl Protein IDs
-as key, and residues as values. Types `flat` (separated by more tabs),
-and `double` (separated by '|') are supported.
-
-The result is the proteins along with the overlapping features and some information about them
-  EOF
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_variants_UNIPROT => :tsv do |residues|
 
