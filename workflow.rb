@@ -301,7 +301,7 @@ module Structure
 
     residues = mutated_isoforms_to_residue_list(mis)
 
-    residue_annotations = Structure.job(:residue_interfaces, name, :residues => residues)
+    residue_annotations = Structure.job(:residue_interfaces, name, :residues => residues).run
 
     Open.write(file(:residue_annotations), residue_annotations.to_s)
 
