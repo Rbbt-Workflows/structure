@@ -195,7 +195,7 @@ module Structure
     end
     end
 
-    TSV.setup(neighbour_residues, :key_field => "Isoform:residue:partner", :fields => ["Partner", "PDB", "Partner residues"], :type => :double)
+    TSV.setup(neighbour_residues, :key_field => "Isoform", :fields => ["Position", "Partner Ensembl Protein ID", "PDB", "Partner residues"], :type => :double)
   end
   export_asynchronous :residue_interfaces
 

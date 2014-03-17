@@ -92,8 +92,8 @@ sequence of a PDB by aligning them
 ## annotated_variants
 
 Annotates variants given as mutated isoforms or genomic mutations. It
-translates them to protein and residue positions and annotates thethem using
-the different annotation methods.
+translates them to protein and residue positions and annotates them using the
+different annotation methods.
 
 ## annotated_variant_neighbours
 

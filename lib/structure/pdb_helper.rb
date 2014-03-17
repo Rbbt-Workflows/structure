@@ -12,7 +12,7 @@ module PDBHelper
     io = pdb_stream(pdb,pdbfile)
     str = ""
     begin
-      while line = io.gets and not line =~ /^END/
+      while line = io.gets and not line =~ /^END/ 
         str << line if line =~ /^ATOM/
       end
     ensure
@@ -51,18 +51,24 @@ module PDBHelper
       x = line[30..37].to_f
       y = line[38..45].to_f
       z = line[46..53].to_f
+      num = code[9..13].to_i
 
-      atom_positions[code] = [x,y,z]
+      atom_positions[code] = [x,y,z,num]
     }
     atom_positions
-    atoms = atom_positions.keys.sort_by{|atom| atom[9..13].to_i}
+
+    atoms = atom_positions.
+      sort_by{|a,values| values[3] }.
+      collect{|atom,v| atom }
 
     atom_distances = []
-    atoms.each_with_index do |atom1,i|
+    while atom1 = atoms.shift
       position1 = atom_positions[atom1]
-      atoms[i+1..-1].each do |atom2|
-        next if (atom1[9..13] == atom2[9..13]) 
-        next if ((atom1[9..13].to_i == atom2[9..13].to_i + 1) and 
+
+      atoms.each do |atom2|
+        position2 = atom_positions[atom2]
+        next if (position1[3] == position2[3]) 
+        next if ((position1[3] == position2[3] + 1) and 
         ((atom1[0] == "C" and atom2[0] == "N") or 
           (atom1[0] == "0" and atom2[0] == "N") or 
           (atom1[0] == "C" and atom2[0..1] == "CA")))
@@ -71,20 +77,25 @@ module PDBHelper
         dx = position1[0] - position2[0]
         dy = position1[1] - position2[1]
         dz = position1[2] - position2[2]
-        next if dx.abs > 5 or dy.abs > 5 or dz.abs > 5
+
+        next if dx.abs > distance or dy.abs > distance or dz.abs > distance
         dist = Math.sqrt(dx**2 + dy**2 + dz**2)
-        next if dist > 5
+        next if dist > distance
         atom_distances << [atom1, atom2, dist]
       end
+
     end
+
     atom_distances
   end
 
   def self.pdb_close_residues(distance, pdb = nil, pdbfile = nil)
 
+    Log.low "Computing atom distances (#{ distance }): #{pdb || "pdbfile"}"
     atom_distances = pdb_atom_distance(distance, pdb, pdbfile)
 
     close_residues = {}
+    Log.low "Computing residue distances (#{distance}): #{pdb || "pdbfile"}"
     atom_distances.each do |atom1, atom2, dist|
       aa1 = atom1.split(/\s+/).values_at(2,3) * ":"
       aa2 = atom2.split(/\s+/).values_at(2,3) * ":"

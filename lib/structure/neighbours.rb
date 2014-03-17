@@ -128,7 +128,7 @@ module Structure
   #end
 
   def self.interface_neighbours_i3d(protein, positions)
-    tsv = TSV.setup({}, :key_field => "Isoform:residue:partner", :fields => ["Partner Ensembl Protein ID", "PDB", "Partner residues"], :type => :double)
+    tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Position", "Partner Ensembl Protein ID", "PDB", "Partner residues"], :type => :double)
 
     uniprot = ISO2UNI[protein]
     return tsv if uniprot.nil?
@@ -182,7 +182,7 @@ module Structure
           next if partner_neighbours.empty?
           partner_neighbours_in_sequence = pdb_chain_position_in_sequence(url, nil, partner_chain, partner_neighbours, partner_sequence).values.compact.flatten
           next if partner_neighbours_in_sequence.empty?
-          tsv.zip_new([protein, position, partner_ensembl] * ":", [partner_ensembl, url, partner_neighbours_in_sequence * ";"])
+          tsv.zip_new(protein, [position, partner_ensembl, url, partner_neighbours_in_sequence * ";"])
         end
       end
     end
