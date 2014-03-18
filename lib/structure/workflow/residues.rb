@@ -1,7 +1,7 @@
 module Structure
  
   input :residues, :tsv, "Proteins and their affected residues", nil
-  task :annotate_residues_UNIPROT => :tsv do |residues|
+  task :annotate_residues_UniProt => :tsv do |residues|
     raise ParameterException, "No residues provided" if residues.nil?
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
 
@@ -49,7 +49,7 @@ module Structure
 
     tsv
   end
-  export_asynchronous :annotate_residues_UNIPROT
+  export_asynchronous :annotate_residues_UniProt
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_Appris => :tsv do |residues|
@@ -132,7 +132,7 @@ module Structure
 
 
   input :residues, :tsv, "Proteins and their affected residues", nil
-  task :annotate_variants_UNIPROT => :tsv do |residues|
+  task :annotate_variants_UniProt => :tsv do |residues|
 
     uniprot_residue_mutations = Structure.UniProt_residues
 
@@ -173,7 +173,7 @@ module Structure
 
     res
   end
-  export_asynchronous :annotate_variants_UNIPROT
+  export_asynchronous :annotate_variants_UniProt
 
 
   input :residues, :tsv, "Proteins and their affected residues", nil

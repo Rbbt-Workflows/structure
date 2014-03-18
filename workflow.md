@@ -61,7 +61,7 @@ PDB into positions inside a given sequence.
 Given a set of proteins and resudies inside these proteins, finds the protein
 features that overlap, as annotated in Appris.
 
-## annotate_residues_UNIPROT
+## annotate_residues_UniProt
 
 Given a set of proteins and resudies inside these proteins, finds the protein
 features that overlap, as annotated in UniProt.
@@ -72,7 +72,7 @@ Given a set of proteins and resudies inside these proteins, finds the mutations
 registered in COSMIC that affect those residues, and provide some annotations
 from the samples that contained them
 
-## annotate_variants_UNIPROT
+## annotate_variants_UniProt
 
 Given a set of proteins and resudies inside these proteins, finds the known
 variants that overlap, as annotated in UniProt.

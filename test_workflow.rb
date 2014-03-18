@@ -24,7 +24,7 @@ class TestStructure < Test::Unit::TestCase
   def _test_uniprot_variants
     r = TSV.setup({})
     r["ENSP00000391127"] = [110]
-    job =  Structure.job(:annotate_variants_UNIPROT, nil, :residues => r)
+    job =  Structure.job(:annotate_variants_UniProt, nil, :residues => r)
     job.clean.run
     assert job.load.include? "ENSP00000391127"
     puts job.load
@@ -33,7 +33,7 @@ class TestStructure < Test::Unit::TestCase
   def test_uniprot_variants
     r = TSV.setup({})
     r["ENSP00000236709"] = [218]
-    job =  Structure.job(:annotate_variants_UNIPROT, nil, :residues => r)
+    job =  Structure.job(:annotate_variants_UniProt, nil, :residues => r)
     puts job.clean.run
     exit
     assert job.load.include? "ENSP00000236709"

@@ -102,7 +102,7 @@ module Structure
                   when "InterPro"
                     Structure.job(:annotate_residues_InterPro, clean_name, :residues => residues).run
                   when "UniProt"
-                    Structure.job(:annotate_residues_UNIPROT, clean_name, :residues => residues).clean.run
+                    Structure.job(:annotate_residues_UniProt, clean_name, :residues => residues).clean.run
                   when "COSMIC"
                     Structure.job(:annotate_variants_COSMIC, clean_name, :residues => residues).run
                   when "Appris"
@@ -209,7 +209,7 @@ module Structure
                   when "InterPro"
                     Structure.job(:annotate_residues_InterPro, clean_name, :residues => neighbour_residues).run
                   when "UniProt"
-                    Structure.job(:annotate_residues_UNIPROT, clean_name, :residues => neighbour_residues).run
+                    Structure.job(:annotate_residues_UniProt, clean_name, :residues => neighbour_residues).run
                   when "COSMIC"
                     Structure.job(:annotate_variants_COSMIC, clean_name, :residues => neighbour_residues).run
                   when "Appris"
