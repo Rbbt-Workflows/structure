@@ -6,7 +6,7 @@ Methods
 The `annotate_residues_*` methods take a TSV file with proteins as keys (in
 `Ensembl Protein ID` format), and lists of positions in the sequence as values.
 It then traverses the file annotating those residues that fall over features
-annotated in the corresponding databases: UniProt, Appris, and COSMIC.
+annotated in the corresponding databases: UniProt, COSMIC, Appris, and InterPro.
 
 UniProt features are extracted from their corresponding UniProt entries. `Ensembl
 Protein ID` codes are translated to `UniProt/SwissProt Accession`, the
@@ -28,7 +28,9 @@ sequences are the same. No steps have been taken to solve any possible
 inconsistencies that could still remain.
 
 Appris information includes domains, transmembrane helices, ligand biding
-residues and catalytic sites.
+residues and catalytic sites. InterPro annotates protein domains; with
+positions relative to UniProt sequences, so sequence alignment is used to
+correct inconsistencies.
 
 ## Variant annotations
 
@@ -50,10 +52,10 @@ The distance for neighbours is set to 4 angstroms.
 ## Residue and variant interfaces
 
 A `neighbour_map` of PDB files containing complexes extracted from
-Interactome3d is used to identify residues in our protein of interest
-that are in close proximity. The distance for interface residues
-is set to 8 angstroms. Variants are translated into residues prior to 
-annotation, as is described above.
+Interactome3d is used to identify residues in our protein of interest that are
+in close proximity to residues in the complex partner. The distance for
+interface residues is set to 8 angstroms. Variants are translated into residues
+prior to annotation, as is described above.
 
 ## Other uses: homology, and paralogy
 
