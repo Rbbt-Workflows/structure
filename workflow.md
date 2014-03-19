@@ -12,8 +12,8 @@ also identify mutations affecting the interfaces of protein complexes.
 
 This workflow makes use of PDB files to calculate residues in close proximity.
 This information is used to find features close to the mutations, at a distance
-of 5 amstrons, or mutations in residues close to residues in a complex partner,
-at a distance of up to 8 amstrons. 
+of 5 angstroms, or mutations in residues close to residues in a complex partner,
+at a distance of up to 8 angstroms. 
 
 PDBs are extracted from Interactome3d, which has organized thousands of PDBs,
 including both experimental structures and structure models, of individual
@@ -82,7 +82,7 @@ variants that overlap, as annotated in UniProt.
 Finds residues that lay over protein complex interfaces. It does so by checking
 PDBs of complexes extracted from Interactome3D and looking for residues in
 close physical proximity  to residues in the complex partner protein (8
-amstrongs).
+angstroms).
 
 ## sequence_position_in_pdb
 

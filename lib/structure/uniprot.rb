@@ -24,7 +24,6 @@ module Structure
     @UniProt_residues ||= Persist.persist_tsv(UniProt.annotated_variants, "UniProt::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["UniProt Variant ID"], :type => :flat)
 
-                           #uni2ensp = Organism.protein_identifiers("Hsa").index :target => "Ensembl Protein ID", :fields => ["UniProt/SwissProt Accession"], :persist => true
                            uni2ensp = Organism.protein_identifiers("Hsa").tsv :fields => ["Ensembl Protein ID"], :key_field => "UniProt/SwissProt Accession", :persist => true, :type => :flat, :merge => true
                            ensp2sequence = Organism.protein_sequence("Hsa").tsv :persist => true
 

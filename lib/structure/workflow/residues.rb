@@ -1,20 +1,20 @@
 module Structure
  
   input :residues, :tsv, "Proteins and their affected residues", nil
-  task :annotate_residues_UniProt => :tsv do |residues|
+  input :organism, :string, "Organism code", "Hsa"
+  task :annotate_residues_UniProt => :tsv do |residues, organism|
     raise ParameterException, "No residues provided" if residues.nil?
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
 
-    iso2uni = Organism.protein_identifiers("Hsa").index :target => "UniProt/SwissProt Accession", :persist => true
-    iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
+    iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
+    iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
 
-    missing = []
-    residues.each do |isoform, list|
+    residues.monitor = {:desc => "Annotated residues UniProt"}
+    TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
       uniprot = iso2uni[isoform]
       if uniprot.nil?
-        missing << isoform
         next
       end
 
@@ -39,11 +39,13 @@ module Structure
         }
       end
 
-      tsv[isoform] = overlapping
+      #tsv[isoform] = overlapping
+      [isoform, overlapping]
     end
 
-    if missing.any?
-      Log.warn "Some isoforms failed to translate to UniProt: #{missing.length}"
+    missing = residues.size - tsv.size
+    if missing > 0
+      Log.warn "Some isoforms failed to translate to UniProt: #{missing}"
       set_info(:missing, missing)
     end
 
@@ -55,9 +57,8 @@ module Structure
   task :annotate_residues_Appris => :tsv do |residues|
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
 
-    iso2sequence = Organism.protein_sequence("Hsa").tsv :type => :single, :persist => true
-
-    residues.each do |isoform, list|
+    TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
+    #residues.each do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
       features = Structure.appris_features(isoform)
@@ -75,7 +76,8 @@ module Structure
         }
       end
 
-      tsv[isoform] = overlapping
+    #  tsv[isoform] = overlapping
+      [isoform, overlapping]
     end
 
     tsv
@@ -130,64 +132,19 @@ module Structure
   end
   export_asynchronous :annotate_variants_COSMIC
 
-
   input :residues, :tsv, "Proteins and their affected residues", nil
-  task :annotate_variants_UniProt => :tsv do |residues|
-
-    uniprot_residue_mutations = Structure.UniProt_residues
-
-    isoform_matched_variants = {}
-    residues.each do |protein, list|
-      list = Array === list ? list.flatten : [list]
-
-
-      list.each do |position|
-        key = [protein, position]*":"
-
-        matching_mutations = uniprot_residue_mutations[key]
-        next if matching_mutations.nil? or matching_mutations.empty?
-        isoform_matched_variants[protein] ||= []
-        isoform_matched_variants[protein].concat matching_mutations
-      end
-    end
-
-    uniprot_mutation_annotations = Structure.UniProt_mutation_annotations
-
-    res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue"] + uniprot_mutation_annotations.fields, :type => :double)
-
-    isoform_matched_variants.each do |protein, mutations|
-      values = []
-      mutations.each do |mutation|
-        begin
-          annotations = uniprot_mutation_annotations[mutation]
-          raise "No annotations for #{ mutation } in #{uniprot_mutation_annotations.persistence_path}" if annotations.nil?
-          residue = annotations.first.scan(/\d+/)
-          values << [residue].concat(annotations || [])
-        rescue
-          Log.exception $!
-        end
-      end
-
-      res[protein] = Misc.zip_fields(values)
-    end
-
-    res
-  end
-  export_asynchronous :annotate_variants_UniProt
-
-
-  input :residues, :tsv, "Proteins and their affected residues", nil
-  task :residue_interfaces => :tsv do |residues|
+  input :organism, :string, "Organism code", "Hsa"
+  task :residue_interfaces => :tsv do |residues, organism|
 
     neighbour_residues = {}
 
     residues.with_monitor :desc => "Processing residues" do
-    residues.through do |protein, list|
+    TSV.traverse residues, :cpus => $cpus, :into => neighbour_residues do |protein, list|
       list = list.flatten.compact.sort
       begin
-        neighbours = Structure.interface_neighbours_i3d(protein.dup, list)
+        neighbours = Structure.interface_neighbours_i3d(protein.dup, list, organism)
         next if neighbours.nil? or neighbours.empty?
-        neighbour_residues.merge!(neighbours)
+        neighbours
       rescue
         Log.exception $!
         next

@@ -3,6 +3,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  workflow.md
  test_workflow.rb
  ToDo.md
+ doc=doc{
+  methods.md
+ }
  lib=lib {
   structure=structure{
    workflow=workflow{
@@ -20,7 +23,6 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    uniprot.rb
    COSMIC.rb
    appris.rb
-   cosmic_feature_analysis.rb
 
    entity.rb
    sinatra.rb

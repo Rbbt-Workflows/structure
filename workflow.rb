@@ -24,6 +24,11 @@ require 'rbbt/entity'
 require 'rbbt/entity/mutated_isoform'
 require 'structure/entity'
 
+$cpus = SOPT.get("--cpus*")[:cpus]
+$cpus = $cpus.to_i if $cpus
+
+Log.info "Loading Structure with #{ $cpus.inspect }"
+
 module Structure
   extend Workflow
 
@@ -66,20 +71,14 @@ module Structure
     end
   end
 
-  helper :residue_neighbours do |residues|
+  helper :residue_neighbours do |residues,organism|
     log :residue_neighbours, "Find neighbouring residues"
     all_neighbours = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
 
     residues.with_monitor :desc => "Finding neighbours" do
-      residues.pthrough do |protein, list|
+      TSV.traverse(residues, :into => all_neighbours, :cpus => $cpus) do |protein, list|
         list = list.flatten.compact.uniq
-        neighbours = Structure.neighbours_i3d(protein, list)
-        next if neighbours.nil? or neighbours.empty?
-        if all_neighbours.empty?
-          all_neighbours = neighbours
-        else
-          all_neighbours.merge! neighbours
-        end
+        Structure.neighbours_i3d(protein, list, organism)
       end
     end
 
@@ -124,9 +123,6 @@ module Structure
           entries.select!{|residue, *rest| residue.to_i == position}
           next if entries.empty?
           entries.each{|p| p.shift }
-
-          #fixed_entries = Misc.zip_fields(entries)
-          #mi_annotations[mi] = fixed_entries
 
           if mi_annotations[mi].nil?
             fixed_entries = Misc.zip_fields(entries.uniq)
@@ -187,7 +183,7 @@ module Structure
 
     residues = mutated_isoforms_to_residue_list(mis)
 
-    neighbours = self.residue_neighbours residues
+    neighbours = self.residue_neighbours residues, organism
 
     Open.write(file(:neighbours), neighbours.to_s)
 

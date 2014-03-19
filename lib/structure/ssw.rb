@@ -241,22 +241,26 @@ end:
     # read_seq is query and ref_seq is target
     def self.align(query_sequence, target_sequence)
       Log.low { "Aligning #{ Misc.fingerprint query_sequence } to #{ Misc.fingerprint target_sequence }" }
-      s_out = Misc.open_pipe do |s_in|
-        SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
-      end
-      txt = s_out.read
-      #Log.log(txt, 0)
-      s_out.close
 
       begin
+        raise "No query sequence" if query_sequence.nil?
+        raise "No target sequence" if target_sequence.nil?
+
+        s_out = Misc.open_pipe do |s_in|
+          SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
+        end
+
+        txt = s_out.read
+        #Log.log(txt, 0)
+        s_out.close
+
         target_start, target, target_end = txt.match(/Target:\s+(\d+)\s+([A-Z\-?*]+)\s+(\d+)/).values_at 1, 2, 3
         query_start, query, query_end = txt.match(/Query:\s+(\d+)\s+([A-Z\-?*]+)\s+(\d+)/).values_at 1, 2, 3
+        [("_" * (query_start.to_i - 1)) + query,
+          ("_" * (target_start.to_i - 1)) + target]
       rescue
         Log.warn("Error in aligmnent: #{$!.message}")
         return ["-", "-"]
       end
-
-      [("_" * (query_start.to_i - 1)) + query,
-      ("_" * (target_start.to_i - 1)) + target]
     end
 end
