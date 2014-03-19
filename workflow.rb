@@ -4,16 +4,19 @@ require 'rbbt/workflow'
 
 require 'rbbt/sources/organism'
 require 'rbbt/sources/uniprot'
+require 'rbbt/sources/InterPro'
 
 require 'structure/alignment'
 require 'structure/pdb_alignment'
 
-require 'structure/interactome_3d'
 require 'structure/pdb_helper'
+require 'structure/neighbours'
+require 'structure/interactome_3d'
+
 require 'structure/uniprot'
 require 'structure/appris'
-require 'structure/neighbours'
 require 'structure/COSMIC'
+require 'structure/interpro'
 
 Workflow.require_workflow 'Genomics'
 Workflow.require_workflow 'Translation'

@@ -2,6 +2,52 @@ module Structure
  
   input :residues, :tsv, "Proteins and their affected residues", nil
   input :organism, :string, "Organism code", "Hsa"
+  task :annotate_residues_InterPro => :tsv do |residues, organism|
+    raise ParameterException, "No residues provided" if residues.nil?
+    tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "InterPro ID", "Range"], :type => :double)
+
+    iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
+    iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
+
+    residues.monitor = {:desc => "Annotated residues InterPro"}
+    TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
+      list = Array === list ? list.flatten : [list]
+
+      uniprot = iso2uni[isoform]
+      next if uniprot.nil?
+      sequence = iso2sequence[isoform]
+      next if sequence.nil?
+
+      features = Structure.corrected_interpro_features(uniprot, sequence)
+      overlapping = [[],[],[]]
+      list.each do |position|
+        position = position.to_i
+        features.select{|info|
+          info[:start] <= position and info[:end] >= position
+        }.each{|info|
+          overlapping[0] << position
+          overlapping[1] << info[:code]
+          overlapping[2] << [info[:start], info[:end]] * ":"
+        }
+      end
+
+      ddd [isoform, overlapping]
+      [isoform, overlapping]
+    end
+
+    puts tsv
+
+    missing = residues.size - tsv.size
+    if missing > 0
+      Log.warn "Some isoforms failed to translate to UniProt: #{missing}"
+      set_info(:missing, missing)
+    end
+
+    tsv
+  end
+
+  input :residues, :tsv, "Proteins and their affected residues", nil
+  input :organism, :string, "Organism code", "Hsa"
   task :annotate_residues_UniProt => :tsv do |residues, organism|
     raise ParameterException, "No residues provided" if residues.nil?
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"], :type => :double)
