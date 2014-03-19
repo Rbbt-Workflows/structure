@@ -31,11 +31,8 @@ module Structure
         }
       end
 
-      ddd [isoform, overlapping]
       [isoform, overlapping]
     end
-
-    puts tsv
 
     missing = residues.size - tsv.size
     if missing > 0
@@ -103,8 +100,8 @@ module Structure
   task :annotate_residues_Appris => :tsv do |residues|
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
 
+    residues.monitor = {:desc => "Annotated residues Appris"}
     TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
-    #residues.each do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
       features = Structure.appris_features(isoform)
@@ -131,27 +128,30 @@ module Structure
   export_asynchronous :annotate_residues_Appris
 
   input :residues, :tsv, "Proteins and their affected residues", nil
-  task :annotate_variants_COSMIC => :tsv do |residues|
+  task :annotate_residues_COSMIC => :tsv do |residues|
 
     cosmic_residue_mutations = Structure.COSMIC_residues
 
     isoform_matched_variants = {}
-    residues.through do |protein,list|
+    residues.monitor = {:desc => "Annotated residues COSMIC"}
+    TSV.traverse residues, :cpus => $cpus, :into => isoform_matched_variants do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
+      all_matching_mutations = []
       list.each do |position|
-        matching_mutations = cosmic_residue_mutations[[protein, position]*":"]
+        matching_mutations = cosmic_residue_mutations[[isoform, position]*":"]
         next if matching_mutations.nil? or matching_mutations.empty?
-        isoform_matched_variants[protein] ||= []
-        isoform_matched_variants[protein].concat matching_mutations
+        all_matching_mutations.concat matching_mutations
       end
+      [isoform, all_matching_mutations]
     end
 
     cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
 
     res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double)
 
-    isoform_matched_variants.each do |protein, mutations|
+    residues.monitor = {:desc => "Annotated residues COSMIC"}
+    TSV.traverse isoform_matched_variants, :cpus => $cpus, :into => res do |isoform, mutations|
       values = []
       mutations.each do |mutation|
         begin
@@ -171,12 +171,12 @@ module Structure
         end
       end
 
-      res[protein] = Misc.zip_fields(values)
+      [isoform, Misc.zip_fields(values)]
     end
 
     res
   end
-  export_asynchronous :annotate_variants_COSMIC
+  export_asynchronous :annotate_residues_COSMIC
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   input :organism, :string, "Organism code", "Hsa"

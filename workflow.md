@@ -77,7 +77,7 @@ features that overlap, as annotated in UniProt.
 Sequence alignment is used to correct discrepancies between sequences in
 UniProt and in Ensembl.
 
-## annotate_variants_COSMIC
+## annotate_residues_COSMIC
 
 Given a set of proteins and resudies inside these proteins, finds the mutations
 registered in COSMIC that affect those residues, and provide some annotations
