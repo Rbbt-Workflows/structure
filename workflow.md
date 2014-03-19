@@ -61,21 +61,27 @@ PDB into positions inside a given sequence.
 Given a set of proteins and resudies inside these proteins, finds the protein
 features that overlap, as annotated in Appris.
 
+## annotate_residues_InterPro
+
+Given a set of proteins and resudies inside these proteins, finds the protein
+domains that overlap, as annotated in InterPro.
+
+Sequence alignment is used to correct discrepancies between sequences in
+UniProt and in Ensembl.
+
 ## annotate_residues_UniProt
 
 Given a set of proteins and resudies inside these proteins, finds the protein
 features that overlap, as annotated in UniProt.
+
+Sequence alignment is used to correct discrepancies between sequences in
+UniProt and in Ensembl.
 
 ## annotate_variants_COSMIC
 
 Given a set of proteins and resudies inside these proteins, finds the mutations
 registered in COSMIC that affect those residues, and provide some annotations
 from the samples that contained them
-
-## annotate_variants_UniProt
-
-Given a set of proteins and resudies inside these proteins, finds the known
-variants that overlap, as annotated in UniProt.
 
 ## residue_interfaces
 
