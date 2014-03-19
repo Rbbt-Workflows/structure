@@ -1,7 +1,7 @@
 Methods
 =======
 
-# Residue annotation
+## Residue annotation
 
 The `annotate_residues_*` methods take a TSV file with proteins as keys (in
 `Ensembl Protein ID` format), and lists of positions in the sequence as values.
@@ -30,7 +30,7 @@ inconsistencies that could still remain.
 Appris information includes domains, transmembrane helices, ligand biding
 residues and catalytic sites.
 
-# Variant annotations
+## Variant annotations
 
 Variants can be specified as `genomic_mutations` (e.g. 12:9265129:A) or
 `mutated_isoforms` (e.g. ENSP00000323929:P193L). Mutated isoforms will be
@@ -40,14 +40,14 @@ which is then forwarded to the residue annotation methods. The results of
 residue annotations are mapped back to the mutated isoforms, and genomic
 mutations if provided.
 
-# Variant neighbour annotations
+## Variant neighbour annotations
 
 Variants are translated into proteins and residues, as decribed above. Then
 these residues are matched to neighbours using the `neighbour_map` task. 
 Neighbouring residues are then subject of annotations as detailed above.
 The distance for neighbours is set to 4 angstroms.
 
-# Residue and variant interfaces
+## Residue and variant interfaces
 
 A `neighbour_map` of PDB files containing complexes extracted from
 Interactome3d is used to identify residues in our protein of interest
@@ -55,7 +55,7 @@ that are in close proximity. The distance for interface residues
 is set to 8 angstroms. Variants are translated into residues prior to 
 annotation, as is described above.
 
-# Other uses: homology, and paralogy
+## Other uses: homology, and paralogy
 
 This workflow exports some low-level methods to map sequences to PDB. Since
 these methods can take any input sequence, they can be used for homolog
