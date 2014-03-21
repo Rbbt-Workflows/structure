@@ -21,6 +21,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    neighbours.rb
 
    uniprot.rb
+   interpro.rb
    COSMIC.rb
    appris.rb
 

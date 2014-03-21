@@ -27,10 +27,11 @@ require 'rbbt/entity'
 require 'rbbt/entity/mutated_isoform'
 require 'structure/entity'
 
-$cpus = SOPT.get("--cpus*")[:cpus]
+require 'rbbt/util/simpleopt'
+$cpus ||= SOPT.get("--cpus*")[:cpus]
 $cpus = $cpus.to_i if $cpus
 
-Log.info "Loading Structure with #{ $cpus.inspect }"
+Log.info "Loading Structure with #{ $cpus.inspect }" unless $cpus.nil?
 
 module Structure
   extend Workflow
@@ -55,12 +56,12 @@ module Structure
     end
   end
 
-  helper :mutated_isoforms do |mutations,organism|
+  helper :mutated_isoforms do |mutations,organism,watson|
     raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if mutations.nil? 
 
     log :mutated_isoforms, "Extracting mutated_isoforms from genomic_mutations" do
 
-      job = Sequence.job(:mutated_isoforms_for_genomic_mutations, clean_name, :mutations => mutations, :organism => organism)
+      job = Sequence.job(:mutated_isoforms, clean_name, :genomic_mutations => mutations, :organism => organism, :watson => watson)
 
       mis = Set.new
       job.run(true).path.traverse do |m,_mis|
@@ -91,20 +92,24 @@ module Structure
 
   input :genomic_mutations, :array, "Genomic Mutations"
   input :mutated_isoforms, :array, "Protein Mutations"
-  input :database, :select, "Database of annotations", "UniProt", :select_options => ["UniProt", "COSMIC", "Appris"]
+  input :database, :select, "Database of annotations", "UniProt", :select_options => ["UniProt", "COSMIC", "Appris", "InterPro", "variants"]
   input :organism, :string, "Organism code", "Hsa"
-  task :annotated_variants => :tsv do |mutations, mis, database, organism|
+  input :watson, :boolean, "Mutations all reported on the watson (forward) strand as opposed to the gene strand", true
+  task :annotated_variants => :tsv do |mutations, mis, database, organism,watson|
     if mis.nil?
-      mis = mutated_isoforms mutations, organism
+      mis = mutated_isoforms mutations, organism, watson
     end
 
     residues = mutated_isoforms_to_residue_list(mis)
 
+    log :annotating_residues, "Annotating residues with #{ database }"
     residue_annotations = case database
                   when "InterPro"
                     Structure.job(:annotate_residues_InterPro, clean_name, :residues => residues).run
                   when "UniProt"
                     Structure.job(:annotate_residues_UniProt, clean_name, :residues => residues).clean.run
+                  when "variants"
+                    Structure.job(:annotate_residues_UniProt_variants, clean_name, :residues => residues).run
                   when "COSMIC"
                     Structure.job(:annotate_residues_COSMIC, clean_name, :residues => residues).run
                   when "Appris"
@@ -112,6 +117,8 @@ module Structure
                   end
 
     Open.write(file(:residue_annotations), residue_annotations.to_s)
+
+    log :mapping, "Mapping residue annotations to variants"
 
     mi_annotations = {}
 
@@ -177,11 +184,12 @@ module Structure
 
   input :genomic_mutations, :array, "Genomic Mutations"
   input :mutated_isoforms, :array, "Protein Mutations"
-  input :database, :select, "Database of annotations", "UniProt", :select_options => ["UniProt", "COSMIC", "Appris"]
+  input :database, :select, "Database of annotations", "UniProt", :select_options => ["UniProt", "COSMIC", "Appris", "InterPro", "variants"]
   input :organism, :string, "Organism code", "Hsa"
-  task :annotated_variant_neighbours => :tsv do |mutations, mis, database, organism|
+  input :watson, :boolean, "Mutations all reported on the watson (forward) strand as opposed to the gene strand", true
+  task :annotated_variant_neighbours => :tsv do |mutations, mis, database, organism,watson|
     if mis.nil?
-      mis = mutated_isoforms mutations, organism
+      mis = mutated_isoforms mutations, organism,watson
     end
 
     residues = mutated_isoforms_to_residue_list(mis)
@@ -204,11 +212,14 @@ module Structure
     residues.annotate neighbour_residues
 
 
+    log :annotating_residues, "Annotating residues with #{ database }"
     residue_annotations = case database
                   when "InterPro"
                     Structure.job(:annotate_residues_InterPro, clean_name, :residues => neighbour_residues).run
                   when "UniProt"
                     Structure.job(:annotate_residues_UniProt, clean_name, :residues => neighbour_residues).run
+                  when "variants"
+                    Structure.job(:annotate_residues_UniProt_variants, clean_name, :residues => neighbour_residues).run
                   when "COSMIC"
                     Structure.job(:annotate_residues_COSMIC, clean_name, :residues => neighbour_residues).run
                   when "Appris"
@@ -216,6 +227,8 @@ module Structure
                   end
 
     Open.write(file(:residue_annotations), residue_annotations.to_s)
+
+    log :mapping, "Mapping residue annotations to variants"
 
     mi_annotations = {}
 
@@ -295,9 +308,10 @@ module Structure
   input :genomic_mutations, :array, "Genomic Mutations"
   input :mutated_isoforms, :array, "Protein Mutations"
   input :organism, :string, "Organism code", "Hsa"
-  task :variant_interfaces => :tsv do |mutations, mis, organism|
+  input :watson, :boolean, "Mutations all reported on the watson (forward) strand as opposed to the gene strand", true
+  task :variant_interfaces => :tsv do |mutations, mis, organism,watson|
     if mis.nil?
-      mis = mutated_isoforms mutations, organism
+      mis = mutated_isoforms mutations, organism, watson
     end
 
     residues = mutated_isoforms_to_residue_list(mis)

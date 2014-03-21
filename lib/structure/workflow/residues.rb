@@ -42,6 +42,7 @@ module Structure
 
     tsv
   end
+  export_asynchronous :annotate_residues_InterPro
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   input :organism, :string, "Organism code", "Hsa"
@@ -82,7 +83,6 @@ module Structure
         }
       end
 
-      #tsv[isoform] = overlapping
       [isoform, overlapping]
     end
 
@@ -95,6 +95,28 @@ module Structure
     tsv
   end
   export_asynchronous :annotate_residues_UniProt
+
+  dep :annotate_residues_UniProt
+  task :annotate_residues_UniProt_variants => :tsv do |residues, organism|
+    residue_annotations = step(:annotate_residues_UniProt).join.path.open
+    annotations = Structure.UniProt_mutation_annotations
+    tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Variant ID", "Change", "Type of Variant", "SNP ID", "Disease"], :type => :double)
+    TSV.traverse residue_annotations, :into => tsv do |isoform, values|
+      entries = []
+      Misc.zip_fields(values).select{|residue,feature,location,description|
+        feature == "VARIANT"
+      }.each{|residue,feature,location,description|
+        if description.match(/(VAR_\d+)/)
+          id = $1
+          next unless annotations.include? id
+          entries << [residue, id].concat(annotations[id])
+        end
+      }
+      [isoform.first, Misc.zip_fields(entries)]
+    end
+    tsv
+  end
+  export_asynchronous :annotate_residues_UniProt_variants
 
   input :residues, :tsv, "Proteins and their affected residues", nil
   task :annotate_residues_Appris => :tsv do |residues|
