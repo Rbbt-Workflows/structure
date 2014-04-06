@@ -120,7 +120,12 @@ module Structure
 
         positions_in_pdb.zip(positions).each do |pdb_position, position|
           code = [chain,pdb_position]*":"
-          neighbours = map[code]
+          begin
+            neighbours = map[code]
+          rescue
+            Log.exception $!
+            next
+          end
           next if neighbours.nil? or neighbours.empty?
           partner_neighbours = neighbours.select{|c| c.split(":").first == partner_chain }.collect{|c| c.split(":").last}
           next if partner_neighbours.empty?

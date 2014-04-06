@@ -37,42 +37,45 @@ module Structure
   extend Workflow
 
   helper :mutated_isoforms_to_residue_list do |mutated_isoforms|
-    log :mutated_isoform_to_residue_list, "Find residues affected in each isoform" do
-      residues = {}
+    residues = {}
 
-      Annotated.purge(mutated_isoforms).each do |mi|
-        protein, _sep, change = mi.partition ":"
-        if change.match(/([A-Z])(\d+)([A-Z])$/)
-          next if $1 == $3
-          position = $2
-          residues[protein] ||=[]
-          residues[protein] << position.to_i
-        end
+    begin
+    Annotated.purge(mutated_isoforms).each do |mi|
+      protein, _sep, change = mi.partition ":"
+      if change.match(/([A-Z])(\d+)([A-Z])$/)
+        next if $1 == $3
+        position = $2
+        residues[protein] ||=[]
+        residues[protein] << position.to_i
       end
-
-      organism = mutated_isoforms.respond_to?(:organism)? mutated_isoforms.organism || "Hsa" : "Hsa"
-
-      TSV.setup(residues, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => organism)
     end
+    rescue Exception
+      iif mutated_isoforms
+      Log.exception $!
+      raise $!
+    end
+
+    organism = mutated_isoforms.respond_to?(:organism)? mutated_isoforms.organism || "Hsa" : "Hsa"
+
+    TSV.setup(residues, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => organism)
   end
 
   helper :mutated_isoforms do |mutations,organism,watson|
     raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if mutations.nil? 
 
-    log :mutated_isoforms, "Extracting mutated_isoforms from genomic_mutations" do
 
-      job = Sequence.job(:mutated_isoforms, clean_name, :genomic_mutations => mutations, :organism => organism, :watson => watson)
+    job = Sequence.job(:mutated_isoforms, clean_name, :mutations => mutations, :organism => organism, :watson => watson)
 
-      mis = Set.new
-      job.run(true).path.traverse do |m,_mis|
-        mis.merge _mis
-      end
+    stream = TSV.traverse job.run(true), :into => :stream do |m,_mis|
+      _mis * "\n"
+    end
 
+    ConcurrentStream.setup stream do
       FileUtils.mkdir_p files_dir
       FileUtils.cp job.path.find, file(:mutated_isoforms_for_genomic_mutations).find
-
-      mis.to_a
     end
+
+    stream
   end
 
   helper :residue_neighbours do |residues,organism|
@@ -316,7 +319,8 @@ module Structure
 
     residues = mutated_isoforms_to_residue_list(mis)
 
-    residue_annotations = Structure.job(:residue_interfaces, clean_name, :residues => residues).clean.run
+    job = Structure.job(:residue_interfaces, clean_name, :residues => residues)
+    residue_annotations = job.load
 
     Open.write(file(:residue_annotations), residue_annotations.to_s)
 

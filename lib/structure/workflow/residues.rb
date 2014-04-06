@@ -98,7 +98,7 @@ module Structure
 
   dep :annotate_residues_UniProt
   task :annotate_residues_UniProt_variants => :tsv do |residues, organism|
-    residue_annotations = step(:annotate_residues_UniProt).join.path.open
+    residue_annotations = step(:annotate_residues_UniProt).load
     annotations = Structure.UniProt_mutation_annotations
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Variant ID", "Change", "Type of Variant", "SNP ID", "Disease"], :type => :double)
     TSV.traverse residue_annotations, :into => tsv do |isoform, values|
@@ -112,9 +112,8 @@ module Structure
           entries << [residue, id].concat(annotations[id])
         end
       }
-      [isoform.first, Misc.zip_fields(entries)]
+      [isoform, Misc.zip_fields(entries)]
     end
-    tsv
   end
   export_asynchronous :annotate_residues_UniProt_variants
 
