@@ -112,9 +112,13 @@ module Structure
         next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
         begin
-          map = Structure.job(:neighbour_map, protein, :distance =>  8, :pdb => url).run 
-        rescue 
+          job = Structure.job(:neighbour_map, protein, :distance =>  8, :pdb => url)
+          map = job.run 
+        rescue Exception
           Log.warn "Error processing #{ url }: #{$!.message}"
+          Log.exception $!
+          job.join
+          exit 0
           next
         end
 
