@@ -40,7 +40,7 @@ module Structure
     residues = {}
 
     begin
-    Annotated.purge(mutated_isoforms).each do |mi|
+    TSV.traverse Annotated.purge(mutated_isoforms), :type => :array do |mi|
       protein, _sep, change = mi.partition ":"
       if change.match(/([A-Z])(\d+)([A-Z])$/)
         next if $1 == $3
@@ -50,7 +50,6 @@ module Structure
       end
     end
     rescue Exception
-      iif mutated_isoforms
       Log.exception $!
       raise $!
     end
@@ -66,16 +65,12 @@ module Structure
 
     job = Sequence.job(:mutated_isoforms, clean_name, :mutations => mutations, :organism => organism, :watson => watson)
 
-    stream = TSV.traverse job.run(true), :into => :stream do |m,_mis|
+    mis = Set.new
+    TSV.traverse job.run(true), :into => mis do |m,_mis|
       _mis * "\n"
     end
 
-    ConcurrentStream.setup stream do
-      FileUtils.mkdir_p files_dir
-      FileUtils.cp job.path.find, file(:mutated_isoforms_for_genomic_mutations).find
-    end
-
-    stream
+    mis.to_a
   end
 
   helper :residue_neighbours do |residues,organism|
@@ -99,7 +94,9 @@ module Structure
   input :organism, :string, "Organism code", "Hsa"
   input :watson, :boolean, "Mutations all reported on the watson (forward) strand as opposed to the gene strand", true
   task :annotated_variants => :tsv do |mutations, mis, database, organism,watson|
+    raise ParameterException, "Database missing" unless database
     if mis.nil?
+      raise ParameterException, "No genomic_mutations or mutated_isoforms" if mutations.nil?
       mis = mutated_isoforms mutations, organism, watson
     end
 
@@ -117,6 +114,8 @@ module Structure
                     Structure.job(:annotate_residues_COSMIC, clean_name, :residues => residues).run
                   when "Appris"
                     Structure.job(:annotate_residues_Appris, clean_name, :residues => residues).run
+                  else
+                    raise ParameterException, "Unknown database: #{ Misc.fingerprint database }" 
                   end
 
     Open.write(file(:residue_annotations), residue_annotations.to_s)
@@ -125,8 +124,10 @@ module Structure
 
     mi_annotations = {}
 
-    mis.each do |mi|
+    TSV.traverse mis, :type => :array do |mi|
+      next if mi.nil? or mi.empty?
       protein, change = mi.split(":")
+      next if change.nil?
       if change.match(/([A-Z])(\d+)([A-Z])$/)
         begin
           next if $1 == $3
