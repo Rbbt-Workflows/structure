@@ -66,11 +66,16 @@ module Structure
     job = Sequence.job(:mutated_isoforms, clean_name, :mutations => mutations, :organism => organism, :watson => watson)
 
     mis = Set.new
-    TSV.traverse job.run(true), :into => mis do |m,_mis|
-      _mis * "\n"
+    TSV.traverse job.run do |m,_mis|
+      mis.merge _mis 
     end
+    mis = mis.to_a
+    job.join
 
-    mis.to_a
+    FileUtils.mkdir_p files_dir
+    FileUtils.cp job.path, file(:mutated_isoforms_for_genomic_mutations)
+
+    mis
   end
 
   helper :residue_neighbours do |residues,organism|
