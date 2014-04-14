@@ -79,7 +79,7 @@ module Structure
 
     neighbours_in_pdb = TSV.setup({}, :key_field => "Sequence position", :fields => ["Neighbours"], :type => :flat)
 
-    return neighbours_in_pdb if positions_in_pdb[chain].nil?
+    return neighbours_in_pdb if positions_in_pdb.nil? or positions_in_pdb[chain].nil?
 
     neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
 
