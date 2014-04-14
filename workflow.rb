@@ -326,7 +326,7 @@ module Structure
     residues = mutated_isoforms_to_residue_list(mis)
 
     job = Structure.job(:residue_interfaces, clean_name, :residues => residues)
-    residue_annotations = job.load
+    residue_annotations = job.run
 
     Open.write(file(:residue_annotations), residue_annotations.to_s)
 
@@ -358,7 +358,9 @@ module Structure
       end
     end
 
-    TSV.setup(mi_annotations, :key_field => "Mutated Isoform", :fields => residue_annotations.fields[1..-1], :type => :double, :namespace => organism)
+    fields = residue_annotations.nil? ? [] : residue_annotations.fields[1..-1]
+
+    TSV.setup(mi_annotations, :key_field => "Mutated Isoform", :fields => fields, :type => :double, :namespace => organism)
 
     mi_annotations
 
@@ -381,7 +383,7 @@ module Structure
         end
       end
 
-      TSV.setup(mutation_annotations, :key_field => "Genomic Mutation", :fields => ["Mutated Isoform"] + residue_annotations.fields[1..-1], :type => :double, :namespace => organism)
+      TSV.setup(mutation_annotations, :key_field => "Genomic Mutation", :fields => ["Mutated Isoform"] + fields, :type => :double, :namespace => organism)
       Open.write(file(:genomic_mutation_annotations), mutation_annotations.to_s)
 
       mutation_annotations
