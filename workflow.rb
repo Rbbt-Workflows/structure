@@ -64,16 +64,21 @@ module Structure
 
 
     job = Sequence.job(:mutated_isoforms, clean_name, :mutations => mutations, :organism => organism, :watson => watson)
+    job.run true
 
     mis = Set.new
-    TSV.traverse job.run do |m,_mis|
+    TSV.traverse job do |m,_mis|
       mis.merge _mis 
     end
     mis = mis.to_a
     job.join
 
     FileUtils.mkdir_p files_dir
-    FileUtils.cp job.path, file(:mutated_isoforms_for_genomic_mutations)
+    if Open.remote? job.path
+      Open.write(file(:mutated_isoforms_for_genomic_mutations), Open.read(job.path))
+    else
+      FileUtils.cp job.path, file(:mutated_isoforms_for_genomic_mutations)
+    end
 
     mis
   end
