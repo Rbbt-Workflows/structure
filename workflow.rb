@@ -36,68 +36,6 @@ Log.info "Loading Structure with #{ $cpus.inspect }" unless $cpus.nil?
 module Structure
   extend Workflow
 
-  helper :mutated_isoforms_to_residue_list do |mutated_isoforms|
-    residues = {}
-
-    begin
-    TSV.traverse Annotated.purge(mutated_isoforms), :type => :array do |mi|
-      protein, _sep, change = mi.partition ":"
-      if change.match(/([A-Z])(\d+)([A-Z])$/)
-        next if $1 == $3
-        position = $2
-        residues[protein] ||=[]
-        residues[protein] << position.to_i
-      end
-    end
-    rescue Exception
-      Log.exception $!
-      raise $!
-    end
-
-    organism = mutated_isoforms.respond_to?(:organism)? mutated_isoforms.organism || "Hsa" : "Hsa"
-
-    TSV.setup(residues, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => organism)
-  end
-
-  helper :mutated_isoforms do |mutations,organism,watson|
-    raise ParameterException, "No mutated_isoforms or genomic_mutations specified" if mutations.nil? 
-
-
-    job = Sequence.job(:mutated_isoforms, clean_name, :mutations => mutations, :organism => organism, :watson => watson)
-    job.run true
-
-    mis = Set.new
-    TSV.traverse job do |m,_mis|
-      mis.merge _mis 
-    end
-    mis = mis.to_a
-    job.join
-
-    FileUtils.mkdir_p files_dir
-    if Open.remote? job.path
-      Open.write(file(:mutated_isoforms_for_genomic_mutations), Open.read(job.path))
-    else
-      FileUtils.cp job.path, file(:mutated_isoforms_for_genomic_mutations)
-    end
-
-    mis
-  end
-
-  helper :residue_neighbours do |residues,organism|
-    log :residue_neighbours, "Find neighbouring residues"
-    all_neighbours = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
-
-    residues.with_monitor :desc => "Finding neighbours" do
-      TSV.traverse(residues, :into => all_neighbours, :cpus => $cpus) do |protein, list|
-        list = list.flatten.compact.uniq
-        Structure.neighbours_i3d(protein, list, organism)
-      end
-    end
-
-    all_neighbours
-  end
-
-
   input :genomic_mutations, :array, "Genomic Mutations"
   input :mutated_isoforms, :array, "Protein Mutations"
   input :database, :select, "Database of annotations", "UniProt", :select_options => ["UniProt", "COSMIC", "Appris", "InterPro", "variants"]
@@ -114,81 +52,89 @@ module Structure
 
     log :annotating_residues, "Annotating residues with #{ database }"
     residue_annotations = case database
-                  when "InterPro"
-                    Structure.job(:annotate_residues_InterPro, clean_name, :residues => residues).run
                   when "UniProt"
-                    Structure.job(:annotate_residues_UniProt, clean_name, :residues => residues).clean.run
-                  when "variants"
-                    Structure.job(:annotate_residues_UniProt_variants, clean_name, :residues => residues).run
+                    Structure.job(:annotate_residues_UniProt, clean_name, :residues => residues).run
                   when "COSMIC"
                     Structure.job(:annotate_residues_COSMIC, clean_name, :residues => residues).run
                   when "Appris"
                     Structure.job(:annotate_residues_Appris, clean_name, :residues => residues).run
+                  when "InterPro"
+                    Structure.job(:annotate_residues_InterPro, clean_name, :residues => residues).run
+                  when "variants"
+                    Structure.job(:annotate_residues_UniProt_variants, clean_name, :residues => residues).run
                   else
                     raise ParameterException, "Unknown database: #{ Misc.fingerprint database }" 
                   end
 
+    residue_annotations.namespace = organism
+
     Open.write(file(:residue_annotations), residue_annotations.to_s)
 
-    log :mapping, "Mapping residue annotations to variants"
+    #log :mapping, "Mapping residue annotations to variants"
 
-    mi_annotations = {}
+    #mi_annotations = {}
 
-    TSV.traverse mis, :type => :array do |mi|
-      next if mi.nil? or mi.empty?
-      protein, change = mi.split(":")
-      next if change.nil?
-      if change.match(/([A-Z])(\d+)([A-Z])$/)
-        begin
-          next if $1 == $3
-          position = $2.to_i
-          raise "No Match" if residue_annotations[protein].nil?
-          entries = residue_annotations[protein].zip_fields
-          entries.select!{|residue, *rest| residue.to_i == position}
-          next if entries.empty?
-          entries.each{|p| p.shift }
+    #TSV.traverse mis, :type => :array do |mi|
+    #  next if mi.nil? or mi.empty?
+    #  protein, change = mi.split(":")
+    #  next if change.nil?
+    #  if change.match(/([A-Z])(\d+)([A-Z])$/)
+    #    begin
+    #      next if $1 == $3
+    #      position = $2.to_i
+    #      raise "No Match" if residue_annotations[protein].nil?
+    #      entries = residue_annotations[protein].zip_fields
+    #      entries.select!{|residue, *rest| residue.to_i == position}
+    #      next if entries.empty?
+    #      entries.each{|p| p.shift }
 
-          if mi_annotations[mi].nil?
-            fixed_entries = Misc.zip_fields(entries.uniq)
-            mi_annotations[mi] = fixed_entries
-          else
-            entries += Misc.zip_fields(mi_annotations[mi])
-            fixed_entries = Misc.zip_fields(entries.uniq)
-            mi_annotations[mi] = fixed_entries
-          end
-        rescue
-          next
-        end
-      end
-    end
+    #      if mi_annotations[mi].nil?
+    #        fixed_entries = Misc.zip_fields(entries.uniq)
+    #        mi_annotations[mi] = fixed_entries
+    #      else
+    #        entries += Misc.zip_fields(mi_annotations[mi])
+    #        fixed_entries = Misc.zip_fields(entries.uniq)
+    #        mi_annotations[mi] = fixed_entries
+    #      end
+    #    rescue
+    #      next
+    #    end
+    #  end
+    #end
 
-    TSV.setup(mi_annotations, :key_field => "Mutated Isoform", :fields => residue_annotations.fields[1..-1], :type => :double, :namespace => organism)
+    #TSV.setup(mi_annotations, :key_field => "Mutated Isoform", :fields => residue_annotations.fields[1..-1], :type => :double, :namespace => organism)
 
-    mi_annotations
+    #mi_annotations
 
-    Open.write(file(:mutated_isoform_annotations), mi_annotations.to_s)
+    #Open.write(file(:mutated_isoform_annotations), mi_annotations.to_s)
+
+    mi_annotations = residue_to_isoform mis, residue_annotations
 
     if file(:mutated_isoforms_for_genomic_mutations).exists?
-      index = file(:mutated_isoforms_for_genomic_mutations).tsv :key_field => "Mutated Isoform", :merge => true, :type => :flat
-      mutation_annotations = {}
-      mi_annotations.each do |mi, values|
-        mutations = index[mi]
-        mutations.each do |mutation|
-          new_values = [mi] + values.collect{|v| v * ";" }
-          if mutation_annotations[mutation].nil?
-            mutation_annotations[mutation] = new_values.collect{|v| [v] }
-          else
-            e = Misc.zip_fields(mutation_annotations[mutation])
-            n = e << new_values
-            mutation_annotations[mutation] = Misc.zip_fields(n)
-          end
-        end
-      end
+      #log :mapping, "Mapping isoform annotations to genomic mutations"
 
-      TSV.setup(mutation_annotations, :key_field => "Genomic Mutation", :fields => ["Mutated Isoform"] + residue_annotations.fields[1..-1], :type => :double, :namespace => organism)
-      Open.write(file(:genomic_mutation_annotations), mutation_annotations.to_s)
+      #index = file(:mutated_isoforms_for_genomic_mutations).tsv :key_field => "Mutated Isoform", :merge => true, :type => :flat
+      #mutation_annotations = {}
+      #TSV.traverse mi_annotations do |mi, values|
+      #  mi = mi.first if Array === mi
+      #  mutations = index[mi]
+      #  mutations.each do |mutation|
+      #    new_values = [mi] + values.collect{|v| v * ";" }
+      #    if mutation_annotations[mutation].nil?
+      #      mutation_annotations[mutation] = new_values.collect{|v| [v] }
+      #    else
+      #      e = Misc.zip_fields(mutation_annotations[mutation])
+      #      n = e << new_values
+      #      mutation_annotations[mutation] = Misc.zip_fields(n)
+      #    end
+      #  end
+      #end
 
-      mutation_annotations
+      #TSV.setup(mutation_annotations, :key_field => "Genomic Mutation", :fields => ["Mutated Isoform"] + residue_annotations.fields[1..-1], :type => :double, :namespace => organism)
+      #Open.write(file(:genomic_mutation_annotations), mutation_annotations.to_s)
+      #mutation_annotations
+      
+      isoform_to_mutation mi_annotations
     else
       mi_annotations
     end
@@ -293,6 +239,8 @@ module Structure
     Open.write(file(:mutated_isoform_annotations), mi_annotations.to_s)
 
     if file(:mutated_isoforms_for_genomic_mutations).exists?
+      log :mapping, "Mapping isform annotations to mutations"
+
       index = file(:mutated_isoforms_for_genomic_mutations).tsv :key_field => "Mutated Isoform", :merge => true, :type => :flat
       mutation_annotations = {}
       mi_annotations.each do |mi, values|
@@ -401,3 +349,4 @@ end
 
 require 'structure/workflow/alignments'
 require 'structure/workflow/residues'
+require 'structure/workflow/helpers'

@@ -61,6 +61,7 @@ module Structure
       return tsv if only_pdb
     end
 
+    # TODO Add contiguous also when PDB is present
     positions.each do |p| 
       new = []
       new << p-1 if p > 1

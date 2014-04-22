@@ -11,6 +11,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    workflow=workflow{
     alignments.rb
     residues.rb
+    helpers.rb
    }
    ssw.rb
    alignment.rb

@@ -152,50 +152,23 @@ module Structure
   task :annotate_residues_COSMIC => :tsv do |residues|
 
     cosmic_residue_mutations = Structure.COSMIC_residues
-
-    isoform_matched_variants = {}
-    residues.monitor = {:desc => "Annotated residues COSMIC"}
-    TSV.traverse residues, :cpus => $cpus, :into => isoform_matched_variants do |isoform, list|
-      list = Array === list ? list.flatten : [list]
-
-      all_matching_mutations = []
-      list.each do |position|
-        matching_mutations = cosmic_residue_mutations[[isoform, position]*":"]
-        next if matching_mutations.nil? or matching_mutations.empty?
-        all_matching_mutations.concat matching_mutations
-      end
-      [isoform, all_matching_mutations]
-    end
-
     cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
 
-    res = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double)
+    residue_annotations = TSV::Dumper.new :key_field => "Ensembl Protein ID", :fields => ["Residue", "Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double
+    residue_annotations.init
+    TSV.traverse residues, :into => residue_annotations do |isoform,residue_list|
+      isoform_annotations = []
+      residue_list.each do |residue|
+        isoform_residue = isoform + ":" << residue.to_s
+        mutations = cosmic_residue_mutations[isoform_residue]
+        annotations = Misc.zip_fields(cosmic_mutation_annotations.values_at(*mutations).compact).collect{|v| v * ";" }
+        annotations.unshift mutations * ";"
+        annotations.unshift residue
 
-    residues.monitor = {:desc => "Annotated residues COSMIC"}
-    TSV.traverse isoform_matched_variants, :cpus => $cpus, :into => res do |isoform, mutations|
-      values = []
-      mutations.each do |mutation|
-        begin
-          annotations = cosmic_mutation_annotations[mutation]
-          raise "No annotations for #{ mutation } in #{cosmic_mutation_annotations.persistence_path}" if annotations.nil?
-          aa_mutation = (annotations.first || []).compact.first
-          raise "No AA mutation" if aa_mutation.nil?
-          if aa_mutation.match(/(\d+)/)
-            residue = $1
-          else
-            raise "AA mutation does not have a position: #{ aa_mutation }" if aa_mutation.nil?
-          end
-          values << [residue,mutation].concat(annotations || [])
-        rescue
-          Log.exception $!
-          next
-        end
+        Misc.append_zipped isoform_annotations, annotations
       end
-
-      [isoform, Misc.zip_fields(values)]
+      [isoform, isoform_annotations]
     end
-
-    res
   end
   export_asynchronous :annotate_residues_COSMIC
 
