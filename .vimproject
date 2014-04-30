@@ -9,6 +9,8 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  lib=lib {
   structure=structure{
    workflow=workflow{
+    annotate.rb
+
     alignments.rb
     residues.rb
     helpers.rb

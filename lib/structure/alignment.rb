@@ -20,9 +20,13 @@ module Structure
     map
   end
 
+  SEQUENCE_MAP = Rbbt.var.cache.Structure.sequence_map.find
+  Open.repository_dirs << SEQUENCE_MAP unless Open.repository_dirs.include? SEQUENCE_MAP
   def self.sequence_map(source_sequence, target_sequence)
-    source_alignment, target_alignment = SmithWaterman.align(source_sequence, target_sequence)
-    Structure.alignment_map(source_alignment, target_alignment)
+    Persist.persist("Sequence map", :yaml, :dir => SEQUENCE_MAP, :other => {:source => source_sequence, :target => target_sequence}) do 
+      source_alignment, target_alignment = SmithWaterman.align(source_sequence, target_sequence)
+      Structure.alignment_map(source_alignment, target_alignment)
+    end
   end
 
   def self.match_position(protein_position, protein_alignment, chain_alignment)

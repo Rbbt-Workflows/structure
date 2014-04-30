@@ -55,7 +55,7 @@ module Structure
           tsv[[protein, seq_pos] * ":"] = [protein, seq_pos, url, seq_neigh * ";"]
         end
 
-        return tsv 
+        return tsv if tsv.any?
       end
     else
       return tsv if only_pdb
@@ -66,7 +66,7 @@ module Structure
       new = []
       new << p-1 if p > 1
       new << p+1 if p < sequence.length 
-      tsv[[protein,p]*":"] = [protein, p, [nil], new * ";"]
+      tsv[[protein,p]*":"] = [protein, p, nil, new * ";"]
     end
 
     tsv
@@ -122,6 +122,8 @@ module Structure
           exit 0
           next
         end
+
+        next if map.nil?
 
         positions_in_pdb.zip(positions).each do |pdb_position, position|
           code = [chain,pdb_position]*":"

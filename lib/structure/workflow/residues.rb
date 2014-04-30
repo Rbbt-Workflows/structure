@@ -4,13 +4,13 @@ module Structure
   input :organism, :string, "Organism code", "Hsa"
   task :annotate_residues_InterPro => :tsv do |residues, organism|
     raise ParameterException, "No residues provided" if residues.nil?
-    tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "InterPro ID", "Range"], :type => :double)
+    dumper = TSV::Dumper.new(:key_field => "Ensembl Protein ID", :fields => ["Residue", "InterPro ID", "Range"], :type => :double)
+    dumper.init
 
     iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
     iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
 
-    residues.monitor = {:desc => "Annotated residues InterPro"}
-    TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
+    TSV.traverse residues, :cpus => $cpus, :into => dumper, :bar => true do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
       uniprot = iso2uni[isoform]
@@ -34,13 +34,13 @@ module Structure
       [isoform, overlapping]
     end
 
-    missing = residues.size - tsv.size
-    if missing > 0
-      Log.warn "Some isoforms failed to translate to UniProt: #{missing}"
-      set_info(:missing, missing)
-    end
+    #missing = residues.size - dumper.size
+    #if missing > 0
+    #  Log.warn "Some isoforms failed to translate to UniProt: #{missing}"
+    #  set_info(:missing, missing)
+    #end
 
-    tsv
+    dumper
   end
   export_asynchronous :annotate_residues_InterPro
 
@@ -53,8 +53,7 @@ module Structure
     iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
     iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
 
-    residues.monitor = {:desc => "Annotated residues UniProt"}
-    TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
+    TSV.traverse residues, :cpus => $cpus, :into => tsv, :bar => true do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
       uniprot = iso2uni[isoform]
@@ -101,7 +100,7 @@ module Structure
     residue_annotations = step(:annotate_residues_UniProt).load
     annotations = Structure.UniProt_mutation_annotations
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "UniProt Variant ID", "Change", "Type of Variant", "SNP ID", "Disease"], :type => :double)
-    TSV.traverse residue_annotations, :into => tsv do |isoform, values|
+    TSV.traverse residue_annotations, :into => tsv, :bar => true do |isoform, values|
       entries = []
       Misc.zip_fields(values).select{|residue,feature,location,description|
         feature == "VARIANT"
@@ -121,8 +120,7 @@ module Structure
   task :annotate_residues_Appris => :tsv do |residues|
     tsv = TSV.setup({}, :key_field => "Ensembl Protein ID", :fields => ["Residue", "Appris Features", "Appris Feature locations", "Appris Feature Descriptions"], :type => :double)
 
-    residues.monitor = {:desc => "Annotated residues Appris"}
-    TSV.traverse residues, :cpus => $cpus, :into => tsv do |isoform, list|
+    TSV.traverse residues, :cpus => $cpus, :into => tsv, :bar => true do |isoform, list|
       list = Array === list ? list.flatten : [list]
 
       features = Structure.appris_features(isoform)
@@ -156,12 +154,15 @@ module Structure
 
     residue_annotations = TSV::Dumper.new :key_field => "Ensembl Protein ID", :fields => ["Residue", "Genomic Mutation"].concat(cosmic_mutation_annotations.fields), :type => :double
     residue_annotations.init
-    TSV.traverse residues, :into => residue_annotations do |isoform,residue_list|
+    TSV.traverse residues, :cpus => $cpus, :into => residue_annotations, :bar => true do |isoform,residue_list|
       isoform_annotations = []
       residue_list.each do |residue|
         isoform_residue = isoform + ":" << residue.to_s
         mutations = cosmic_residue_mutations[isoform_residue]
-        annotations = Misc.zip_fields(cosmic_mutation_annotations.values_at(*mutations).compact).collect{|v| v * ";" }
+        next if mutations.nil? or mutations.empty?
+        mutations.uniq!
+        annot = cosmic_mutation_annotations.values_at(*mutations)
+        annotations = Misc.zip_fields(annot.compact).collect{|v| v * ";" }
         annotations.unshift mutations * ";"
         annotations.unshift residue
 
@@ -178,8 +179,7 @@ module Structure
 
     neighbour_residues = {}
 
-    residues.with_monitor :desc => "Processing residues" do
-    TSV.traverse residues, :cpus => $cpus, :into => neighbour_residues do |protein, list|
+    TSV.traverse residues, :cpus => $cpus, :into => neighbour_residues, :bar => true do |protein, list|
       list = list.flatten.compact.sort
       begin
         neighbours = Structure.interface_neighbours_i3d(protein.dup, list, organism)
@@ -189,7 +189,6 @@ module Structure
         Log.exception $!
         next
       end
-    end
     end
 
     TSV.setup(neighbour_residues, :key_field => "Isoform", :fields => ["Position", "Partner Ensembl Protein ID", "PDB", "Partner residues"], :type => :double)
