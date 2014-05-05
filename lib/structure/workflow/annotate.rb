@@ -86,7 +86,7 @@ module Structure
     end
     next if features.empty?
 
-    overlapping = [[],[],[]]
+    overlapping = [[],[],[],[]]
 
     features.select{|info|
       case info[:type]
@@ -95,12 +95,12 @@ module Structure
       when "DISULFID", "CROSSLNK", "VARIANT"
         info[:start] == residue or info[:end] == residue
       else
-        info[:start] <= residue and info[:end] >= residue
+        info[:start].to_i <= residue and info[:end].to_i >= residue
       end
     }.each{|info|
-      overlapping[0] << info[:code]
+      overlapping[0] << info[:type]
       overlapping[1] << [info[:start], info[:end]] * ":"
-      overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
+      overlapping[3] << (info[:description] || "").strip.sub(/\.$/,'')
     }
 
     next if overlapping.first.empty?
@@ -111,6 +111,7 @@ module Structure
   ANNOTATORS["variants"] = Annotator.new "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions", "UniProt Variant ID", "SNP ID",  "Type of Variant", "Disease" do |isoform,residue,organism|
     @iso2uni ||= {}
     @iso2sequence ||= {}
+    @annotations ||= Structure.UniProt_mutation_annotations
     iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true)
     iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true)
 
@@ -127,13 +128,13 @@ module Structure
     overlapping = [[],[],[],[]]
 
     features.select{|info|
-      info[:type] == "VARIANT"
+      info[:type] == "VARIANT" and info[:start] == residue
     }.each{|info|
       if info[:description].match(/(VAR_\d+)/)
         id = $1
-        next unless annotations.include? id
+        next unless @annotations.include? id
         overlapping[0] << id
-        annots = annotations[id]
+        annots = @annotations[id]
         overlapping[1] << annots[2]
         overlapping[2] << annots[1]
         overlapping[3] << annots[3]
@@ -157,29 +158,6 @@ module Structure
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
     annotator.organism = organism
 
-    #case database
-    #when "COSMIC"
-    #  cosmic_residue_mutations = Structure.COSMIC_residues
-    #  cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
-    #  fields = ["Genomic Mutation"] + cosmic_mutation_annotations.fields
-    #when "variants"
-    #  iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
-    #  iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
-    #  annotations = Structure.UniProt_mutation_annotations
-    #  fields = ["UniProt Variant ID", "SNP ID",  "Type of Variant", "Disease"]
-    #when "UniProt", "variants"
-    #  iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
-    #  iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
-    #  fields = ["UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"]
-    #when "InterPro"
-    #  iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
-    #  iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
-    #  fields = ["InterPro ID", "Range"]
-    #when "Appris"
-    #  fields = ["Appris Features", "Appris Feature locations", "Appris Feature Descriptions"]
-    #end
-
-    #mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue"].concat(fields), :type => :double, :namespace => organism
     mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mutation_annotations.init
     TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. #{ database }", :into => mutation_annotations do |mutation,mis|
@@ -193,105 +171,6 @@ module Structure
 
         annotations = annotator.annotate isoform, residue, organism
         next if annotations.nil?
-        #annotations = case database
-        #              when "COSMIC"
-        #                isoform_residue = isoform + ":" << residue.to_s
-        #                mutations = cosmic_residue_mutations[isoform_residue]
-        #                  next if mutations.nil? 
-        #                  mutations.uniq!
-        #                  next if mutations.empty?
-        #                  annot = cosmic_mutation_annotations.values_at(*mutations)
-        #                  Misc.zip_fields(annot.compact).collect{|v| v * "|" }
-        #                  annot.unshift mutations * "|"
-
-        #                when "Appris"
-        #                  features = Structure.appris_features(isoform)
-
-        #                  overlapping = [[],[],[]]
-        #                  features.select{|info|
-        #                    info[:start] <= residue and info[:end] >= residue
-        #                  }.each{|info|
-        #                    overlapping[0] << info[:type]
-        #                    overlapping[1] << [info[:start], info[:end]] * ":"
-        #                    overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
-        #                  }
-
-        #                  next if overlapping.first.empty?
-        #                  overlapping
-
-        #                when "InterPro"
-        #                  uniprot = iso2uni[isoform]
-        #                  next if uniprot.nil?
-        #                  sequence = iso2sequence[isoform]
-        #                  next if sequence.nil?
-
-        #                  features =  Persist.persist("Corrected InterPro features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-        #                    Structure.corrected_interpro_features(uniprot, sequence)
-        #                  end
-        #                  next if features.empty?
-
-        #                  overlapping = [[],[]]
-        #                  features.select{|info|
-        #                    info[:start] <= residue and info[:end] >= residue
-        #                  }.each{|info|
-        #                    overlapping[0] << info[:code]
-        #                    overlapping[1] << [info[:start], info[:end]] * ":"
-        #                  }
-
-        #                  next if overlapping.first.empty?
-        #                  overlapping
-
-        #                when "UniProt", "variants"
-        #                  uniprot = iso2uni[isoform]
-        #                  next if uniprot.nil?
-        #                  sequence = iso2sequence[isoform]
-        #                  next if sequence.nil?
-
-        #                  features =  Persist.persist("Corrected UniProt features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-        #                    Structure.corrected_uniprot_features(uniprot, sequence)
-        #                  end
-        #                  next if features.empty?
-
-        #                  if database == "variants"
-        #                    overlapping = [[],[],[],[]]
-        #                  else
-        #                    overlapping = [[],[],[]]
-        #                  end
-        #                  features.select{|info|
-        #                    if database == "variants"
-        #                      info[:type] == "VARIANT"
-        #                    else
-        #                      case info[:type]
-        #                      when "VAR_SEQ", "CONFLICT", "CHAIN", "UNSURE"
-        #                        false
-        #                      when "DISULFID", "CROSSLNK", "VARIANT"
-        #                        info[:start] == residue or info[:end] == residue
-        #                      else
-        #                        info[:start] <= residue and info[:end] >= residue
-        #                      end
-        #                    end
-        #                  }.each{|info|
-        #                    if database == "variants"
-        #                      if info[:description].match(/(VAR_\d+)/)
-        #                        id = $1
-        #                        next unless annotations.include? id
-        #                        overlapping[0] << id
-        #                        annots = annotations[id]
-        #                        overlapping[1] << annots[2]
-        #                        overlapping[2] << annots[1]
-        #                        overlapping[3] << annots[3]
-        #                      end
-        #                    else
-        #                      overlapping[0] << info[:code]
-        #                      overlapping[1] << [info[:start], info[:end]] * ":"
-        #                      overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
-        #                    end
-        #                  }
-
-        #                  next if overlapping.first.empty?
-
-        #                  overlapping
-        #                end
 
         annotations.unshift residue
         annotations.unshift mi
@@ -372,37 +251,19 @@ module Structure
     mutated_isoforms.grace
     organism = mutated_isoforms.info[:inputs][:organism]
 
-    case database
-    when "COSMIC"
-      cosmic_residue_mutations = Structure.COSMIC_residues
-      cosmic_mutation_annotations = Structure.COSMIC_mutation_annotations
-      fields = ["Genomic Mutation"] + cosmic_mutation_annotations.fields
-    when "variants"
-      iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
-      iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
-      annotations = Structure.UniProt_mutation_annotations
-      fields = ["UniProt Variant ID", "SNP ID",  "Type of Variant", "Disease"]
-    when "UniProt", "variants"
-      iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
-      iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
-      fields = ["UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions"]
-    when "InterPro"
-      iso2uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
-      iso2sequence = Organism.protein_sequence(organism).tsv :type => :single, :persist => true
-      fields = ["InterPro ID", "Range"]
-    when "Appris"
-      fields = ["Appris Features", "Appris Feature locations", "Appris Feature Descriptions"]
-    end
+    annotator = ANNOTATORS[database]
+    raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
+    annotator.organism = organism
 
-    mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue"].concat(fields), :type => :double
+    mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue", "PDB"].concat(annotator.fields), :type => :double
     mutation_annotations.init
     variant_neighbours.join
     TSV.traverse variant_neighbours.file(:mutation_neighbours), :cpus => $cpus, :bar => "Annot. #{ database }", :into => mutation_annotations do |mutation,values|
       mutation = mutation.first if Array === mutation
-      mis, residues, pdb, neighbours = values
+      mis, residues, pdbs, neighbours = values
       next if mis.nil? or mis.empty? 
       all_mutation_annotations = []
-      mis.each do |mi|
+      mis.zip(pdbs).each do |mi,pdb|
         next unless mi =~ /(.*):([A-Z])(\d+)([A-Z])$/
           next if $2 == $4
         isoform = $1
@@ -412,110 +273,13 @@ module Structure
           neighbours.collect{|e| e.split(";") } : 
           [residue-1,residue+1]
 
-
         n.flatten.each do |residue|
           residue = residue.to_i
 
-          annotations = case database
-                        when "COSMIC"
-                          isoform_residue = isoform + ":" << residue.to_s
-                          mutations = cosmic_residue_mutations[isoform_residue]
-                          next if mutations.nil? 
-                          mutations.uniq!
-                          next if mutations.empty?
-                          annot = cosmic_mutation_annotations.values_at(*mutations)
-                          Misc.zip_fields(annot.compact).collect{|v| v * "|" }
-                          annot.unshift mutations * "|"
+          annotations = annotator.annotate isoform, residue, organism
+          next if annotations.nil?
 
-                        when "Appris"
-                          features = Structure.appris_features(isoform)
-
-                          overlapping = [[],[],[]]
-                          features.select{|info|
-                            info[:start] <= residue and info[:end] >= residue
-                          }.each{|info|
-                            overlapping[0] << info[:type]
-                            overlapping[1] << [info[:start], info[:end]] * ":"
-                            overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
-                          }
-
-                          next if overlapping.first.empty?
-                          overlapping
-
-                        when "InterPro"
-                          uniprot = iso2uni[isoform]
-                          next if uniprot.nil?
-                          sequence = iso2sequence[isoform]
-                          next if sequence.nil?
-
-                          features =  Persist.persist("Corrected InterPro features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-                            Structure.corrected_interpro_features(uniprot, sequence)
-                          end
-                          next if features.empty?
-
-                          overlapping = [[],[]]
-                          features.select{|info|
-                            info[:start] <= residue and info[:end] >= residue
-                          }.each{|info|
-                            overlapping[0] << info[:code]
-                            overlapping[1] << [info[:start], info[:end]] * ":"
-                          }
-
-                          next if overlapping.first.empty?
-                          overlapping
-
-                        when "UniProt", "variants"
-                          uniprot = iso2uni[isoform]
-                          next if uniprot.nil?
-                          sequence = iso2sequence[isoform]
-                          next if sequence.nil?
-
-                          features =  Persist.persist("Corrected UniProt features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-                            Structure.corrected_uniprot_features(uniprot, sequence)
-                          end
-                          next if features.empty?
-
-                          if database == "variants"
-                            overlapping = [[],[],[],[]]
-                          else
-                            overlapping = [[],[],[]]
-                          end
-                          features.select{|info|
-                            if database == "variants"
-                              info[:type] == "VARIANT"
-                            else
-                              case info[:type]
-                              when "VAR_SEQ", "CONFLICT", "CHAIN", "UNSURE"
-                                false
-                              when "DISULFID", "CROSSLNK", "VARIANT"
-                                info[:start] == residue or info[:end] == residue
-                              else
-                                info[:start] <= residue and info[:end] >= residue
-                              end
-                            end
-                          }.each{|info|
-                            if database == "variants"
-                              if info[:description].match(/(VAR_\d+)/)
-                                id = $1
-                                next unless annotations.include? id
-                                overlapping[0] << id
-                                annots = annotations[id]
-                                overlapping[1] << annots[2]
-                                overlapping[2] << annots[1]
-                                overlapping[3] << annots[3]
-                              end
-                            else
-                              overlapping[0] << info[:code]
-                              overlapping[1] << [info[:start], info[:end]] * ":"
-                              overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
-                            end
-                          }
-
-                          next if overlapping.first.empty?
-
-                          overlapping
-                        end
-
+          annotations.unshift pdb
           annotations.unshift residue
           annotations.unshift mi
           all_mutation_annotations << annotations.collect{|v| Array === v ? v * ";" : v }
@@ -529,7 +293,7 @@ module Structure
     FileUtils.mkdir_p files_dir
     stream = Misc.save_stream(file(:mutation_annotations), mutation_annotations.stream)
 
-    mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue"].concat(fields), :type => :double
+    mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB"].concat(annotator.fields), :type => :double
     mi_annotations.init
     TSV.traverse stream, :into => mi_annotations do |mutation, values|
       mutation = mutation.first if Array === mutation
