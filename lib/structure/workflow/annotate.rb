@@ -195,6 +195,7 @@ module Structure
     end
     TSV.collapse_stream mi_annotations.stream
   end
+  export_asynchronous :annotate
 
   dep Sequence, :mutated_isoforms_fast
   task :variant_neighbours => :tsv do 
@@ -240,6 +241,7 @@ module Structure
     end
     CMD.cmd('sort -u', :in => mi_annotations.stream, :pipe => true)
   end
+  export_asynchronous :variant_neighbours
 
   #{{{ ANNOTATE NEIGHBOURS
   dep :variant_neighbours
@@ -304,6 +306,7 @@ module Structure
     end
     TSV.collapse_stream mi_annotations.stream
   end
+  export_asynchronous :annotate_neighbours
 
 
   dep Sequence, :mutated_isoforms_fast
@@ -353,4 +356,5 @@ module Structure
     end
     CMD.cmd('sort -u', :in => mi_annotations.stream, :pipe => true)
   end
+  export_asynchronous :variant_interfaces
 end
