@@ -20,7 +20,7 @@ including both experimental structures and structure models, of individual
 proteins, and of protein complexes.
 
 Pairwise (Smith-Watterman) alignment is used to fix all inconsistencies between
-protein sequences and sequence differences between proteins in Ensembl and
+protein sequences in PDBs, and sequence differences between proteins in Ensembl and
 proteins in UniProt.
 
 # Tasks
@@ -34,12 +34,38 @@ When PDBs are required, the PDB code or a URL can be specified using the `pdb`
 parameter. Alternatively, the content of a PDB file can be provided using the
 `pdbfile` parameter.
 
+The main tasks are: `annotate`, `annotate_neighbours`, and `variant_interfaces`
+
+## annotate
+
+Annotates genomic mutations based on the protein features that are overlapping
+amino-acid changes
+
+## annotate_neighbours
+
+Annotates genomic mutations based on the protein features that are in close
+physical proximity to amino-acid changes
+
+At a distance of 5 amstrons 
+
+## variant_interfaces
+
+Find variants that affect residues in protein-protein interaction sufaces
+
+Residues at a distance of 8 amstrons of a residue from an interaction partner
+
+## variant_neighbours
+
+Find residues in the neighbourhood of amino-acid changes derived from genomic
+mutations.
+
+At a distance of 5 amstrons 
+
 ## neighbour_map
 
 For a given PDB, find all pairs of residues in a PDB that fall within a given
 'distance' of each other. It uses PDBs from Interactome3d for individual
 proteins.
-
 
 ## neighbours_in_pdb
 
@@ -56,58 +82,7 @@ sequence. PDB positions are reported as `chain:position`.
 Translate the positions of amino-acids in a particular chain of the provided
 PDB into positions inside a given sequence.
 
-## annotate_residues_Appris
-
-Given a set of proteins and resudies inside these proteins, finds the protein
-features that overlap, as annotated in Appris.
-
-## annotate_residues_InterPro
-
-Given a set of proteins and resudies inside these proteins, finds the protein
-domains that overlap, as annotated in InterPro.
-
-Sequence alignment is used to correct discrepancies between sequences in
-UniProt and in Ensembl.
-
-## annotate_residues_UniProt
-
-Given a set of proteins and resudies inside these proteins, finds the protein
-features that overlap, as annotated in UniProt.
-
-Sequence alignment is used to correct discrepancies between sequences in
-UniProt and in Ensembl.
-
-## annotate_residues_COSMIC
-
-Given a set of proteins and resudies inside these proteins, finds the mutations
-registered in COSMIC that affect those residues, and provide some annotations
-from the samples that contained them
-
-## residue_interfaces
-
-Finds residues that lay over protein complex interfaces. It does so by checking
-PDBs of complexes extracted from Interactome3D and looking for residues in
-close physical proximity  to residues in the complex partner protein (8
-angstroms).
-
 ## sequence_position_in_pdb
 
 Translate the positions inside a given amino-acid sequence to positions in the
 sequence of a PDB by aligning them
-
-## annotated_variants
-
-Annotates variants given as mutated isoforms or genomic mutations. It
-translates them to protein and residue positions and annotates them using the
-different annotation methods.
-
-## annotated_variant_neighbours
-
-Annotates variants given as mutated isoforms or genomic mutations. It
-translates them to protein and residue positions, uses them to find
-neighbouring residues, and annotates them using the different annotation methods.
-
-## variant_interfaces
-
-Identifies variants, given as mutated isoforms or genomic mutations, that
-occur over protein-protein binding interfaces. 
