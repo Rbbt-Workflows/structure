@@ -8,39 +8,48 @@ module PDBHelper
     raise "No valid pdb provided: #{ pdb }"
   end
 
+
+  PDB_ATOMS = Rbbt.var.cache.Structure.pdb_atoms.find
+  Open.repository_dirs << PDB_ATOMS unless Open.repository_dirs.include? PDB_ATOMS
   def self.atoms(pdb = nil, pdbfile = nil)
-    io = pdb_stream(pdb,pdbfile)
-    str = ""
-    begin
-      while line = io.gets and not line =~ /^END/ 
-        str << line if line =~ /^ATOM/
+    Persist.persist("PDB atoms", :string, :dir => PDB_ATOMS, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
+      io = pdb_stream(pdb,pdbfile)
+      str = ""
+      begin
+        while line = io.gets and not line =~ /^END/ 
+          str << line if line =~ /^ATOM/
+        end
+      ensure
+        io.close
       end
-    ensure
-      io.close
+      str
     end
-    str
   end
 
+  CHAIN_SEQUENCES = Rbbt.var.cache.Structure.chain_sequences.find
+  Open.repository_dirs << CHAIN_SEQUENCES unless Open.repository_dirs.include? CHAIN_SEQUENCES
   def self.pdb_chain_sequences(pdb = nil, pdbfile = nil)
-    atoms = PDBHelper.atoms(pdb, pdbfile)
+    Persist.persist("Chain sequences", :yaml, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
+      atoms = PDBHelper.atoms(pdb, pdbfile)
 
-    chains = {}
-    atoms.split("\n").each do |line|
-      chain = line[20..21].strip
-      aapos = line[22..25].to_i
-      aa    = line[17..19]
+      chains = {}
+      atoms.split("\n").each do |line|
+        chain = line[20..21].strip
+        aapos = line[22..25].to_i
+        aa    = line[17..19]
 
-      next if aapos <= 0
+        next if aapos <= 0
 
-      chains[chain] ||= Array.new
-      chains[chain][aapos-1] = aa
+        chains[chain] ||= Array.new
+        chains[chain][aapos-1] = aa
+      end
+
+      chains.each do |chain,chars|
+        chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
+      end
+
+      chains
     end
-
-    chains.each do |chain,chars|
-      chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
-    end
-
-    chains
   end
 
   def self.pdb_atom_distance(distance, pdb = nil, pdbfile = nil)

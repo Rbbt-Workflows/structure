@@ -21,9 +21,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    pdb_helper.rb
    pdb_alignment.rb
 
-   interactome_3d.rb
    neighbours.rb
 
+   interactome_3d.rb
    uniprot.rb
    interpro.rb
    COSMIC.rb

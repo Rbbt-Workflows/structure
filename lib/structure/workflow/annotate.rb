@@ -308,7 +308,6 @@ module Structure
   end
   export_asynchronous :annotate_neighbours
 
-
   dep Sequence, :mutated_isoforms_fast
   task :variant_interfaces => :tsv do 
     mutated_isoforms = step(:mutated_isoforms_fast)
@@ -318,7 +317,10 @@ module Structure
     interfaces = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Mutated Isoform", "Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double
     interfaces.init
     TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Variant interfaces", :into => interfaces do |mutation,mis|
-      next if mis.nil? or mis.empty?
+      mutation = mutation.first if Array === mutation
+      next if mis.nil?
+      mis.flatten!
+      next if mis.empty?
       all_mutation_annotations = []
       mis.each do |mi|
         next unless mi =~ /(.*):([A-Z])(\d+)([A-Z])$/
@@ -337,8 +339,8 @@ module Structure
           all_mutation_annotations << [mi,residue,part.uniq,pdb*";",n*";"]
         end
       end
+      next if all_mutation_annotations.empty?
       annots = Misc.zip_fields(all_mutation_annotations.uniq)
-      next if annots.empty?
       [mutation, annots]
     end
 

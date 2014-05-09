@@ -10,9 +10,14 @@ module Structure
   I3D_INTERACTIONS = Interactome3d.interactions_tsv.tsv :merge => true, :unnamed => true, :persist => true
   I3D_INTERACTIONS_REVERSE = Interactome3d.interactions_tsv.tsv :merge => true, :key_field => "PROT2", :zipped => true, :unnamed => true, :persist => true
 
+  def self.uni2iso(organism = "Hsa")
+    @@uni2iso ||= {}
+    @@uni2iso[organism] ||= Organism.protein_identifiers(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
+  end
+
   def self.iso2uni(organism = "Hsa")
     @@iso2uni ||= {}
-    @@iso2uni[organism] ||= Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true
+    @@iso2uni[organism] ||= Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
   end
 
   def self.iso2seq(organism = "Hsa")
@@ -80,7 +85,7 @@ module Structure
     sequence = iso2seq(organism)[protein]
     return tsv if sequence.nil?
 
-    Protein.setup(protein, "Ensembl Protein ID", organism)
+    uni2iso = iso2uni(organism)
 
     forward_positions = ["PROT2", "CHAIN1", "CHAIN2", "FILENAME"].collect{|f| I3D_INTERACTIONS.identify_field f}
     reverse_positions = ["PROT1", "CHAIN2", "CHAIN1", "FILENAME"].collect{|f| I3D_INTERACTIONS_REVERSE.identify_field f}
@@ -101,9 +106,8 @@ module Structure
 
         next if chain.strip.empty? or partner_chain.strip.empty?
 
-        Protein.setup(partner, "UniProt/SwissProt Accession", protein.organism)
-        partner_sequence = partner.sequence
-        partner_ensembl =  partner.ensembl
+        partner_ensembl =  uni2iso[partner]
+        partner_sequence = iso2seq[partner_ensembl]
 
         type = filename =~ /EXP/ ? :pdb : :model
         url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
@@ -116,6 +120,7 @@ module Structure
         Misc.insist do
           job = Structure.job(:neighbour_map, protein, :distance =>  8, :pdb => url)
           map = job.run 
+          map.unnamed = true
         end
 
         next if map.nil?
@@ -137,6 +142,7 @@ module Structure
         end
       end
     end
+
     tsv
   end
 end
