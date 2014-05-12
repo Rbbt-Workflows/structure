@@ -100,7 +100,7 @@ module Structure
     }.each{|info|
       overlapping[0] << info[:type]
       overlapping[1] << [info[:start], info[:end]] * ":"
-      overlapping[3] << (info[:description] || "").strip.sub(/\.$/,'')
+      overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
     }
 
     next if overlapping.first.empty?
@@ -108,7 +108,7 @@ module Structure
     overlapping
   end
 
-  ANNOTATORS["variants"] = Annotator.new "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions", "UniProt Variant ID", "SNP ID",  "Type of Variant", "Disease" do |isoform,residue,organism|
+  ANNOTATORS["variants"] = Annotator.new "UniProt Variant ID", "SNP ID",  "Type of Variant", "Disease" do |isoform,residue,organism|
     @iso2uni ||= {}
     @iso2sequence ||= {}
     @annotations ||= Structure.UniProt_mutation_annotations
