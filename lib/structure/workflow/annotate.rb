@@ -98,9 +98,11 @@ module Structure
         info[:start].to_i <= residue and info[:end].to_i >= residue
       end
     }.each{|info|
+      description = (info[:description] || "").strip.sub(/\.$/,'')
+      #description = "-" if description.nil? or description.empty?
       overlapping[0] << info[:type]
       overlapping[1] << [info[:start], info[:end]] * ":"
-      overlapping[2] << (info[:description] || "").strip.sub(/\.$/,'')
+      overlapping[2] << description
     }
 
     next if overlapping.first.empty?
@@ -189,7 +191,7 @@ module Structure
     TSV.traverse stream, :into => mi_annotations, :bar => "Sorting by Mut. Iso." do |mutation, values|
       mutation = mutation.first if Array === mutation
       Misc.zip_fields(values).each do |mi, *rest|
-        mi_annotations.add mi, rest.collect{|v| v.nil? ? [] : v.to_s.split(";") }
+        mi_annotations.add mi, rest.collect{|v| v.nil? ? [] : v.to_s.split(";",-1) }
       end
       nil
     end
@@ -235,7 +237,7 @@ module Structure
     TSV.traverse stream, :into => mi_annotations do |mutation, values|
       mutation = mutation.first if Array === mutation
       Misc.zip_fields(values).each do |mi, *rest|
-        mi_annotations.add mi, rest.collect{|v| v.nil? ? [] : v.to_s.split(";") }
+        mi_annotations.add mi, rest.collect{|v| v.nil? ? [] : v.to_s.split(";",-1) }
       end
       nil
     end
