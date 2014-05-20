@@ -5,7 +5,7 @@ protein mutations. It reports features that overlap the mutations or that are
 in close physical proximity. 
 
 The features reported include features domains, variants, helices, ligand
-binding residues, catalitic sites, transmembrane domains, InterPro domains, or
+binding residues, catalytic sites, transmembrane domains, InterPro domains, or
 known somatic mutations in different types of cancer. This information is
 extracted from resources such as UniProt, COSMIC, InterPro and Appris.  It can
 also identify mutations affecting the interfaces of protein complexes.
@@ -34,7 +34,8 @@ When PDBs are required, the PDB code or a URL can be specified using the `pdb`
 parameter. Alternatively, the content of a PDB file can be provided using the
 `pdbfile` parameter.
 
-The main tasks are: `annotate`, `annotate_neighbours`, and `variant_interfaces`
+The main tasks are: `annotate`, `annotate_neighbours`, and `interfaces`. 
+Or alternatively for mutated isoforms: `annotate_mi`, `annotate_mi_neighbours`, and `mi_interfaces`. 
 
 ## annotate
 
@@ -46,20 +47,37 @@ amino-acid changes
 Annotates genomic mutations based on the protein features that are in close
 physical proximity to amino-acid changes
 
-At a distance of 5 amstrons 
+At a distance of 5 angstroms 
 
-## variant_interfaces
+## interfaces
 
-Find variants that affect residues in protein-protein interaction sufaces
+Find variants that affect residues in protein-protein interaction surfaces
 
-Residues at a distance of 8 amstrons of a residue from an interaction partner
+Residues at a distance of 8 angstroms of a residue from an interaction partner
 
-## variant_neighbours
+## annotate_mi
 
-Find residues in the neighbourhood of amino-acid changes derived from genomic
-mutations.
+Annotates mutated isoforms based on the protein features that are overlapping
+amino-acid changes
 
-At a distance of 5 amstrons 
+## annotate_mi_neighbours
+
+Annotates mutated isoforms based on the protein features that are in close
+physical proximity to amino-acid changes
+
+At a distance of 5 angstroms 
+
+## mi_interfaces
+
+Find mutated_isoforms with affected residues in protein-protein interaction sufaces
+
+Residues at a distance of 8 angstroms of a residue from an interaction partner
+
+## mi_neighbours
+
+Finds residues physical proximity to amino-acid changes in mutated isoforms
+
+At a distance of 5 angstroms 
 
 ## neighbour_map
 
@@ -74,7 +92,7 @@ particular residue in a given sequence.
 
 ## pdb_alignment_map
 
-Find the correspondance between sequence positions in a PDB and in a given
+Find the correspondence between sequence positions in a PDB and in a given
 sequence. PDB positions are reported as `chain:position`.
 
 ## pdb_chain_position_in_sequence

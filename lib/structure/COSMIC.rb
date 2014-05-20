@@ -32,7 +32,7 @@ module Structure
   def self.COSMIC_mutation_annotations
     @COSMIC_mutation_annotations ||= begin
                                        fields = [
-                                         'Mutation AA',
+                                         'ID_sample',
                                          'Primary site',
                                          'Site subtype',
                                          'Primary histology',

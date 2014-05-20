@@ -57,6 +57,7 @@ module Structure
         next if neighbours_in_pdb.nil? or neighbours_in_pdb.empty?
 
         neighbours_in_pdb.each do |seq_pos, seq_neigh|
+          next if seq_pos.nil?
           tsv[[protein, seq_pos] * ":"] = [protein, seq_pos, url, seq_neigh * ";"]
         end
 
@@ -85,7 +86,7 @@ module Structure
     sequence = iso2seq(organism)[protein]
     return tsv if sequence.nil?
 
-    uni2iso = iso2uni(organism)
+    uni2iso = uni2iso(organism)
 
     forward_positions = ["PROT2", "CHAIN1", "CHAIN2", "FILENAME"].collect{|f| I3D_INTERACTIONS.identify_field f}
     reverse_positions = ["PROT1", "CHAIN2", "CHAIN1", "FILENAME"].collect{|f| I3D_INTERACTIONS_REVERSE.identify_field f}
