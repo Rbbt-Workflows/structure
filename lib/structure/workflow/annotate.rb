@@ -202,7 +202,7 @@ module Structure
   task :mi_interfaces => :tsv do |mis,organism|
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
-    TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform neighbours", :into => mi_annotations, :type => :array do |mi|
+    TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform interfaces", :into => mi_annotations, :type => :array do |mi|
       case
       when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
         next if $2 == $4
@@ -276,7 +276,7 @@ module Structure
 
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mi_annotations.init
-    TSV.traverse neigh, :into => mi_annotations  do |mi,v|
+    TSV.traverse neigh, :cpus => $cpus, :bar => "Annot. neigh. #{database}", :into => mi_annotations  do |mi,v|
       mi = mi.first if Array === mi
       case
       when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
@@ -370,7 +370,7 @@ module Structure
     mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mutation_annotations.init
 
-    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. #{ database }", :into => mutation_annotations do |mutation,mis|
+    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. neigh. #{ database }", :into => mutation_annotations do |mutation,mis|
       next if mis.nil? or mis.empty?
       all_annots = []
 
@@ -427,7 +427,7 @@ module Structure
 
     annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     annotations.init
-    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Mutated Isoform neighbours", :into => annotations do |mutation,mis|
+    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Genomic mutation interfaces", :into => annotations do |mutation,mis|
       next if mis.nil? or mis.empty?
       all_annots = []
       mis.each do |mi|
