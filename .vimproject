@@ -11,10 +11,8 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    annotator.rb
    workflow=workflow{
     annotate.rb
-    annotate.rb.save
 
     alignments.rb
-    residues.rb
     helpers.rb
    }
    ssw.rb

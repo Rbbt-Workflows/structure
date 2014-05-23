@@ -4,8 +4,6 @@ require 'structure/interactome_3d'
 require 'structure/alignment'
 
 module Structure
-  #ISO2UNI = Organism.protein_identifiers("Hsa").index :target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true
-  #ISO2SEQ = Organism.protein_sequence("Hsa").tsv :persist => true, :unnamed => true
   I3D_PROTEINS = Interactome3d.proteins_tsv.tsv :merge => true, :unnamed => true, :persist => true
   I3D_INTERACTIONS = Interactome3d.interactions_tsv.tsv :merge => true, :unnamed => true, :persist => true
   I3D_INTERACTIONS_REVERSE = Interactome3d.interactions_tsv.tsv :merge => true, :key_field => "PROT2", :zipped => true, :unnamed => true, :persist => true
