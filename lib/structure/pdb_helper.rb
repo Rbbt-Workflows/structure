@@ -12,7 +12,7 @@ module PDBHelper
   PDB_ATOMS = Rbbt.var.cache.Structure.pdb_atoms.find
   Open.repository_dirs << PDB_ATOMS unless Open.repository_dirs.include? PDB_ATOMS
   def self.atoms(pdb = nil, pdbfile = nil)
-    Persist.persist("PDB atoms", :string, :dir => PDB_ATOMS, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
+    Persist.persist("PDB atoms", :string, :dir => PDB_ATOMS, :other => {:pdb => pdb, :pdbfile => pdbfile}, :persist => false) do 
       io = pdb_stream(pdb,pdbfile)
       str = ""
       begin
