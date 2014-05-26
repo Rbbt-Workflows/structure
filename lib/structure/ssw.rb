@@ -247,7 +247,9 @@ end:
         raise "No target sequence" if target_sequence.nil?
 
         s_out = Misc.open_pipe do |s_in|
-          SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
+          Log.ignore_stderr do
+            SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
+          end
         end
 
         txt = s_out.read

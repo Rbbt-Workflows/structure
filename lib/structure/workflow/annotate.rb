@@ -314,14 +314,15 @@ module Structure
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
   task :annotate => :tsv do |database|
     mutated_isoforms = step(:mutated_isoforms_fast)
-    mutated_isoforms.grace
+    mutated_isoforms.join
+    raise "JOINED BUT NOT EXISTS" unless mutated_isoforms.path.exists?
     organism = mutated_isoforms.info[:inputs][:organism]
 
     annotator = ANNOTATORS[database]
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
     annotator.organism = organism
 
-    mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
+    mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mutation_annotations.init
 
     TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. #{ database }", :into => mutation_annotations do |mutation,mis|
@@ -367,55 +368,60 @@ module Structure
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
     annotator.organism = organism
 
-    mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutations", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
+    mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mutation_annotations.init
 
     TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. neigh. #{ database }", :into => mutation_annotations do |mutation,mis|
-      next if mis.nil? or mis.empty?
-      all_annots = []
+      begin
+        next if mis.nil? or mis.empty?
+        all_annots = []
 
-      used_mi = nil
-      mis.each do |mi|
-        case
-        when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-          next if $2 == $4
-          isoform = $1
-          residue = $3.to_i
-        when mi =~ /^(.*):(\d+)$/
-          isoform = $1
-          residue = $2.to_i
-        else
-          next
-        end
-
-        n =  Persist.persist("Neighbours", :yaml, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-          Structure.neighbours_i3d(isoform, [residue], organism)
-        end
-        next if n.empty?
-
-        pdbs = []
-        ns = []
-        n.each do |r,v|
-          _p,_pos,pdb,n = v
-          next if n.empty?
-          pdb
-          n.split(";").each do |nresidue|
-
-            annotations = annotator.annotate isoform, nresidue.to_i, organism
-            next if annotations.nil?
-            annotations = annotations.collect{|v| v * ";" }
-
-            annotations.unshift nresidue
-
-            all_annots << annotations
+        used_mi = nil
+        mis.each do |mi|
+          case
+          when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
+            next if $2 == $4
+            isoform = $1
+            residue = $3.to_i
+          when mi =~ /^(.*):(\d+)$/
+            isoform = $1
+            residue = $2.to_i
+          else
+            next
           end
-        end
-        used_mi = mi
-        break
-      end
 
-      next if all_annots.empty?
-      [mutation, [used_mi] + Misc.zip_fields(all_annots)]
+          n =  Persist.persist("Neighbours", :yaml, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+            Structure.neighbours_i3d(isoform, [residue], organism)
+          end
+          next if n.empty?
+
+          pdbs = []
+          ns = []
+          n.each do |r,v|
+            _p,_pos,pdb,n = v
+            next if n.empty?
+            pdb
+            n.split(";").each do |nresidue|
+
+              annotations = annotator.annotate isoform, nresidue.to_i, organism
+              next if annotations.nil?
+              annotations = annotations.collect{|v| v * ";" }
+
+              annotations.unshift nresidue
+
+              all_annots << annotations
+            end
+          end
+          used_mi = mi
+          break
+        end
+
+        next if all_annots.empty?
+        [mutation, [used_mi] + Misc.zip_fields(all_annots)]
+      rescue Exception
+        Log.exception $!
+        raise $!
+      end
     end
   end
 
