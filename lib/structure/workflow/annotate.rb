@@ -361,7 +361,7 @@ module Structure
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
   task :annotate_neighbours => :tsv do |database|
     mutated_isoforms = step(:mutated_isoforms_fast)
-    mutated_isoforms.grace
+    mutated_isoforms.join
     organism = mutated_isoforms.info[:inputs][:organism]
 
     annotator = ANNOTATORS[database]
@@ -428,7 +428,7 @@ module Structure
   dep Sequence, :mutated_isoforms_fast
   task :interfaces => :tsv do |mis,organism|
     mutated_isoforms = step(:mutated_isoforms_fast)
-    mutated_isoforms.grace
+    mutated_isoforms.join
     organism = mutated_isoforms.info[:inputs][:organism]
 
     annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
