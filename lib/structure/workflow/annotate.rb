@@ -315,7 +315,6 @@ module Structure
   task :annotate => :tsv do |database|
     mutated_isoforms = step(:mutated_isoforms_fast)
     mutated_isoforms.join
-    raise "JOINED BUT NOT EXISTS" unless mutated_isoforms.path.exists?
     organism = mutated_isoforms.info[:inputs][:organism]
 
     annotator = ANNOTATORS[database]
@@ -360,8 +359,7 @@ module Structure
   dep Sequence, :mutated_isoforms_fast
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
   task :annotate_neighbours => :tsv do |database|
-    mutated_isoforms = step(:mutated_isoforms_fast)
-    mutated_isoforms.join
+    mutated_isoforms = step(:mutated_isoforms_fast).grace.join
     organism = mutated_isoforms.info[:inputs][:organism]
 
     annotator = ANNOTATORS[database]
@@ -393,7 +391,7 @@ module Structure
           n =  Persist.persist("Neighbours", :yaml, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
             Structure.neighbours_i3d(isoform, [residue], organism)
           end
-          next if n.empty?
+          next if n.nil? or n.empty?
 
           pdbs = []
           ns = []
@@ -431,7 +429,7 @@ module Structure
     mutated_isoforms.join
     organism = mutated_isoforms.info[:inputs][:organism]
 
-    annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
+    annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     annotations.init
     TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Genomic mutation interfaces", :into => annotations do |mutation,mis|
       next if mis.nil? or mis.empty?
@@ -450,7 +448,9 @@ module Structure
         end
 
         n = Persist.persist("Interface neighbours", :yaml, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-          Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+          Misc.insist do
+            Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+          end
         end
 
         next if n.nil? or n.empty?

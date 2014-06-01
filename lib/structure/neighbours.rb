@@ -116,13 +116,11 @@ module Structure
         next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
         map = nil
-        Misc.insist do
-          job = Structure.job(:neighbour_map, protein, :distance =>  8, :pdb => url)
-          map = job.run 
-          map.unnamed = true
-        end
+        job = Structure.job(:neighbour_map, protein, :distance =>  8, :pdb => url)
+        map = job.run
+        map.unnamed = true
 
-        next if map.nil?
+        next if map.nil? or map.empty?
 
         positions_in_pdb.zip(positions).each do |pdb_position, position|
           code = [chain,pdb_position]*":"

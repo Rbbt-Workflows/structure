@@ -99,7 +99,6 @@ module PDBHelper
   end
 
   def self.pdb_close_residues(distance, pdb = nil, pdbfile = nil)
-
     Log.low "Computing atom distances (#{ distance }): #{pdb || "pdbfile"}"
     atom_distances = pdb_atom_distance(distance, pdb, pdbfile)
 
