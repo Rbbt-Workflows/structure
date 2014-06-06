@@ -2,38 +2,21 @@ require 'structure/alignment'
 
 module Structure
 
-  def self.sequence_position_in_pdb(protein_sequence, protein_positions, pdb, pdbfile)
-    chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
-
-    protein_positions = [protein_positions] unless Array === protein_positions
-    alignments = {}
-    chains.each do |chain,chain_sequence|
-      alignments[chain] = begin
-                            chain_alignment, protein_alignment = SmithWaterman.align(chain_sequence, protein_sequence)
-                            Structure.match_position(protein_positions, protein_alignment, chain_alignment)
-                          end
-    end
-
-    TSV.setup(alignments, :key_field => "PDB Chain", :fields => protein_positions, :type => :list, :cast => :to_i)
-  end
-
   ALIGNMENT_REPO = Rbbt.var.cache.Structure.alignments.find
   Open.repository_dirs << ALIGNMENT_REPO unless Open.repository_dirs.include? ALIGNMENT_REPO
-
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
     protein_alignment, chain_alignment = 
       Persist.persist("SW PDB Alignment", :array,
-                      :dir => ALIGNMENT_REPO,
-                      :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) {
-
+                      :dir => ALIGNMENT_REPO, :persist => true,
+                      :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) do
       chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
       chain_sequence = chains[chain] 
       SmithWaterman.align(protein_sequence, chain_sequence)
-    }
+                      end
 
     seq_pos = Structure.match_position(positions, chain_alignment, protein_alignment)
     res = Hash[*positions.zip(seq_pos).flatten]
-    TSV.setup(res, :key_field => "Chain position", :fields => ["Sequence position"], :type => :single)
+    TSV.setup(res, :key_field => "Chain position", :fields => ["Sequence position"], :type => :single, :unnamed => true)
   end
 
   def self.pdb_alignment_map(protein_sequence, pdb, pdbfile)
@@ -68,10 +51,24 @@ module Structure
     Structure.job(:pdb_chain_position_in_sequence, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :chain => target_chain, :positions => chain_positions[target_chain]).exec
   end
 
+  def self.sequence_position_in_pdb(protein_sequence, protein_positions, pdb, pdbfile)
+    chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
+
+    protein_positions = [protein_positions] unless Array === protein_positions
+    alignments = {}
+    chains.each do |chain,chain_sequence|
+      alignments[chain] = begin
+                            chain_alignment, protein_alignment = SmithWaterman.align(chain_sequence, protein_sequence)
+                              Structure.match_position(protein_positions, protein_alignment, chain_alignment)
+                          end
+    end
+
+    TSV.setup(alignments, :key_field => "PDB Chain", :fields => protein_positions, :type => :list, :cast => :to_i, :unnamed => true)
+  end
+
   def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
     neighbours_in_pdb = TSV.setup({}, :key_field => "Sequence position", :fields => ["Neighbours"], :type => :flat)
 
-    #positions_in_pdb = Structure.job(:sequence_position_in_pdb, "TEST", :pdb => pdb, :pdbfile => pdbfile, :sequence => sequence, :positions => positions).exec
     positions_in_pdb = Structure.sequence_position_in_pdb(sequence, positions, pdb, pdbfile)
 
     Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
@@ -80,7 +77,8 @@ module Structure
 
     return neighbours_in_pdb if positions_in_pdb.nil? or positions_in_pdb[chain].nil?
 
-    neighbour_map = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run
+    job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run(true)
+    neighbour_map = job.load
 
     return neighbours_in_pdb if neighbour_map.nil?
 

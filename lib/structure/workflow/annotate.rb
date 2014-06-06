@@ -56,15 +56,15 @@ module Structure
   ANNOTATORS["InterPro"] = Annotator.new "InterPro ID", "Domain range" do |isoform,residue,organism|
     @iso2uni ||= {}
     @iso2sequence ||= {}
-    iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true)
-    iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true)
+    iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
+    iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true, :unnamed => true)
 
     uniprot = iso2uni[isoform]
     next if uniprot.nil?
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
-    features =  Persist.persist("Corrected InterPro features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+    features =  Persist.persist("Corrected InterPro features", :marshal, :persist => true, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
       Structure.corrected_interpro_features(uniprot, sequence)
     end
     next if features.empty?
@@ -84,15 +84,15 @@ module Structure
   ANNOTATORS["UniProt"] = Annotator.new "UniProt Features", "UniProt Feature locations", "UniProt Feature Descriptions" do |isoform,residue,organism|
     @iso2uni ||= {}
     @iso2sequence ||= {}
-    iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true)
-    iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true)
+    iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
+    iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true, :unnamed => true)
 
     uniprot = iso2uni[isoform]
     next if uniprot.nil?
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
-    features =  Persist.persist("Corrected UniProt features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+    features =  Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
       Structure.corrected_uniprot_features(uniprot, sequence)
     end
     next if features.empty?
@@ -125,15 +125,15 @@ module Structure
     @iso2uni ||= {}
     @iso2sequence ||= {}
     @annotations ||= Structure.UniProt_mutation_annotations
-    iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true)
-    iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true)
+    iso2uni = @iso2uni[organism] ||= Organism.protein_identifiers(organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
+    iso2sequence = @iso2sequence[organism] ||= Organism.protein_sequence(organism).tsv(:type => :single, :persist => true, :unnamed => true)
 
     uniprot = iso2uni[isoform]
     next if uniprot.nil?
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
-    features =  Persist.persist("Corrected UniProt features", :yaml, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+    features =  Persist.persist("Corrected UniProt features", :marshal, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
       Structure.corrected_uniprot_features(uniprot, sequence)
     end
     next if features.empty?
@@ -167,6 +167,7 @@ module Structure
     annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB", "Neighbours"], :type => :double
     annotations.init
     TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform neighbours", :into => annotations, :type => :array do |mi|
+
       case
       when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
         next if $2 == $4
@@ -179,11 +180,12 @@ module Structure
         next
       end
 
-      n =  Persist.persist("Neighbours", :yaml, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+      n =  Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
         Structure.neighbours_i3d(isoform, [residue], organism)
       end
 
       next if n.empty?
+
       pdbs = []
       ns = []
       n.each do |r,v|
@@ -192,7 +194,9 @@ module Structure
         pdbs << pdb
         ns << n.split(";")
       end
+
       next if ns.empty?
+
       [mi, [residue, pdbs, ns]]
     end
   end
@@ -215,7 +219,7 @@ module Structure
         next
       end
 
-      n = Persist.persist("Interface neighbours", :yaml, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+      n = Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
         Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
       end
 
@@ -267,8 +271,9 @@ module Structure
   dep :mi_neighbours
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
   task :annotate_mi_neighbours => :tsv do |database|
-    neigh = step(:mi_neighbours).grace
-    organism = neigh.info[:inputs][:organism]
+    neigh = step(:mi_neighbours)
+    inputs = neigh.inputs
+    organism = neigh.inputs[:organism]
 
     annotator = ANNOTATORS[database]
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
@@ -312,7 +317,8 @@ module Structure
 
   dep Sequence, :mutated_isoforms_fast
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
-  task :annotate => :tsv do |database|
+  input :principal, :boolean, "Use only principal isoforms", true
+  task :annotate => :tsv do |database, principal|
     mutated_isoforms = step(:mutated_isoforms_fast)
     mutated_isoforms.join
     organism = mutated_isoforms.info[:inputs][:organism]
@@ -358,8 +364,10 @@ module Structure
 
   dep Sequence, :mutated_isoforms_fast
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
+  input :principal, :boolean, "Use only principal isoforms", true
   task :annotate_neighbours => :tsv do |database|
-    mutated_isoforms = step(:mutated_isoforms_fast).grace.join
+    mutated_isoforms = step(:mutated_isoforms_fast).grace
+    mutated_isoforms.join
     organism = mutated_isoforms.info[:inputs][:organism]
 
     annotator = ANNOTATORS[database]
@@ -388,7 +396,7 @@ module Structure
             next
           end
 
-          n =  Persist.persist("Neighbours", :yaml, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+          n =  Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
             Structure.neighbours_i3d(isoform, [residue], organism)
           end
           next if n.nil? or n.empty?
@@ -447,7 +455,7 @@ module Structure
           next
         end
 
-        n = Persist.persist("Interface neighbours", :yaml, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+        n = Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
           Misc.insist do
             Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
           end

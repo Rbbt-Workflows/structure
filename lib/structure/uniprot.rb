@@ -24,10 +24,10 @@ module Structure
     @UniProt_residues ||= Persist.persist_tsv(UniProt.annotated_variants, "UniProt::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["UniProt Variant ID"], :type => :flat)
 
-                           uni2ensp = Organism.protein_identifiers("Hsa").tsv :fields => ["Ensembl Protein ID"], :key_field => "UniProt/SwissProt Accession", :persist => true, :type => :flat, :merge => true
-                           ensp2sequence = Organism.protein_sequence("Hsa").tsv :persist => true
+                           uni2ensp = Organism.protein_identifiers("Hsa").tsv :fields => ["Ensembl Protein ID"], :key_field => "UniProt/SwissProt Accession", :persist => true, :type => :flat, :merge => true, :unnamed => true
+                           ensp2sequence = Organism.protein_sequence("Hsa").tsv :persist => true, :unnamed => true
 
-                           db = UniProt.annotated_variants.tsv(:fields => ["Amino Acid Mutation", "UniProt Variant ID"], :persist => true, :type => :double)
+                           db = UniProt.annotated_variants.tsv(:fields => ["Amino Acid Mutation", "UniProt Variant ID"], :persist => true, :type => :double, :unnamed => true)
                            db.monitor = {:desc => "Processing UniProt", :step => 1000}
 
                            db.with_unnamed do
@@ -85,7 +85,7 @@ module Structure
                                           'SNP ID',
                                           'Disease'
                                         ]
-                                       UniProt.annotated_variants.tsv(:key_field => "UniProt Variant ID", :fields => fields, :persist => true, :type => :double, :zipped => true).to_list
+                                       UniProt.annotated_variants.tsv(:key_field => "UniProt Variant ID", :fields => fields, :persist => true, :type => :double, :zipped => true, :unnamed => true).to_list
                                      end
   end
 end

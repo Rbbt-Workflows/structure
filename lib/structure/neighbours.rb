@@ -44,6 +44,7 @@ module Structure
         type = filename =~ /EXP/ ? :pdb : :model
         url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
 
+        neighbours_in_pdb = nil
         begin
           neighbours_in_pdb = self.neighbours_in_pdb(sequence, positions, url, nil, chain, 5) 
         rescue 

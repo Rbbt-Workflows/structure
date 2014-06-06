@@ -247,19 +247,21 @@ end:
         raise "No target sequence" if target_sequence.nil?
 
         s_out = Misc.open_pipe do |s_in|
-          Log.ignore_stderr do
+          #Log.ignore_stderr do
             SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
-          end
+          #end
         end
 
         txt = s_out.read
-        #Log.log(txt, 0)
         s_out.close
+        s_out.join
 
         target_start, target, target_end = txt.match(/Target:\s+(\d+)\s+([A-Z\-?*]+)\s+(\d+)/).values_at 1, 2, 3
+
         query_start, query, query_end = txt.match(/Query:\s+(\d+)\s+([A-Z\-?*]+)\s+(\d+)/).values_at 1, 2, 3
-        [("_" * (query_start.to_i - 1)) + query,
-          ("_" * (target_start.to_i - 1)) + target]
+
+        txt.replace ""
+        [("_" * (query_start.to_i - 1)) + query, ("_" * (target_start.to_i - 1)) + target]
       rescue
         Log.warn("Error in aligmnent: #{$!.message}")
         return ["-", "-"]

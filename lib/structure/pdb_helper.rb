@@ -8,32 +8,15 @@ module PDBHelper
     raise "No valid pdb provided: #{ pdb }"
   end
 
-
-  PDB_ATOMS = Rbbt.var.cache.Structure.pdb_atoms.find
-  Open.repository_dirs << PDB_ATOMS unless Open.repository_dirs.include? PDB_ATOMS
-  def self.atoms(pdb = nil, pdbfile = nil)
-    Persist.persist("PDB atoms", :string, :dir => PDB_ATOMS, :other => {:pdb => pdb, :pdbfile => pdbfile}, :persist => false) do 
-      io = pdb_stream(pdb,pdbfile)
-      str = ""
-      begin
-        while line = io.gets and not line =~ /^END/ 
-          str << line if line =~ /^ATOM/
-        end
-      ensure
-        io.close
-      end
-      str
-    end
-  end
-
   CHAIN_SEQUENCES = Rbbt.var.cache.Structure.chain_sequences.find
   Open.repository_dirs << CHAIN_SEQUENCES unless Open.repository_dirs.include? CHAIN_SEQUENCES
   def self.pdb_chain_sequences(pdb = nil, pdbfile = nil)
-    Persist.persist("Chain sequences", :yaml, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
-      atoms = PDBHelper.atoms(pdb, pdbfile)
-
+    Persist.persist("Chain sequences", :marshal, :persist => false, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
       chains = {}
-      atoms.split("\n").each do |line|
+      stream = pdb_stream(pdb, pdbfile)
+      while line = stream.gets
+        break if line =~ /^END/
+        next unless line =~ /^ATOM/
         chain = line[20..21].strip
         aapos = line[22..25].to_i
         aa    = line[17..19]
@@ -43,6 +26,7 @@ module PDBHelper
         chains[chain] ||= Array.new
         chains[chain][aapos-1] = aa
       end
+      stream.close
 
       chains.each do |chain,chars|
         chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
@@ -53,17 +37,21 @@ module PDBHelper
   end
 
   def self.pdb_atom_distance(distance, pdb = nil, pdbfile = nil)
-    atoms = self.atoms(pdb, pdbfile)
+    stream = pdb_stream(pdb, pdbfile)
+    
     atom_positions = {}
-    atoms.split("\n").each{|line|
-      code = line[13..26]
-      x = line[30..37].to_f
-      y = line[38..45].to_f
-      z = line[46..53].to_f
-      num = code[9..13].to_i
+    while line = stream.gets
+        break if line =~ /^END/
+        next unless line =~ /^ATOM/
+        code = line[13..26]
+        x = line[30..37].to_f
+        y = line[38..45].to_f
+        z = line[46..53].to_f
+        num = code[9..13].to_i
 
-      atom_positions[code] = [x,y,z,num]
-    }
+        atom_positions[code] = [x,y,z,num]
+    end
+
     atom_positions
 
     atoms = atom_positions.

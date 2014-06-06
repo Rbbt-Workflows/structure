@@ -33,6 +33,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
   }
  }
  share=share{
+  rbbt_commands=rbbt_commands{
+   bootstrap
+  }
   software=software/opt/ssw filter="*"{
    ssw.c
    ssw.h

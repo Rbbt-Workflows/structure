@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+#ENV["RBBT_NO_STREAM"] = "true"
+#ENV["RBBT_NO_PROGRESS"] = "true"
+ENV["RBBT_NO_LOCKFILE_ID"] = "true"
+#ENV["LOCKFILE_DEBUG"] = "true"
+
+
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+require 'rbbt/workflow'
+
+$0 = "rbbt #{$previous_commands*""} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Bootstrap the Structure workflow
+
+$ rbbt command command [options] <filename.tsv|->
+
+Use - to read from STDIN
+
+-h--help Print this help
+
+EOF
+rbbt_usage and exit 0 if options[:help]
+
+Workflow.require_workflow "Structure"
+Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
+FileUtils.mkdir_p Structure.workdir.find
+
+organism = "Hsa"
+database = "UniProt"
+Log.severity = 5
+
+stream = TSV.traverse Organism.identifiers(organism), :keys => "Ensembl Protein ID", :into => :stream, :bar => true do |proteins|
+  mutations = proteins.split("|").collect do |protein|
+    mutation = protein + ":A10V"
+  end
+  mutations * "\n"
+end
+
+stream = CMD.cmd('shuf', :in => stream, :pipe => true)
+
+mutation_file = Rbbt.tmp.structure_bootstrap_job3.mutations.find
+Misc.sensiblewrite(mutation_file, stream)
+
+$cpus = 15
+methods = %w(annotate_mi annotate_mi_neighbours)
+databases = %w(Appris variants UniProt InterPro COSMIC)
+
+job = Structure.job(:mi_neighbours, "Bootstrap", :mutated_isoforms => mutation_file)
+job.run(true).join
+
+jobs = []
+begin
+  databases.each do |database|
+    methods.each do |method|
+      job = Structure.job(method.to_sym, "Bootstrap", :mutated_isoforms => mutation_file, :database => database)
+      jobs << job
+      job.run(true).grace
+    end
+  end
+
+  job = Structure.job(:mi_interfaces, "Bootstrap", :mutated_isoforms => mutation_file)
+  job.run(true).grace
+  jobs << job
+
+  Step.wait_for_jobs jobs
+ensure
+  jobs.each do |job|
+    job.abort unless job.done?
+  end
+end

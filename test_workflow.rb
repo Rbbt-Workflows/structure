@@ -22,3 +22,14 @@ class TestStructure < Test::Unit::TestCase
     end
   end
 end
+
+if __FILE__ == $0
+  step = Structure.example_step(:neighbour_map, "Example")
+  step.inputs[0] = step.inputs[0].to_i
+  
+  10000.times do
+    step.clean if rand < 0.03
+    step.run(true)
+  end
+
+end
