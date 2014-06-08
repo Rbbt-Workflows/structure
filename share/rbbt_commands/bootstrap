@@ -31,7 +31,8 @@ Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
 FileUtils.mkdir_p Structure.workdir.find
 
 organism = "Hsa"
-database = "UniProt"
+$cpus = 15
+
 Log.severity = 5
 
 stream = TSV.traverse Organism.identifiers(organism), :keys => "Ensembl Protein ID", :into => :stream, :bar => true do |proteins|
@@ -46,14 +47,13 @@ stream = CMD.cmd('shuf', :in => stream, :pipe => true)
 mutation_file = Rbbt.tmp.structure_bootstrap_job3.mutations.find
 Misc.sensiblewrite(mutation_file, stream)
 
-$cpus = 15
-methods = %w(annotate_mi annotate_mi_neighbours)
-databases = %w(Appris variants UniProt InterPro COSMIC)
-
 job = Structure.job(:mi_neighbours, "Bootstrap", :mutated_isoforms => mutation_file)
 job.run(true).join
+exit
 
 jobs = []
+methods = %w(annotate_mi annotate_mi_neighbours)
+databases = %w(Appris variants UniProt InterPro COSMIC)
 begin
   databases.each do |database|
     methods.each do |method|
@@ -68,7 +68,7 @@ begin
   jobs << job
 
   Step.wait_for_jobs jobs
-ensure
+rescue
   jobs.each do |job|
     job.abort unless job.done?
   end
