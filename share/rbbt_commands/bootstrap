@@ -30,46 +30,49 @@ Workflow.require_workflow "Structure"
 Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
 FileUtils.mkdir_p Structure.workdir.find
 
-organism = "Hsa"
+organisms = %w(Hsa/dec2013 Hsa/may2009)
 $cpus = 15
 
 Log.severity = 5
 
-stream = TSV.traverse Organism.identifiers(organism), :keys => "Ensembl Protein ID", :into => :stream, :bar => true do |proteins|
-  mutations = proteins.split("|").collect do |protein|
-    mutation = protein + ":A10V"
-  end
-  mutations * "\n"
-end
+organisms.each do |organism|
 
-stream = CMD.cmd('shuf', :in => stream, :pipe => true)
-
-mutation_file = Rbbt.tmp.structure_bootstrap_job3.mutations.find
-Misc.sensiblewrite(mutation_file, stream)
-
-job = Structure.job(:mi_neighbours, "Bootstrap", :mutated_isoforms => mutation_file)
-job.run(true).join
-exit
-
-jobs = []
-methods = %w(annotate_mi annotate_mi_neighbours)
-databases = %w(Appris variants UniProt InterPro COSMIC)
-begin
-  databases.each do |database|
-    methods.each do |method|
-      job = Structure.job(method.to_sym, "Bootstrap", :mutated_isoforms => mutation_file, :database => database)
-      jobs << job
-      job.run(true).grace
+  stream = TSV.traverse Organism.identifiers(organism), :keys => "Ensembl Protein ID", :into => :stream, :bar => true do |proteins|
+    mutations = proteins.split("|").collect do |protein|
+      mutation = protein + ":A10V"
     end
+    mutations * "\n"
   end
 
-  job = Structure.job(:mi_interfaces, "Bootstrap", :mutated_isoforms => mutation_file)
-  job.run(true).grace
-  jobs << job
+  stream = CMD.cmd('shuf', :in => stream, :pipe => true)
 
-  Step.wait_for_jobs jobs
-rescue
-  jobs.each do |job|
-    job.abort unless job.done?
+  mutation_file = Rbbt.tmp.structure_bootstrap_job3.mutations.find
+  Misc.sensiblewrite(mutation_file, stream)
+
+  job = Structure.job(:mi_neighbours, "Bootstrap", :mutated_isoforms => mutation_file)
+  job.run(true).join
+  exit
+
+  jobs = []
+  methods = %w(annotate_mi annotate_mi_neighbours)
+  databases = %w(Appris variants UniProt InterPro COSMIC)
+  begin
+    databases.each do |database|
+      methods.each do |method|
+        job = Structure.job(method.to_sym, "Bootstrap", :mutated_isoforms => mutation_file, :database => database)
+        jobs << job
+        job.run(true).grace
+      end
+    end
+
+    job = Structure.job(:mi_interfaces, "Bootstrap", :mutated_isoforms => mutation_file)
+    job.run(true).grace
+    jobs << job
+
+    Step.wait_for_jobs jobs
+  rescue
+    jobs.each do |job|
+      job.abort unless job.done?
+    end
   end
 end
