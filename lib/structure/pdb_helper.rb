@@ -8,7 +8,7 @@ module PDBHelper
     raise "No valid pdb provided: #{ pdb }"
   end
 
-  CHAIN_SEQUENCES = Rbbt.var.cache.Structure.chain_sequences.find
+  CHAIN_SEQUENCES = Structure.cache_dir.chain_sequences.find
   Open.repository_dirs << CHAIN_SEQUENCES unless Open.repository_dirs.include? CHAIN_SEQUENCES
   def self.pdb_chain_sequences(pdb = nil, pdbfile = nil)
     Persist.persist("Chain sequences", :marshal, :persist => false, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 

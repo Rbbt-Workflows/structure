@@ -1,13 +1,13 @@
 require 'structure/annotator'
 module Structure
 
-  CORRECTED_FEATURES = Rbbt.var.cache.Structure.corrected_features.find
+  CORRECTED_FEATURES = cache_dir.corrected_features.find
   Open.repository_dirs << CORRECTED_FEATURES unless Open.repository_dirs.include? CORRECTED_FEATURES
 
-  NEIGHBOURS = Rbbt.var.cache.Structure.neighbours.find
+  NEIGHBOURS = cache_dir.neighbours.find
   Open.repository_dirs << NEIGHBOURS unless Open.repository_dirs.include? NEIGHBOURS
 
-  INTERFACE_NEIGHBOURS = Rbbt.var.cache.Structure.interface_neighbours.find
+  INTERFACE_NEIGHBOURS = cache_dir.interface_neighbours.find
   Open.repository_dirs << INTERFACE_NEIGHBOURS unless Open.repository_dirs.include? INTERFACE_NEIGHBOURS
 
   ANNOTATORS = IndiferentHash.setup({})

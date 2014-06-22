@@ -1,3 +1,8 @@
+Workflow.require_workflow 'Genomics'
+require 'rbbt/entity'
+require 'rbbt/entity/mutated_isoform'
+require 'structure/entity'
+
 if defined? Entity and defined? MutatedIsoform and Entity === MutatedIsoform
   module MutatedIsoform
     property :pdbs_and_positions => :single do

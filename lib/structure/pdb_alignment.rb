@@ -2,7 +2,7 @@ require 'structure/alignment'
 
 module Structure
 
-  ALIGNMENT_REPO = Rbbt.var.cache.Structure.alignments.find
+  ALIGNMENT_REPO = cache_dir.alignments.find
   Open.repository_dirs << ALIGNMENT_REPO unless Open.repository_dirs.include? ALIGNMENT_REPO
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
     protein_alignment, chain_alignment = 

@@ -6,6 +6,24 @@ require 'rbbt/sources/organism'
 require 'rbbt/sources/uniprot'
 require 'rbbt/sources/InterPro'
 
+module Structure
+  extend Workflow
+
+  class << self
+    attr_accessor :cache_dir
+    def cache_dir
+      @cache_dir ||= Rbbt.var.Structure
+    end
+  end
+
+  extend Resource
+  self.subdir = Structure.cache_dir
+  Structure.claim Structure.root, :proc do |dirname|
+    FileUtils.mkdir_p dirname
+    nil
+  end
+end
+
 require 'structure/alignment'
 require 'structure/pdb_alignment'
 
@@ -18,14 +36,9 @@ require 'structure/appris'
 require 'structure/COSMIC'
 require 'structure/interpro'
 
-Workflow.require_workflow 'Genomics'
 Workflow.require_workflow 'Translation'
-Workflow.require_workflow 'PdbTools'
+#Workflow.require_workflow 'PdbTools'
 Workflow.require_workflow "Sequence"
-
-require 'rbbt/entity'
-require 'rbbt/entity/mutated_isoform'
-require 'structure/entity'
 
 require 'rbbt/util/simpleopt'
 $cpus ||= SOPT.get("--cpus* CPUs to use in map-reduce (Structure workflow)")[:cpus]
@@ -33,9 +46,6 @@ $cpus = $cpus.to_i if $cpus
 
 Log.info "Loading Structure with #{ $cpus.inspect }" unless $cpus.nil?
 
-module Structure
-  extend Workflow
-end
 
 require 'structure/workflow/alignments'
 require 'structure/workflow/helpers'
