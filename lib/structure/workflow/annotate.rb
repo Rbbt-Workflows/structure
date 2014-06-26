@@ -64,8 +64,10 @@ module Structure
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
-    features =  Persist.persist("Corrected InterPro features", :marshal, :persist => true, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-      Structure.corrected_interpro_features(uniprot, sequence)
+    features =  Misc.insist do
+      Persist.persist("Corrected InterPro features", :marshal, :persist => true, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+        Structure.corrected_interpro_features(uniprot, sequence)
+      end
     end
     next if features.empty?
 
@@ -92,9 +94,12 @@ module Structure
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
-    features =  Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-      Structure.corrected_uniprot_features(uniprot, sequence)
+    features = Misc.insist do
+      Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+        Structure.corrected_uniprot_features(uniprot, sequence)
+      end
     end
+
     next if features.empty?
 
     overlapping = [[],[],[]]
@@ -133,8 +138,10 @@ module Structure
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
-    features =  Persist.persist("Corrected UniProt features", :marshal, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
-      Structure.corrected_uniprot_features(uniprot, sequence)
+    features =  Misc.insist do
+      Persist.persist("Corrected UniProt features", :marshal, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+        Structure.corrected_uniprot_features(uniprot, sequence)
+      end
     end
     next if features.empty?
 
@@ -169,19 +176,21 @@ module Structure
     TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform neighbours", :into => annotations, :type => :array do |mi|
 
       case
-      when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-        next if $2 == $4
-        isoform = $1
-        residue = $3.to_i
-      when mi =~ /^(.*):(\d+)$/
-        isoform = $1
-        residue = $2.to_i
+      when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
+        next if m[2] == m[4]
+        isoform = m[1]
+        residue = m[3].to_i
+      when (m = mi.match(/^(.*):(\d+)$/))
+        isoform = m[1]
+        residue = m[2].to_i
       else
         next
       end
 
-      n =  Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-        Structure.neighbours_i3d(isoform, [residue], organism)
+      n =  Misc.insist do
+        Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+          Structure.neighbours_i3d(isoform, [residue], organism)
+        end
       end
 
       next if n.empty?
@@ -207,20 +216,23 @@ module Structure
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
     TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform interfaces", :into => mi_annotations, :type => :array do |mi|
+
       case
-      when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-        next if $2 == $4
-        isoform = $1
-        residue = $3.to_i
-      when mi =~ /^(.*):(\d+)$/
-        isoform = $1
-        residue = $2.to_i
+      when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
+        next if m[2] == m[4]
+        isoform = m[1]
+        residue = m[3].to_i
+      when (m = mi.match(/^(.*):(\d+)$/))
+        isoform = m[1]
+        residue = m[2].to_i
       else
         next
       end
 
-      n = Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-        Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+      n = Misc.insist do
+        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+          Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+        end
       end
 
       next if n.nil? or n.empty?
@@ -244,25 +256,24 @@ module Structure
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
     annotator.organism = organism
 
-    mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue"].concat(annotator.fields), :type => :double, :namespace => organism
+    mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => annotator.fields, :type => :double, :namespace => organism
     mi_annotations.init
     TSV.traverse mis, :cpus => $cpus, :bar => "Annot. #{ database }", :into => mi_annotations, :type => :array do |mi|
+
       case
-      when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-        next if $2 == $4
-        isoform = $1
-        residue = $3.to_i
-      when mi =~ /^(.*):(\d+)$/
-        isoform = $1
-        residue = $2.to_i
+      when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
+        next if m[2] == m[4]
+        isoform = m[1]
+        residue = m[3].to_i
+      when (m = mi.match(/^(.*):(\d+)$/))
+        isoform = m[1]
+        residue = m[2].to_i
       else
         next
       end
 
       annotations = annotator.annotate isoform, residue, organism
       next if annotations.nil?
-
-      annotations.unshift residue
 
       [mi, annotations]
     end
@@ -385,19 +396,21 @@ module Structure
         used_mi = nil
         mis.each do |mi|
           case
-          when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-            next if $2 == $4
-            isoform = $1
-            residue = $3.to_i
-          when mi =~ /^(.*):(\d+)$/
-            isoform = $1
-            residue = $2.to_i
+          when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
+            next if m[2] == m[4]
+            isoform = m[1]
+            residue = m[3].to_i
+          when (m = mi.match(/^(.*):(\d+)$/))
+            isoform = m[1]
+            residue = m[2].to_i
           else
             next
           end
 
-          n =  Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-            Structure.neighbours_i3d(isoform, [residue], organism)
+          n =  Misc.insist do
+            Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+              Structure.neighbours_i3d(isoform, [residue], organism)
+            end
           end
           next if n.nil? or n.empty?
 
@@ -443,20 +456,21 @@ module Structure
       next if mis.nil? or mis.empty?
       all_annots = []
       mis.each do |mi|
+
         case
-        when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-          next if $2 == $4
-          isoform = $1
-          residue = $3.to_i
-        when mi =~ /^(.*):(\d+)$/
-          isoform = $1
-          residue = $2.to_i
+        when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
+          next if m[2] == m[4]
+          isoform = m[1]
+          residue = m[3].to_i
+        when (m = mi.match(/^(.*):(\d+)$/))
+          isoform = m[1]
+          residue = m[2].to_i
         else
           next
         end
 
-        n = Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-          Misc.insist do
+        n = Misc.insist do
+          Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
             Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
           end
         end

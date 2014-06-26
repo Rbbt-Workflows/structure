@@ -23,9 +23,11 @@ module Structure
   SEQUENCE_MAP = cache_dir.sequence_map.find
   Open.repository_dirs << SEQUENCE_MAP unless Open.repository_dirs.include? SEQUENCE_MAP
   def self.sequence_map(source_sequence, target_sequence)
-    Persist.persist("Sequence map", :marshal, :dir => SEQUENCE_MAP, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:source => source_sequence, :target => target_sequence}) do
-      source_alignment, target_alignment = SmithWaterman.align(source_sequence, target_sequence)
-      Structure.alignment_map(source_alignment, target_alignment)
+    Misc.insist do
+      Persist.persist("Sequence map", :marshal, :dir => SEQUENCE_MAP, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:source => source_sequence, :target => target_sequence}) do
+        source_alignment, target_alignment = SmithWaterman.align(source_sequence, target_sequence)
+        Structure.alignment_map(source_alignment, target_alignment)
+      end
     end
   end
 

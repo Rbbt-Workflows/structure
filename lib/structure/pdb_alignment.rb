@@ -5,7 +5,7 @@ module Structure
   ALIGNMENT_REPO = cache_dir.alignments.find
   Open.repository_dirs << ALIGNMENT_REPO unless Open.repository_dirs.include? ALIGNMENT_REPO
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
-    protein_alignment, chain_alignment = 
+    protein_alignment, chain_alignment = Misc.insist do
       Persist.persist("SW PDB Alignment", :array,
                       :dir => ALIGNMENT_REPO, :persist => true,
                       :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) do
@@ -13,6 +13,7 @@ module Structure
       chain_sequence = chains[chain] 
       SmithWaterman.align(protein_sequence, chain_sequence)
                       end
+    end
 
     seq_pos = Structure.match_position(positions, chain_alignment, protein_alignment)
     res = Hash[*positions.zip(seq_pos).flatten]

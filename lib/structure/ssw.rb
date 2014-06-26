@@ -8,6 +8,7 @@ require 'inline'
 #            http://arxiv.org/abs/1208.6350
 module SmithWaterman
 
+
     inline(:C) do |builder|
       prefix =<<-EOF
 #include <stdlib.h>

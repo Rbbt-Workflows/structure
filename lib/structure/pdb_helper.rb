@@ -11,45 +11,47 @@ module PDBHelper
   CHAIN_SEQUENCES = Structure.cache_dir.chain_sequences.find
   Open.repository_dirs << CHAIN_SEQUENCES unless Open.repository_dirs.include? CHAIN_SEQUENCES
   def self.pdb_chain_sequences(pdb = nil, pdbfile = nil)
-    Persist.persist("Chain sequences", :marshal, :persist => false, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
-      chains = {}
-      stream = pdb_stream(pdb, pdbfile)
-      while line = stream.gets
-        break if line =~ /^END/
-        next unless line =~ /^ATOM/
-        chain = line[20..21].strip
-        aapos = line[22..25].to_i
-        aa    = line[17..19]
+    Misc.insist do
+      Persist.persist("Chain sequences", :marshal, :persist => false, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
+        chains = {}
+        stream = pdb_stream(pdb, pdbfile)
+        while line = stream.gets
+          break if line =~ /^END/
+            next unless line =~ /^ATOM/
+            chain = line[20..21].strip
+          aapos = line[22..25].to_i
+          aa    = line[17..19]
 
-        next if aapos <= 0
+          next if aapos <= 0
 
-        chains[chain] ||= Array.new
-        chains[chain][aapos-1] = aa
+          chains[chain] ||= Array.new
+          chains[chain][aapos-1] = aa
+        end
+        stream.close
+
+        chains.each do |chain,chars|
+          chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
+        end
+
+        chains
       end
-      stream.close
-
-      chains.each do |chain,chars|
-        chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
-      end
-
-      chains
     end
   end
 
   def self.pdb_atom_distance(distance, pdb = nil, pdbfile = nil)
     stream = pdb_stream(pdb, pdbfile)
-    
+
     atom_positions = {}
     while line = stream.gets
-        break if line =~ /^END/
+      break if line =~ /^END/
         next unless line =~ /^ATOM/
         code = line[13..26]
-        x = line[30..37].to_f
-        y = line[38..45].to_f
-        z = line[46..53].to_f
-        num = code[9..13].to_i
+      x = line[30..37].to_f
+      y = line[38..45].to_f
+      z = line[46..53].to_f
+      num = code[9..13].to_i
 
-        atom_positions[code] = [x,y,z,num]
+      atom_positions[code] = [x,y,z,num]
     end
 
     atom_positions
