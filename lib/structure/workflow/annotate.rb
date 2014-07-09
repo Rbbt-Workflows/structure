@@ -252,6 +252,7 @@ module Structure
   input :organism, :string, "Organism code", "Hsa"
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
   task :annotate_mi => :tsv do |mis,organism,database|
+
     annotator = ANNOTATORS[database]
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
     annotator.organism = organism

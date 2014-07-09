@@ -32,15 +32,11 @@ module Structure
   def self.COSMIC_mutation_annotations
     @COSMIC_mutation_annotations ||= begin
                                        fields = [
-                                         'ID_sample',
+                                         'Sample name',
                                          'Primary site',
                                          'Site subtype',
                                          'Primary histology',
                                          'Histology subtype',
-                                         'Genome-wide screen',
-                                         'Mutation somatic status',
-                                         'Sample source',
-                                         'Tumour origin'
                                          ]
                                        COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true
                                      end
