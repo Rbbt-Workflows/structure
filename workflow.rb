@@ -4,7 +4,6 @@ require 'rbbt/workflow'
 
 require 'rbbt/sources/organism'
 require 'rbbt/sources/uniprot'
-require 'rbbt/sources/InterPro'
 
 module Structure
   extend Workflow

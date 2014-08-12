@@ -1,3 +1,6 @@
+Workflow.require_workflow "InterPro"
+require 'rbbt/sources/InterPro'
+
 module Structure
   def self.interpro_protein_domains
     @interpro_protein_domains ||= InterPro.protein_domains.tsv :persist => true, :unnamed => true
