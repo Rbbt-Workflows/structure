@@ -2,8 +2,8 @@
 
 #ENV["RBBT_NO_STREAM"] = "true"
 #ENV["RBBT_NO_PROGRESS"] = "true"
-ENV["RBBT_NO_LOCKFILE_ID"] = "true"
 #ENV["LOCKFILE_DEBUG"] = "true"
+ENV["RBBT_NO_LOCKFILE_ID"] = "true"
 
 require 'rbbt-util'
 require 'rbbt/util/simpleopt'
@@ -28,7 +28,7 @@ Workflow.require_workflow "Structure"
 Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
 FileUtils.mkdir_p Structure.workdir.find
 
-organisms = %w(Hsa/dec2013 Hsa/may2009)
+organisms = Organism.organism_codes
 $cpus = 15
 
 organisms.each do |organism|
