@@ -49,7 +49,7 @@ $.widget("rbbt.jmol_tool", {
   //{{{ JOBS
 
   _mutation_positions: function(mutations, organism, watson, complete){
-    var mutated_isoforms = rbbt_job("Sequence", "mutated_isoforms_for_genomic_mutations", {organism: organism, watson: watson, mutations: mutations}, complete)
+    var mutated_isoforms = rbbt_job("Sequence", "mutated_isoforms_fast", {organism: organism, watson: watson, mutations: mutations}, complete)
     return mutated_isoforms;
   },
 

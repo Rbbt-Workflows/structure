@@ -62,7 +62,6 @@
 		* @return void
 		*/
 		this.script = function(source){
-      console.log(source)
 			if (this._applet){
 				this._applet.script(source);
 			} else {
