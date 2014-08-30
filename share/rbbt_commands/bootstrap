@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
 
-#ENV["RBBT_NO_STREAM"] = "true"
-#ENV["RBBT_NO_PROGRESS"] = "true"
-#ENV["LOCKFILE_DEBUG"] = "true"
 ENV["RBBT_NO_LOCKFILE_ID"] = "true"
 
 require 'rbbt-util'
@@ -15,9 +12,7 @@ options = SOPT.setup <<EOF
 
 Bootstrap the Structure workflow
 
-$ rbbt command command [options] <filename.tsv|->
-
-Use - to read from STDIN
+$ rbbt workflow cmd Structure bootstrap
 
 -h--help Print this help
 
@@ -29,7 +24,7 @@ Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
 FileUtils.mkdir_p Structure.workdir.find
 
 organisms = Organism.organism_codes
-$cpus = 15
+$cpus = 3
 
 organisms.each do |organism|
 
@@ -47,7 +42,6 @@ organisms.each do |organism|
 
   job = Structure.job(:mi_neighbours, "Bootstrap", :mutated_isoforms => mutation_file)
   job.run(true).join
-  exit
 
   jobs = []
   methods = %w(annotate_mi annotate_mi_neighbours)
@@ -57,15 +51,15 @@ organisms.each do |organism|
       methods.each do |method|
         job = Structure.job(method.to_sym, "Bootstrap", :mutated_isoforms => mutation_file, :database => database)
         jobs << job
-        job.run(true).grace
       end
     end
 
     job = Structure.job(:mi_interfaces, "Bootstrap", :mutated_isoforms => mutation_file)
-    job.run(true).grace
     jobs << job
 
-    Step.wait_for_jobs jobs
+    Misc.bootstrap(jobs) do |job|
+        job.run(true).join
+    end
   rescue
     jobs.each do |job|
       job.abort unless job.done?

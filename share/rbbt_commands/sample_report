@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+
+require 'rbbt-util'
+require 'rbbt/util/simpleopt'
+
+$0 = "rbbt #{$previous_commands*""} #{ File.basename(__FILE__) }" if $previous_commands
+
+options = SOPT.setup <<EOF
+
+Compute the results for COSMIC
+
+$ rbbt workflow cmd Structure sample_report <sample> -d <directory>
+
+Use - to read from STDIN
+
+-h--help Print this help
+-d--directory* Directory to place results
+
+EOF
+rbbt_usage and exit 0 if options[:help] or ARGV.empty? or options[:directory].nil? 
+
+Workflow.require_workflow "Structure"
+Workflow.require_workflow "COSMIC"
+Workflow.require_workflow "Sample"
+
+sample = Sample.setup ARGV.shift.dup
+
+directory = Path.setup(options[:directory].dup)
+FileUtils.mkdir_p directory unless File.directory? directory
+
+%W(mutated_isoform_annotations mutated_isoform_neighbour_annotations).each do |task|
+  FileUtils.mkdir_p directory[sample][task] unless File.directory? directory[sample][task] 
+  task_name = task =~ /neigh/ ? :structure_annotations : :structure_neighbour_annotations
+  sample.send(task_name,false).run(true).join.dependencies.each do |dep|
+    next unless dep.path =~ /annotate_mi/
+      database = dep.inputs[:database]
+    FileUtils.cp dep.path, directory[sample][task][database]
+  end
+end
+
+def prepare_dir(dir)
+  FileUtils.mkdir_p dir unless File.exists? dir
+end
+
+%W(mutation_mi_annotations consequence mutation_genes).each do |database|
+  prepare_dir directory[sample].genomic_mutation_annotations
+  job = sample.send(database, false).run(true).join
+  FileUtils.cp job.path, directory[sample].genomic_mutation_annotations[database]
+end
+
+%W(interfaces db_NSFP mutation_mi_annotations).each do |database|
+  prepare_dir directory[sample].mutated_isoform_annotations
+  job = sample.send(database, false).run(true).join
+  FileUtils.cp job.path, directory[sample].mutated_isoform_annotations[database]
+end
+
+%W(db_NSFP).each do |database|
+  job = sample.send(database, false).run(true).join
+  TmpFile.with_file do |tmp|
+    all_fields = TSV.parse_header(job.path).all_fields
+    preds = all_fields.select{|f| f =~ /_pred/}
+    good_cols = []
+    all_fields.each_with_index{|f,i|
+      good_cols << i + 1 unless preds.include? f
+    }
+    FileUtils.mkdir_p File.dirname(tmp) unless File.directory? File.dirname(tmp)
+    `cut -f#{good_cols * ","} '#{job.path}' > '#{tmp}'`
+    FileUtils.cp tmp, directory[sample].mutated_isoform_annotations[database]
+  end
+end

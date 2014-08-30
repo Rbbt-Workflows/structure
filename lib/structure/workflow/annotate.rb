@@ -7,13 +7,15 @@ module Structure
   NEIGHBOURS = cache_dir.neighbours.find
   Open.repository_dirs << NEIGHBOURS unless Open.repository_dirs.include? NEIGHBOURS
 
+  NEIGHBOUR_MAP = cache_dir.neighbour_map.find
+  Open.repository_dirs << NEIGHBOUR_MAP unless Open.repository_dirs.include? NEIGHBOUR_MAP
+
   INTERFACE_NEIGHBOURS = cache_dir.interface_neighbours.find
   Open.repository_dirs << INTERFACE_NEIGHBOURS unless Open.repository_dirs.include? INTERFACE_NEIGHBOURS
 
   ANNOTATORS = IndiferentHash.setup({})
 
-  ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample ID', 'Primary site', 'Site subtype', 'Primary histology', 'Histology subtype',
-    'Genome-wide screen', 'Mutation somatic status', 'Sample source', 'Tumour origin' do |isoform, residue,organism|
+  ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample ID', 'Primary site', 'Site subtype', 'Primary histology', 'Histology subtype' do |isoform, residue,organism|
 
     @cosmic_residue_mutations ||= Structure.COSMIC_residues
     @cosmic_mutation_annotations ||= Structure.COSMIC_mutation_annotations
@@ -173,7 +175,7 @@ module Structure
   task :mi_neighbours => :tsv do |mis,organism|
     annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB", "Neighbours"], :type => :double
     annotations.init
-    TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform neighbours", :into => annotations, :type => :array do |mi|
+    TSV.traverse mis, :cpus => $cpus, :respawn => 1.6, :bar => "Mutated Isoform neighbours", :into => annotations, :type => :array do |mi|
 
       case
       when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))

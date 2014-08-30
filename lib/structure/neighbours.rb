@@ -116,9 +116,7 @@ module Structure
         positions_in_pdb = sequence_position_in_pdb(sequence, positions, url, nil)[chain]
         next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
-        map = nil
-        job = Structure.job(:neighbour_map, protein, :distance =>  8, :pdb => url)
-        map = job.run
+        map = neighbour_map_job pdb, nil, 8
         map.unnamed = true
 
         next if map.nil? or map.empty?

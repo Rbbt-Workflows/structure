@@ -67,6 +67,15 @@ module Structure
     TSV.setup(alignments, :key_field => "PDB Chain", :fields => protein_positions, :type => :list, :cast => :to_i, :unnamed => true)
   end
 
+  def self.neighbour_map_job(pdb, pdbfile, distance)
+    Misc.insist do
+      Persist.persist("Neighbour map", :marshal, :persist => true, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do 
+        job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance)
+        job.run
+      end
+    end
+  end
+
   def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
     neighbours_in_pdb = TSV.setup({}, :key_field => "Sequence position", :fields => ["Neighbours"], :type => :flat)
 
@@ -78,8 +87,7 @@ module Structure
 
     return neighbours_in_pdb if positions_in_pdb.nil? or positions_in_pdb[chain].nil?
 
-    job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance).run(true)
-    neighbour_map = job.load
+    neighbour_map = neighbour_map_job(pdb,pdbfile,distance)
 
     return neighbours_in_pdb if neighbour_map.nil?
 
