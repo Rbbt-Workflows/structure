@@ -171,7 +171,7 @@ module Structure
   #{{{ NEIGHBOURS
   
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
-  input :organism, :organism, "Organism code", "Hsa"
+  input :organism, :string, "Organism code", "Hsa"
   task :mi_neighbours => :tsv do |mis,organism|
     annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB", "Neighbours"], :type => :double
     annotations.init
