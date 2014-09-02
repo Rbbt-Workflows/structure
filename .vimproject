@@ -8,6 +8,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  }
  lib=lib {
   sinatra.rb
+  entity=rbbt/entity{
+   structure.rb
+  }
   structure=structure{
    annotator.rb
    workflow=workflow{
@@ -32,6 +35,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    entity.rb
    sinatra.rb
   }
+
  }
  share=share{
   rbbt_commands=rbbt_commands{
@@ -46,6 +50,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  }
  www=www {
   views=views {
+   partials=partials{
+    download.haml
+   }
+   tasks.haml
    compass=compass{
     jmol.sass
     isoform_svg.sass

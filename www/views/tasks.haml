@@ -1,0 +1,32 @@
+.workflow.tasks
+
+  %h3 Structure PPI
+
+  - unless workflow.documentation[:title].empty?
+    :markdown 
+      #{workflow.documentation[:title]}
+  - unless workflow.documentation[:description].empty?
+    :markdown 
+      #{workflow.documentation[:description]}
+
+
+  %h5 Tasks
+
+  - unless workflow.documentation[:task_description].empty?
+    :markdown 
+      #{workflow.documentation[:task_description]}
+
+  %ul.tasks.clean_list
+    - tasks = workflow.exec_exports + workflow.synchronous_exports + workflow.asynchronous_exports
+
+    - tasks.sort.each do |task|
+      %li
+        //%a(href="#{to(File.join("/", workflow.to_s, task.to_s))}")= task
+        %a(href="#{File.join("/", workflow.to_s, task.to_s)}")= task
+        - info = workflow.task_info(task)
+        - if info[:description]
+          %p= info[:description].split(/\n\s*\n/).first
+
+  %h5 Download data
+
+  = partial_render("partials/download")

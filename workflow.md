@@ -1,13 +1,13 @@
 Functionalities regarding protein Structures
 
 This workflow offers several functionalities to explore the consequence of
-protein mutations. It reports features that overlap the mutations or that are
+protein mutations. It reports features that overlap the mutations, or that are
 in close physical proximity. 
 
-The features reported include features domains, variants, helices, ligand
-binding residues, catalytic sites, transmembrane domains, InterPro domains, or
+The features reported include protein domains, variants, helices, ligand
+binding residues, catalytic sites, transmembrane domains, InterPro domains, and
 known somatic mutations in different types of cancer. This information is
-extracted from resources such as UniProt, COSMIC, InterPro and Appris.  It can
+extracted from resources such as UniProt, COSMIC, InterPro and Appris. It can
 also identify mutations affecting the interfaces of protein complexes.
 
 This workflow makes use of PDB files to calculate residues in close proximity.
@@ -15,27 +15,51 @@ This information is used to find features close to the mutations, at a distance
 of 5 angstroms, or mutations in residues close to residues in a complex partner,
 at a distance of up to 8 angstroms. 
 
-PDBs are extracted from Interactome3d, which has organized thousands of PDBs,
-including both experimental structures and structure models, of individual
-proteins, and of protein complexes.
+PDBs are extracted from Interactome3d, which organized thousands of PDBs,
+for both experimental structures and structure models, of individual
+proteins and protein complexes.
 
 Pairwise (Smith-Watterman) alignment is used to fix all inconsistencies between
-protein sequences in PDBs, and sequence differences between proteins in Ensembl and
-proteins in UniProt.
+protein sequences in PDBs, Uniprot and Ensembl Protein ID.
 
 # Tasks
 
-The annotation tasks take `residues` as input. These residues are given as a
-flat TSV file of proteins and positions over them. The result is a TSV file
-containing the proteins and features that overlap. The fields of the TSV
-file depend on the features of database used.
+The annotation tasks take either genomic mutations or mutated isoforms. Mutated
+isoforms must be in reference to Ensembl Protein IDs (e.g.
+ENSP00000449454:E433D). When inputing genomic mutations, the consequence of
+this mutations in terms of mutated isoforms is computed automatically. Genomic
+mutations can be reported in Chromosome:Position:AlternativeAllele format (e.g.
+1:19949995:T) or in VCF format. Normaly genomic mutations are given always with
+respect to the watson or forward strand. This is the default. Sometimes,
+however, mutations are given with respect to the strand that encodes de gene;
+If this is the case, specify `watson` to be `false`. The version of the methods
+using mutated isoforms as input have the `_mi_` term in their name. The
+`organism` input is used to specify the version of the genome and gene set to
+use, leave `Hsa` for the most recent `H`omo `sa`piens data, or `Hsa/may2009`
+for the latest gene set of hg18. The date codes correspond the Ensembl
+archives, which are used to download and process all the information
+consistently for each version.
 
 When PDBs are required, the PDB code or a URL can be specified using the `pdb`
 parameter. Alternatively, the content of a PDB file can be provided using the
 `pdbfile` parameter.
 
+The result of these tasks are reported in TSV tables. These tables often encode
+complex relationships. For instance a genomic mutation might have as
+consequence several mutated isoforms, with each protein mutation overlapping
+different domains or features. This multiplicity is encoded in the TSV in a
+standard way: using tabs to separate fields, vertical bars (`|`) to separate
+diferent values for each field, and semicolons (`;`) to further separate
+multiple options for each result.
+
 The main tasks are: `annotate`, `annotate_neighbours`, and `interfaces`. 
-Or alternatively for mutated isoforms: `annotate_mi`, `annotate_mi_neighbours`, and `mi_interfaces`. 
+Or alternatively for mutated isoforms: `annotate_mi`, `annotate_mi_neighbours`, 
+and `mi_interfaces`. 
+
+All the workflow tasks can be executed from the web interface, programatically,
+through the REST interface using `wget` or `curl`, or using the `rbbt` command.
+See [the rbbt documentation](http://mikisvaz.github.io/rbbt/) for more
+information.
 
 ## annotate
 

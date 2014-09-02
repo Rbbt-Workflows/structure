@@ -1,0 +1,19 @@
+
+%p
+  The following files contain reports for all mutations in the COSMIC and 1000 Genomes databases.
+  The where produced using the Structure-PPI and Sequence workflows. Due to the large size
+  of these datasets, we have skipped annotation with the `COSMIC` database itself, which would
+  have resulted in massive result files.
+
+- base_url = Path.setup("http://ubio.bioinfo.cnio.es/people/mvazquezg/structure_reports/")
+
+- files = %w(genomic_mutation_annotations/consequence.gz genomic_mutation_annotations/mutation_genes.gz genomic_mutation_annotations/mutation_mi_annotations.gz mutated_isoform_annotations/Appris.gz mutated_isoform_annotations/InterPro.gz mutated_isoform_annotations/UniProt.gz mutated_isoform_annotations/db_NSFP.gz mutated_isoform_annotations/interfaces.gz mutated_isoform_annotations/variants.gz mutated_isoform_neighbour_annotations/Appris.gz mutated_isoform_neighbour_annotations/InterPro.gz mutated_isoform_neighbour_annotations/UniProt.gz mutated_isoform_neighbour_annotations/variants.gz) 
+
+%ul
+  - %w(COSMIC:all Genomes1000:all).each do |sample|
+    - files.each do |file|
+      - next unless file.include? "/"
+      - name = "#{ sample } - #{ file.sub(".gz",'') }"
+      %li
+        %a(href="#{[base_url,sample,file] * "/"}")= name
+

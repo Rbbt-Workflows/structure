@@ -232,7 +232,7 @@ module Structure
       end
 
       n = Misc.insist do
-        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :persist => true, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
           Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
         end
       end

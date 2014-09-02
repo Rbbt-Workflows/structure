@@ -23,38 +23,39 @@ Workflow.require_workflow "Structure"
 Workflow.require_workflow "COSMIC"
 Workflow.require_workflow "Sample"
 
+def prepare_dir(dir)
+  FileUtils.mkdir_p dir unless File.exists? dir
+end
+
 sample = Sample.setup ARGV.shift.dup
 
 directory = Path.setup(options[:directory].dup)
 FileUtils.mkdir_p directory unless File.directory? directory
 
-%W(mutated_isoform_annotations mutated_isoform_neighbour_annotations).each do |task|
-  FileUtils.mkdir_p directory[sample][task] unless File.directory? directory[sample][task] 
-  task_name = task =~ /neigh/ ? :structure_annotations : :structure_neighbour_annotations
-  sample.send(task_name,false).run(true).join.dependencies.each do |dep|
+%w(consequence mutation_genes mutation_mi_annotations).each do |database|
+  prepare_dir directory[sample].genomic_mutation_annotations
+  job = sample.send(database, false).run(true).join
+  FileUtils.cp job.path, directory[sample].genomic_mutation_annotations[database]
+end
+
+%w(mutated_isoform_annotations mutated_isoform_neighbour_annotations).each do |task|
+  prepare_dir directory[sample][task] 
+  task_name = task =~ /neigh/ ? :structure_neighbour_annotations : :structure_annotations
+  sample.send(task_name,false).dependencies.each do |dep|
+    dep.fork.grace.join
     next unless dep.path =~ /annotate_mi/
       database = dep.inputs[:database]
     FileUtils.cp dep.path, directory[sample][task][database]
   end
 end
 
-def prepare_dir(dir)
-  FileUtils.mkdir_p dir unless File.exists? dir
-end
-
-%W(mutation_mi_annotations consequence mutation_genes).each do |database|
-  prepare_dir directory[sample].genomic_mutation_annotations
-  job = sample.send(database, false).run(true).join
-  FileUtils.cp job.path, directory[sample].genomic_mutation_annotations[database]
-end
-
-%W(interfaces db_NSFP mutation_mi_annotations).each do |database|
+%w(interfaces).each do |database|
   prepare_dir directory[sample].mutated_isoform_annotations
   job = sample.send(database, false).run(true).join
   FileUtils.cp job.path, directory[sample].mutated_isoform_annotations[database]
 end
 
-%W(db_NSFP).each do |database|
+%w(db_NSFP).each do |database|
   job = sample.send(database, false).run(true).join
   TmpFile.with_file do |tmp|
     all_fields = TSV.parse_header(job.path).all_fields
