@@ -30,7 +30,7 @@ ENSP00000449454:E433D). When inputing genomic mutations, the consequence of
 this mutations in terms of mutated isoforms is computed automatically. Genomic
 mutations can be reported in Chromosome:Position:AlternativeAllele format (e.g.
 1:19949995:T) or in VCF format. Normaly genomic mutations are given always with
-respect to the watson or forward strand. This is the default. Sometimes,
+respect to the Watson or forward strand. This is the default. Sometimes,
 however, mutations are given with respect to the strand that encodes de gene;
 If this is the case, specify `watson` to be `false`. The version of the methods
 using mutated isoforms as input have the `_mi_` term in their name. The

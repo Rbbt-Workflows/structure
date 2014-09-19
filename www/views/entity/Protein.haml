@@ -1,3 +1,4 @@
+- require 'rbbt/sources/COSMIC/knowledge_base'
 - entity_card = EntityCard.new(entity)
 - entity_card.name = entity
 - entity_card.long_name = "#{entity.gene.name} Protein Isoform"  if entity.gene
@@ -67,25 +68,28 @@
                 %option(value=c)= c
 
 
-        - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => true}
+        - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
         - filter "Primary site"
-        = table :id => "COSMIC mutations for #{ entity }" do
+        = table :table_id => "COSMIC mutations for #{ entity.name || entity }", :row_ids => :consume do
+          - associations = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [entity], :source => :all).tsv.to_double
 
-          - tsv = TSV.setup(entity.gene.COSMIC_rsids, :key_field => "Mutation ID", :fields => [], :type => :double)
-          - tsv.attach CMD.cmd('grep -v "_ENST"', :in => COSMIC.mutations.open, :pipe => true), :fields => ["Genomic Mutation", "Primary site", "Site subtype", "Primary histology", "Histology subtype"]
+          - log :sample_mutations
+          - sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true).reorder("Genomic Mutation", nil)
+          - sample_mutations.fields = ["Sample"]
 
-          - mutations = GenomicMutation.setup(tsv.column("Genomic Mutation").values.flatten, "COSMIC mutations over #{entity.gene}", Organism.default_code("Hsa"), false)
-          - mutation_isoforms = Misc.process_to_hash(mutations){|list| list.mutated_isoforms}
-          - tsv.add_field "Change" do |key, values|
-            - mutation = values[0].first
-            - mis = mutation_isoforms[mutation]
-            - mi = mis.select_by(:protein){|p| p == entity}.select_by(:consequence){|c| c != "SYNONYMOUS"}.first unless mis.nil?
-            - mi.nil? ? [""] : [mi.change]
+          - associations = associations.attach(sample_mutations)
 
-          - tsv = tsv.reorder("Genomic Mutation", tsv.fields - ["Genomic Mutation"])
-          - tsv.namespace = Organism.default_code("Hsa")
-          - tsv.entity_options = {:watson => true}
-          - tsv.select("Change"){|c| ! c.flatten.empty?}
+          - log :sample_info
+          - sample_info = COSMIC.sample_info.find.tsv
+          - sample_info.key_field = "Sample"
+
+          - associations = associations.attach(sample_info)
+
+          - good_fields = associations.fields - ["Ensembl Protein ID"]
+
+          - log :slice_and_show
+          - associations.slice(good_fields)
+ 
 
         :javascript
           $('.COSMIC ul.highlight > li > a.highlight').click(function(){
@@ -104,12 +108,9 @@
                 data = JSON.parse(data);
                 var change_positions = [];
                 for (mutation in data){
-                  var changes = data[mutation];
-                  for (i in changes){
-                    var c = changes[i];
-                    if (m = c.match(/(\d+)/)){
-                      change_positions.push(parseInt(m[1]));
-                    }
+                  var change = data[mutation][0];
+                  if (m = change.match(/[A-Z*](\d*)[A-Z*]/)){
+                    change_positions.push(parseInt(m[1]));
                   }
                 }
                 var isoform_svg= $('.isoform_svg_tool');
@@ -117,9 +118,9 @@
                 var sequence = $('.sequence_tool');
                 var color = table.parent('dd').find('select').val();
 
-                if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_sequence_positions', change_positions, color); }
-                isoform_svg.isoform_svg_tool('mark_position', change_positions, color);
                 sequence.sequence_tool('mark_positions', change_positions, color);
+                isoform_svg.isoform_svg_tool('mark_position', change_positions, color);
+                if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_sequence_positions', change_positions, color); }
               }
             })
 

@@ -1,5 +1,9 @@
 @import '_rbbt'
 
+dd 
+  max-height: 700px
+  overflow: auto
+
 dd > select
   @media #{$only-large}
     width: 300px
@@ -13,3 +17,8 @@ ul.controls, ul.highlight
       width: 100px
     select
       width: 300px
+
+div.sequence_tool
+  &>span
+    overflow: auto
+    display: inline-block
