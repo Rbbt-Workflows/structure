@@ -1,4 +1,4 @@
-@import '_rbbt'
+@import 'rbbt/button'
 
 dd 
   max-height: 700px
@@ -8,15 +8,16 @@ dd > select
   @media #{$only-large}
     width: 300px
 ul.controls, ul.highlight
-  +rbbt_menu(#fff)
   width: auto
+  margin-bottom: $vindent
   li
-    +rbbt_menu_item(#fff)
-    margin-left: $indent
-    a
+    display: inline-block
+    &.button
+      +rbbt_button()
+    //a
       width: 100px
-    select
-      width: 300px
+    //select
+      width: auto
 
 div.sequence_tool
   &>span

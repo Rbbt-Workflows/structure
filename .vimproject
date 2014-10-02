@@ -79,6 +79,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     sequence.haml
    }
    entity=entity{
+    MutatedIsoform.haml
     Protein.haml
    }
   }

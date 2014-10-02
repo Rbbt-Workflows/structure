@@ -1,4 +1,5 @@
-- require 'rbbt/sources/COSMIC/knowledge_base'
+- require 'rbbt/knowledge_base/COSMIC'
+
 - entity_card = EntityCard.new(entity)
 - entity_card.name = entity
 - entity_card.long_name = "#{entity.gene.name} Protein Isoform"  if entity.gene
@@ -16,20 +17,28 @@
   = link_css '/stylesheets/protein'
 
   %dl.tabs
-    %dt Controls
-    %dd
+    - if user
+      %dt Controls
+      %dd
+        .controls
+          %ul.controls
+            %li.button
+              %a.clear(href="#") clear
+            %li.button
+              %a.aligned(href="#") mark alignment
+
+          = action_parameters nil, {:klass => ''}, :action => '#' do
+            - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
+            - input :color, :select, "Color to use", 'green', :select_options => colors
+
+    %dt.show SVG
+    %dd.show
       .controls
         %ul.controls
-          %li
+          %li.button
             %a.clear(href="#") clear
+          %li.button
             %a.aligned(href="#") mark alignment
-
-        = action_parameters nil, {:klass => ''}, :action => '#' do
-          - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
-          - input :color, :select, "Color to use", 'green', :select_options => colors
-
-    %dt SVG
-    %dd
       .svg
         = tool :isoform_svg, :protein => entity, :sequence => entity.sequence, :height => 200
       .sequence
@@ -37,14 +46,23 @@
 
     %dt JMOL
     %dd
+      .controls
+        %ul.controls
+          %li.button
+            %a.clear(href="#") clear
+          %li.button
+            %a.aligned(href="#") mark alignment
       .jmol
         = tool :jmol, :protein => entity
 
     %dt Appris
     %dd.Appris
-      %select(name='color')
-        - colors.each do |c|
-          %option(value=c)= c
+      .controls
+        %ul.controls
+          %li
+            %select(name='color')
+              - colors.each do |c|
+                %option(value=c)= c
       %dl
         - (entity.appris_residues || []).each do |type, list|
           %dt= Misc.humanize type
@@ -60,7 +78,7 @@
       = fragment do
 
         %ul.highlight
-          %li
+          %li.button
             %a.highlight(href="#") highlight
           %li
             %select(name='color')
@@ -71,7 +89,8 @@
         - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
         - filter "Primary site"
         = table :table_id => "COSMIC mutations for #{ entity.name || entity }", :row_ids => :consume do
-          - associations = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [entity], :source => :all).tsv.to_double
+          - association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [entity], :source => :all)
+          - associations = association_items.tsv.to_double
 
           - log :sample_mutations
           - sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true).reorder("Genomic Mutation", nil)
@@ -200,9 +219,12 @@
 
       %dt UniProt features
       %dd.UniProt_features
-        %select(name='color')
-          - colors.each do |c|
-            %option(value=c)= c
+        .controls
+          %ul.controls
+            %li
+              %select(name='color')
+                - colors.each do |c|
+                  %option(value=c)= c
         %ul
           - features = UniProt.features(entity.uniprot)
           - feature_types = {}

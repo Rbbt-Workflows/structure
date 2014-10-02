@@ -1,0 +1,57 @@
+- entity_card = EntityCard.new(entity)
+
+- entity_card.name = "MutatedIsoform"
+- entity_card.long_name = entity
+
+- entity_card.meta do
+  %dl
+    - if entity.protein
+      %dt Protein
+      %dd= entity.protein.link
+
+    - if entity.protein.gene
+      %dt Gene
+      %dd= entity.protein.gene.link
+
+    %dt Consequence
+    %dd= entity.consequence
+
+    %dt Change
+    %dd= entity.change
+
+    - if entity.truncated
+      - ablated_domains = entity.ablated_domain_positions
+      - if ablated_domains.any?
+        %dt Ablated IntePro domains
+        %dd
+          %ul.clean_list
+            - ablated_domains.each do |domain,s,e|
+              %li
+                - InterProDomain.setup(domain, entity.organism)
+                - pfam = domain.pfam
+                - if pfam
+                  == #{domain.link} (#{pfam.link pfam}) [#{s} - #{e}]
+                - else
+                  == #{domain.link} [#{s} - #{e}]
+
+
+    - if defined? DbNSFP
+      %dt Mutation Assessor 
+      %dd= entity.mutation_assessor_scores || "NA"
+
+      %dt SIFT
+      %dd= entity.sift_scores || "NA"
+
+
+- if entity =~ /ENSP/
+  - entity_card.description do
+    = fragment do
+      .svg(style="width:100%")
+        - begin
+          = entity.marked_svg 
+        - rescue Exception
+          Could not download protein SVG, try again later. #{$!.message}
+
+- entity_card.action_controller = default_action_controller entity
+
+= entity_card_render entity_card

@@ -58,7 +58,7 @@ $.widget("rbbt.jmol_tool", {
   },
 
   alignment_map: function(complete){
-    return(rbbt_job("Structure", "alignment_map", {sequence: this.options.sequence, pdb: this._wrapper().getProperty("filename").filename}, complete))
+    return(rbbt_job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._wrapper().getProperty("filename").filename}, complete))
   },
   
   //{{{ JMOL STUFF

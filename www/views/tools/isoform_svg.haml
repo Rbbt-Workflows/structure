@@ -2,7 +2,12 @@
 .isoform_svg_tool
   .window
     - log :svg, "Downloading SVG"
-    = protein.marked_svg([])
+    - begin
+      = protein.marked_svg([])
+    - rescue Exception
+      %p.error
+        Could not download protein SVG, try again later. #{$!.message}
+
 
   :javascript
 
