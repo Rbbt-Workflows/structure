@@ -45,12 +45,11 @@
 
 - if entity =~ /ENSP/
   - entity_card.description do
-    = fragment do
-      .svg(style="width:100%")
-        - begin
-          = entity.marked_svg 
-        - rescue Exception
-          Could not download protein SVG, try again later. #{$!.message}
+    .svg(style="width:100%")
+      - begin
+        = entity.marked_svg 
+      - rescue Exception
+        Could not download protein SVG, try again later. #{$!.message}
 
 - entity_card.action_controller = default_action_controller entity
 
