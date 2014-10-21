@@ -8,22 +8,22 @@ module Structure
   I3D_INTERACTIONS = Interactome3d.interactions_tsv.tsv :merge => true, :unnamed => true, :persist => true
   I3D_INTERACTIONS_REVERSE = Interactome3d.interactions_tsv.tsv :merge => true, :key_field => "PROT2", :zipped => true, :unnamed => true, :persist => true
 
-  def self.uni2iso(organism = "Hsa")
+  def self.uni2iso(organism = Organism.default_code("Hsa"))
     @@uni2iso ||= {}
     @@uni2iso[organism] ||= Organism.protein_identifiers(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
   end
 
-  def self.iso2uni(organism = "Hsa")
+  def self.iso2uni(organism = Organism.default_code("Hsa"))
     @@iso2uni ||= {}
     @@iso2uni[organism] ||= Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
   end
 
-  def self.iso2seq(organism = "Hsa")
+  def self.iso2seq(organism = Organism.default_code("Hsa"))
     @@iso2seq ||= {}
     @@iso2seq[organism] ||= Organism.protein_sequence(organism).tsv :persist => true, :unnamed => true
   end
 
-  def self.neighbours_i3d(protein, positions, organism = "Hsa", only_pdb = false)
+  def self.neighbours_i3d(protein, positions, organism = Organism.default_code("Hsa"), only_pdb = false)
 
     uniprot = iso2uni(organism)[protein]
     sequence = iso2seq(organism)[protein]
@@ -77,7 +77,7 @@ module Structure
     tsv
   end
 
-  def self.interface_neighbours_i3d(protein, positions, organism = "Hsa")
+  def self.interface_neighbours_i3d(protein, positions, organism = Organism.default_code("Hsa"))
     tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Position", "Partner Ensembl Protein ID", "PDB", "Partner residues"], :type => :double)
 
     uniprot = iso2uni(organism)[protein]

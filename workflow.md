@@ -22,6 +22,12 @@ proteins and protein complexes.
 Pairwise (Smith-Watterman) alignment is used to fix all inconsistencies between
 protein sequences in PDBs, Uniprot and Ensembl Protein ID.
 
+### Reference:
+
+Vazquez M, Valencia A, Pons T. (2014) Structure-PPi:_ a module for the
+annotation of cancer-related single-nucleotide variants at protein-protein
+interfaces_. *Bioinformatics* (submitted)
+
 # Tasks
 
 The annotation tasks take either genomic mutations or mutated isoforms. Mutated
@@ -128,3 +134,4 @@ PDB into positions inside a given sequence.
 
 Translate the positions inside a given amino-acid sequence to positions in the
 sequence of a PDB by aligning them
+

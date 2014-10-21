@@ -171,7 +171,7 @@ module Structure
   #{{{ NEIGHBOURS
   
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
-  input :organism, :string, "Organism code", "Hsa"
+  input :organism, :string, "Organism code", Organism.default_code("Hsa")
   task :mi_neighbours => :tsv do |mis,organism|
     annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB", "Neighbours"], :type => :double
     annotations.init
@@ -213,7 +213,7 @@ module Structure
   end
 
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
-  input :organism, :string, "Organism code", "Hsa"
+  input :organism, :string, "Organism code", Organism.default_code("Hsa")
   task :mi_interfaces => :tsv do |mis,organism|
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
@@ -251,7 +251,7 @@ module Structure
   end
 
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
-  input :organism, :string, "Organism code", "Hsa"
+  input :organism, :string, "Organism code", Organism.default_code("Hsa")
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
   task :annotate_mi => :tsv do |mis,organism,database|
 

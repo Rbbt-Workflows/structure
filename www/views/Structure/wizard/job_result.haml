@@ -1,0 +1,20 @@
+- mis = result.column("Mutated Isoform").values.flatten.compact.uniq
+- MutatedIsoform.setup(mis, result.namespace)
+
+- mis.each do |mi|
+  - mi_values = result.select("Mutated Isoform" => mi)
+  - mi_values.unnamed = false
+  %h5= mi.name
+  %dl
+    %dt Appris
+    %dd
+      %ul
+        - mi_values = result.slice(result.fields.select{|f| f =~ /Appris/  and not f =~ /Neigh/})
+        - mi_values.each do |k,values|
+          - Misc.zip_fields(values).each do |v|
+            %li= mi_values.fields.zip(v).collect{|p| p * "="} * ", "
+      %ul
+        - mi_values = result.slice(result.fields.select{|f| f =~ /Appris/  and f =~ /Neigh/})
+        - mi_values.each do |k,values|
+          - Misc.zip_fields(values.collect{|v| v.first.split(";")}).each do |v|
+            %li= mi_values.fields.zip(v).collect{|p| p * "="} * ", "

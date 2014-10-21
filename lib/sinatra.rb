@@ -9,8 +9,9 @@ require 'rbbt/entity/structure'
 require 'rbbt/entity/gene'
 require 'rbbt/entity/mutated_isoform'
 require 'rbbt/entity/InterPro'
+require 'rbbt/sources/pfam'
 
-[Gene, Protein, MutatedIsoform, InterPro].each do |mod|
+[Gene, Protein, MutatedIsoform, InterProDomain, PfamDomain].each do |mod|
   mod.instance_eval do
     include Entity::REST
   end
@@ -21,3 +22,7 @@ Workflow.require_workflow "Appris"
 require 'rbbt/entity/appris'
 
 $title = "Structure PPI"
+
+post '/wizard' do
+  template_render('wizard', params, "Wizard", :cache_type => :sync)
+end

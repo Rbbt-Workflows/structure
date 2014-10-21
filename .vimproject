@@ -14,10 +14,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
   structure=structure{
    annotator.rb
    workflow=workflow{
-    annotate.rb
-
-    alignments.rb
     helpers.rb
+    alignments.rb
+    annotate.rb
+    wizard.rb
    }
    ssw.rb
    alignment.rb
@@ -48,8 +48,18 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    ssw.h
   }
  }
+ test=test{
+  test_ssw.rb
+  test_uniprot.rb
+ }
+
  www=www {
   views=views {
+   Structure=Structure{
+    wizard=wizard{
+     job_result.haml
+    }
+   }
    partials=partials{
     download.haml
    }
@@ -81,11 +91,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    entity=entity{
     MutatedIsoform.haml
     Protein.haml
+    Protein=Protein{
+     COSMIC.haml
+    }
    }
   }
  }
- test=test{
-  test_ssw.rb
-  test_uniprot.rb
-  }
 }

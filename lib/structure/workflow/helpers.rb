@@ -18,7 +18,7 @@ module Structure
       raise $!
     end
 
-    organism = mutated_isoforms.respond_to?(:organism)? mutated_isoforms.organism || "Hsa" : "Hsa"
+    organism = mutated_isoforms.respond_to?(:organism)? mutated_isoforms.organism || Organism.default_code("Hsa") : Organism.default_code("Hsa")
 
     TSV.setup(residues, :key_field => "Ensembl Protein ID", :fields => ["Residues"], :type => :flat, :cast => :to_i, :namespace => organism)
 

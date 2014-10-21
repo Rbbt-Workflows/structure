@@ -49,3 +49,4 @@ Log.info "Loading Structure with #{ $cpus.inspect }" unless $cpus.nil?
 require 'structure/workflow/alignments'
 require 'structure/workflow/helpers'
 require 'structure/workflow/annotate'
+require 'structure/workflow/wizard'
