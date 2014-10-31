@@ -1,0 +1,22 @@
+@import "compass/css3/transform"
+
+=expandable
+  padding-right: 3em
+  overflow: hidden
+  text-overflow: ellipsis
+  &:before
+    content: "V"
+    float: right
+    margin-right: -2em
+    display: inline-block
+    z-index: 10
+  &.show
+    &:before
+      +rotate(90deg)
+    
+=showable
+  display: none
+  &.show
+    display: inline-block
+    
+  

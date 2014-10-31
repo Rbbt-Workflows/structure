@@ -37,6 +37,8 @@
   - %w(dom_update workflow fragment menu favourites page_type modal reveal actions table list map hide).each do |file|
     - record_js "/js-find/rbbt/#{ file }"
 
+  - record_js '/js-find/isotope/isotope.pkgd.min.js'
+
   - record_js "/js-find/app"
 
   = serve_js
@@ -49,16 +51,18 @@
 
     - unless workflow.documentation[:title].empty?
       %span.title
-      :markdown 
-        #{workflow.documentation[:title]}
+        = workflow.documentation[:title]
 
   %navigation
-    %dl.tasks.clean_list
+    %ul.main_navigation
+      %li
+        %a(href="/") Main page
+
+    %dl.tasks.clean_list.rbbt_menu
       - tasks = workflow.exec_exports + workflow.synchronous_exports + workflow.asynchronous_exports
 
       - tasks.sort.each do |task|
-        //%a(href="#{to(File.join("/", workflow.to_s, task.to_s))}")= task
-        %dt
+        %dt.next
           %a(href="#{File.join("/", workflow.to_s, task.to_s)}")= task
         - info = workflow.task_info(task)
         %dd
@@ -66,8 +70,26 @@
             %p= info[:description].split(/\n\s*\n/).first
 
   %article
+    - @reload_page = false
     = yield
 
   #modal
-  -#coda
+  #coda
     =partial_render('layout/coda')
+    -#:javascript
+      $('navigation .tasks dt a').click(function(){
+
+        var article = $('article')
+        article.hide()
+        var href = $(this).attr('href')
+        console.log(href)
+        href = add_parameter(href, '_layout',false)
+
+        get_ajax({url: href, async: true}, function(data){
+          console.log("success")
+          article.html(data)
+          article.show()
+        })
+        
+        return false
+      })

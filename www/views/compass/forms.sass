@@ -1,15 +1,7 @@
 form
-  +leading-border(1px)
   +container
   .input
     +rhythm(0.5,0.5,0.5,0.5)
-    +medium_block
-    +first
-    &.array, &.tsv, &.text, &.file
-      @media #{$not-large}
-        width: 100%
-      @media #{$only-large}
-        +large_block
 
     textarea
       width: 100%
@@ -48,11 +40,17 @@ select.format
   width: auto
 
 .input.submit:last-child
-  @media #{$only-large}
-    width: 99%
+  width: 100%
   clear: both
   min-height: 0
   text-align: left
-  +leading-border(1px)
     
 
+.input:not(.submit)
+  +small_block
+  &.masonry
+    margin: 0 !important
+    margin-right: 1em !important
+  &.array, &.tsv, &.text, &.file
+    overflow: hidden
+    +medium_block

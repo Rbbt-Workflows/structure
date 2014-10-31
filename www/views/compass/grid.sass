@@ -1,26 +1,28 @@
+@import "compass/utilities/general/clearfix"
 @import "compass/reset"
 @import "normalize"
 
-//@import "fonts"
-@import "reveal"
-@import "font-scale"
 @import "text"
-@import "columns"
-@import "blocks"
 
+@import "base/blocks"
+@import "base/columns"
+
+@import "reveal"
 @import "forms"
 @import "lists"
 @import "buttons"
 @import "table"
+@import "menu"
+@import "result"
 
 
 // STYLES
 
+@import "compass/css3/border-radius"
+
 =stripes
   background: repeating-linear-gradient( 0deg, #BBBBBB 24px, #FFFFFF 48px)
 
-=page-title
-  +medium
 
 body
   //+stripes
@@ -30,15 +32,17 @@ body
 
   +normal
   & > header:first-child
-    +large
+    +very-large
+    margin-bottom: rhythm(1)
     .title
-      +font-scale(1)
+      display: block
+      +font-scale(0.7)
 
 =box($size: 1 of 2)
   @media #{$not-small}
     +column($size)
 
-article, header
+article
   +container()
   @media #{$not-small}
     margin: 0 span(1 of 18)
@@ -46,24 +50,61 @@ article, header
 section.documentation
   @media #{$not-small}
     +column_text
-  +rhythm(1,0,2,0)
+  +rhythm(0,0,1,0)
 
 navigation
   +rhythm(0,0,0,2)
   +box(first 1 of 4)
   margin-right: 0px !important
-  dd
-    +font-scale(0.8)
 
 article
   +box(last 3 of 4)
   
+ul.main_navigation
+  +clean_list
+  margin: 0
+  padding: 0
+  li
+    margin: 0
+    padding: 0
+    display: block
+  a
+    text-decoration: none
+    +button(0)
+  
 .clean_list
   +clean_list
   dt
-    +button(0px)
+    +button(0)
+    
+    &:hover
+      background: linear-gradient( 10deg, #fff 24px, #eee 48px)
+      +border-radius(5px,5px)
+
+    +expandable
+    margin: 0
+    margin-top: rhythm(0.5)
+    *, &
+      text-decoration: none
   dd
+    +showable
     +indented
     p
       margin: 0px
 
+body:before
+  +very-small
+  clear: both
+  content: "Beta"
+  display: inline-block
+  height: rhythm(1)
+  background: rgba(255,255,255,250)
+  position: fixed
+  bottom: 0
+  right: 1em
+  text-align: right
+
+.examples
+  +clean_list
+  a
+    +button(0,0.5)

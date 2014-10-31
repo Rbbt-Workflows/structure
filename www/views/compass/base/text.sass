@@ -1,0 +1,16 @@
+@import "base/columns"
+
+=ellipsis_text
+  white-space: nowrap
+  text-overflow: ellipsis
+  overflow: hidden
+  &:hover
+    overflow: visible
+    text-overflow: none
+
+@import "compass/css3/columns"
+=column_text($size: 3)
+  @include columns(30em $size)
+  @include column-gap(2em)
+  text-align: justify
+

@@ -1,0 +1,16 @@
+@import "compass/css3/box-sizing"
+
+body *
+  @include box-sizing(border-box)
+
+@import "susy"
+@import "screen_sizes"
+
+$container-style: fluid
+
+=column($column-size: 1 of 2)
+  +span($column-size)
+
+=small_column($size: 1 of 3)
+  +column($size)
+

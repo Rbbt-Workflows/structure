@@ -1,0 +1,34 @@
+=border( $size: 1px, $padding: 0.25 ) 
+  +rhythm-borders($size,$padding)
+
+=block
+  text-overflow: ellipsis
+  //max-width: 100%
+  //overflow: hidden
+
+=large_block
+  +block
+  @media #{$only-small}
+    width: 100%
+  @media #{$only-very-large}
+    +gallery(1 of 2)
+
+=medium_block
+  +block
+  @media #{$not-small}
+    +gallery(1 of 2)
+  &.masonry
+    @media #{$only-very-large}
+      +gallery(1 of 3)
+
+=small_block
+  +block
+  @media #{$not-small}
+    +gallery(1 of 2)
+  @media #{$only-very-large}
+    +gallery(1 of 4)
+  &.masonry
+    @media #{$only-large}
+      +gallery(3 of 8)
+    @media #{$only-very-large}
+      +gallery(1 of 5)

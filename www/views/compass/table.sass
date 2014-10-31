@@ -55,9 +55,15 @@ $color_table_border: darken($table_color, 5 * $golden-ratio)
       float: left
       margin-right: 1em
     li
-      margin-left: $margin_table_actions
+      a
+        +medium
+        text-decoration: none
+        +button(0,$golden-stepup/2)
       &.active a
-        text-decoration: underline
+        +button(0,$golden-stepup)
+
+      &.inactive a
+        +button(0,$golden-stepup/2)
 
 
     ul.table_actions

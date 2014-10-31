@@ -1,3 +1,22 @@
+@import 'base/fonts'
+@import 'base/text'
+
+@import "compass/typography/vertical_rhythm"
+
+$base-font-size: 16px
+$base-line-height: 24px
+
+@import 'base/font-scale'
+
+@include establish-baseline
+
+@font-face 
+  font-family: 'Open Sans'
+  src: local('Open Sans'), local('OpenSans'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff) format('woff')
+
+body
+  font-family: "Open Sans", "Trebuchet MS", "Noticia Text", Verdana, Arial, "Helvetica Neue", Helvetica, sans-serif
+
 p
   +rhythm(0,0,0,1)
 

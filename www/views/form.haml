@@ -3,8 +3,10 @@
 - task_info = workflow.task_info(task)
 
 .workflow_task(id=id)
-  .description
-    - if task_info[:description]
+  %h3= task.to_s
+
+  - if task_info[:description]
+    .description
       :documentation
         #{task_info[:description]}
 
@@ -53,3 +55,14 @@
             return false
           })
         })
+
+:defferjs
+  var form = $("form#" + '#{id}')
+  form.find('.input').addClass('masonry')
+  form.isotope({itemSelector: '.input',
+    masonry: {
+    //columnWidth: '.grid-sizer'
+    }
+  })
+
+    

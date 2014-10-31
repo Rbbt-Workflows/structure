@@ -67,11 +67,16 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     download.haml
    }
    compass=compass{
-    fonts.sass
-    font-scale.sass
+    base=base{
+     misc.sass
+
+     columns.sass
+     blocks.sass
+     fonts.sass
+     font-scale.sass
+     text.sass
+    }
     text.sass
-    columns.sass
-    blocks.sass
 
     buttons.sass
     lists.sass
@@ -85,19 +90,6 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     isoform_svg.sass
     sequence.sass
     protein.sass
-
-    ggs.scss
-    ggs2.scss
-    ggs=ggs{
-     normalize.sass
-     fluid.sass
-     baseline.sass
-     typography.sass
-     colours.sass
-     ie.sass
-     grid.sass
-    }
-    ggs.sass
     structure.sass
    }
    public=public{
