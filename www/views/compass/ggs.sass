@@ -1,0 +1,245 @@
+/*
+ **
+ **  Golden Grid System (1.01)  <http://goldengridsystem.com/>
+ **  by Joni Korpi        <http://jonikorpi.com/>
+ **  licensed under MIT     <http://opensource.org/licenses/mit-license.php>
+ **/
+
+@import 'ggs/normalize'
+@import 'ggs/fluid'
+@import 'ggs/baseline'
+@import 'ggs/typography'
+@import 'ggs/colours'
+@import 'ggs/ie'
+@import 'ggs/grid'
+
+
+article p
+  margin-bottom: 1.5em
+  -webkit-hyphens: auto
+  -moz-hyphens: auto
+  hyphens: auto
+
+#content
+  figure, header p
+    margin-bottom: 1.5em
+    -webkit-hyphens: auto
+    -moz-hyphens: auto
+    hyphens: auto
+
+article p:last-child
+  margin-bottom: 0
+
+#content header p
+  padding-bottom: 1.4375em
+  border-bottom: 0.0625em dotted #3d3c38
+  margin: 0
+
+h2
+  margin-bottom: 0.46153846153846156em
+
+h3
+  margin: 3em 0 1.5em
+
+#download h3, #guide h3
+  margin: 1.5em 0 0
+
+#colophon h3
+  border-bottom: 0.0625em dotted #9e9c95
+  margin: 0 0 0.6875em
+
+
+/*
+ **
+ **  Four-column grid active
+ **  ----------------------------------------
+ **  Margin   | #  1   2   3   4   |   Margin
+ **  5.55555% | %  25  50  75  100 | 5.55555%
+ **/
+
+#masthead, #content, .inner
+  margin: 0 5.555555555555555%
+
+.wrapper
+  position: relative
+
+#masthead
+  clear: both
+  padding: 2.25em 0 1.5em
+
+#guides
+  height: 7.5em
+  position: relative
+  background: #171409
+
+.ggs-site-guide
+  height: 100%
+  position: absolute
+  top: 0
+  z-index: 9000
+  margin-left: -0.75em
+  border: solid #ffc300
+  background: #ffc300
+  border-width: 0 0.75em
+  -webkit-transition: all 0.618s ease-out
+  -moz-transition: all 0.618s ease-out
+  -ms-transition: all 0.618s ease-out
+  -o-transition: all 0.618s ease-out
+  transition: all 0.618s ease-out
+  div
+    background: #171409
+    width: 2px
+    height: 100%
+    position: absolute
+    left: -1px
+    top: 0
+
+#content
+  margin-bottom: 3em
+  header
+    padding-top: 3em
+
+#features figure
+  width: 100%
+  height: 12em
+
+.canvas
+  background: #171409
+  position: relative
+  height: 100%
+  overflow: hidden
+
+.gutter, .margin
+  height: 100%
+  width: 1.5em
+  background: #ffc300
+  position: absolute
+  left: 25%
+  top: 0
+  margin-left: -0.75em
+
+.gutter2
+  left: 50%
+
+.gutter3
+  left: 75%
+
+.gutter div
+  height: 100%
+  position: absolute
+  left: 50%
+  top: 0
+  margin-left: -0.0625em
+  width: 0.125em
+  background: #171409
+
+.margin
+  left: 0
+  margin: 0
+  width: 0.75em
+
+.right
+  left: auto
+  right: 0
+
+.line
+  height: 1.4375em
+  border-bottom: 0.0625em dotted #ffc300
+
+.text
+  position: absolute
+  left: 0.75em
+  top: 1.5em
+  color: #ffc300
+  white-space: pre
+
+.switch
+  position: absolute
+  right: 1.5em
+  top: 1.5em
+  width: 1.5em
+
+.switchBar
+  height: 0.25em
+  margin-bottom: 0.25em
+  background: #ffc300
+
+#folding
+  .gutter1, .gutter3
+    background: none
+    border: dashed #ffc300
+    border-width: 0 0.0625em
+    width: 1.375em
+
+#gutters
+  .canvas
+    background: #171409
+  .gutter, .margin
+    background: #ffc300
+
+#baseline .canvas
+  background: #171409
+
+#guide
+  clear: both
+
+#colophon
+  clear: both
+  padding: 1.5em 0 0
+  background: #171409
+
+#follow
+  margin-bottom: 1.5em
+
+#promoGroup
+  .wrapper
+    margin-bottom: 1.5em
+  p
+    padding-left: 5.25em
+
+#colophon img
+  width: 4.5em
+  height: 4.5em
+  float: left
+  -webkit-border-radius: 0.1875em
+  -moz-border-radius: 0.1875em
+  border-radius: 0.1875em
+  overflow: hidden
+
+#copyright
+  padding-bottom: 2.25em
+
+/*
+ **
+ **  Zoom baseline grid to 17/16 = 1.0625
+ **/
+@media screen and (min-width: 40em)
+  body
+    font-size: 1.0625em
+  #guides
+    height: 12em
+  #colophon:after
+    content: " "
+    display: block
+    height: 0
+    visibility: hidden
+    clear: both
+  #promoGroup
+    -webkit-box-sizing: border-box
+    -moz-box-sizing: border-box
+    -o-box-sizing: border-box
+    -ms-box-sizing: border-box
+    box-sizing: border-box
+    width: 50%
+    float: left
+  #follow, #copyright
+    width: 50%
+    float: left
+  #promoGroup
+    float: right
+  #copyright p
+    font-size: 1em
+    line-height: 1.5em
+  #promoGroup #promo, #copyright
+    margin-bottom: 3em
+

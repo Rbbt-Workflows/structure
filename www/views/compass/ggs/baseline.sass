@@ -1,0 +1,72 @@
+/*
+ **
+ ** Zoomable baseline grid
+ ** type size presets
+ **
+
+body
+  font-size: $font-size
+  line-height: 1.5em
+
+=small()
+  font-size: 0.8125em
+  line-height: 1.3846153846153846em
+.small, small, code, #copyright p
+  +small
+
+=normal()
+  font-size: 1em
+  line-height: 1.5em
+.normal, h4, h3
+  +normal
+
+=large()
+  font-size: 1.625em
+  line-height: 1.3846153846153846em
+.large, h2, h1
+  +large
+
+=huge()
+  font-size: 2.625em
+  line-height: 1.1428571428571428em
+.huge
+  +huge
+
+=massive()
+  font-size: 4.25em
+  line-height: 1.0588235294117647em
+.massive
+  +massive
+
+=gigantic()
+  font-size: 6.875em
+  line-height: 1.0909090909090908em
+.gigantic
+  +gigantic
+
+
+/*
+ **
+ **  Zoom baseline grid to 17/16 = 1.0625
+ **/
+@media screen and (min-width: 40em)
+  body
+    font-size: 1.0625em
+
+@media screen and (min-width: 105em)
+  body
+    font-size: 1.0625em
+
+@media screen and (min-width: 2496px)
+  body
+    font-size: 1.125em
+
+@media screen and (min-width: 4104px)
+  body
+    font-size: 1.1875em
+
+@media screen and (min-width: 4440px)
+  body
+    position: relative
+    max-width: 5120px
+

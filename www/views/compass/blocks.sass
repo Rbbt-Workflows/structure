@@ -1,0 +1,44 @@
+=border($size: 1px, $padding: 0.5)
+  +rhythm-borders($size,$padding)
+  
+
+=ellipsis_text
+  white-space: nowrap
+  text-overflow: ellipsis
+  overflow: hidden
+  &:hover
+    overflow: visible
+    text-overflow: none
+
+=block
+  //max-width: 100%
+  //overflow: hidden
+
+=large_block
+  +block
+  @media #{$only-very-large}
+    +span(45%)
+    margin-right: 2.5%
+    margin-left: auto
+
+=medium_block
+  +block
+  @media #{$only-large}
+    +span(45%)
+    margin-right: 2.5%
+    margin-left: auto
+  @media #{$only-very-large}
+    +span(30%)
+
+=small_block
+  +block
+  @media #{$not-small}
+    +span(50%)
+    +span(45%)
+    margin-right: 2.5%
+  @media #{$only-large}
+    +span(30%)
+    margin-right: 1.5%
+  @media #{$only-very-large}
+    +span(23%)
+    margin-right: 1%

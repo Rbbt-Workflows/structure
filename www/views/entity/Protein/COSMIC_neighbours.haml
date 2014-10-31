@@ -1,4 +1,3 @@
-
 - organism = COSMIC.organism
 - name = entity.name || entity
 
@@ -12,9 +11,12 @@
 - mutation_isoform_info = mutation_isoform_info.attach(sample_mutations)
 - mutation_isoform_info = mutation_isoform_info.attach(Structure.COSMIC_mutation_annotations, :fields => ["Primary site", "Site subtype", "Primary histology", "Histology subtype"])
 
+- positions = mutation_isoform_info.column("Change").values.flatten.uniq.collect{|c| c.match(/(\d+)/)[0] }.compact.uniq
+- map = Structure.neighbours_i3d(entity, positions, organism, true)
 - databases = Structure::ANNOTATORS.keys
 - database_feature_counts = {}
 - feature_locations = {}
+- extra = 0
 - databases.each do |database|
   - next if database == "COSMIC"
   - annotator = Structure::ANNOTATORS[database]
@@ -30,9 +32,17 @@
   - mutation_isoform_info = mutation_isoform_info.add_fields annotator.fields do |k,v|
     - new = [[]] * annotator.fields.length
     - samples = v["COSMIC Sample"].length
-    - v["Change"].each do |c|
-      - residue = c.match(/(\d+)/)[1].to_i
-      - values = annotator.annotate(entity, residue, organism)
+    - changes = v["Change"]
+    - residues = changes.collect do |change|
+      - residue = change.match(/(\d+)/)[1].to_i
+      - residues = []
+      - if map and map[[entity,residue]*":"]
+        - nei = map[[entity, residue] * ":"]["Neighbours"].split(";") 
+        - extra += nei.length
+        - residues.concat nei
+      - residues
+    - residues.flatten.compact.uniq.each do |residue|
+      - values = annotator.annotate(entity, residue.to_i, organism)
       - next if values.nil?
       - seen = []
       - if location_pos
@@ -55,13 +65,13 @@
 - all_sample_hits = mutation_isoform_info.column("COSMIC Sample").values.flatten
 - num_samples = all_sample_hits.uniq.length.to_f
 - aas = entity.sequence.length.to_f * num_samples
-- global_frequency = all_sample_hits.length.to_f / aas
+- global_frequency = (all_sample_hits.length + extra).to_f / aas
 - TSV.setup(feature_counts, :key_field => "Feature", :fields => ["Counts"], :type => :single, :namespace => organism)
 - header "Binomial Significance", NumericValue
-
 .row
   .column
-    = table :page => "1~Binomial Significance", :table_id => "Most affected features in COSMIC for #{ name }" do
+    - caption = "* pvalues are only orientative"
+    = table :page => "1~Binomial Significance", :table_id => "Most affected neighbouring features (not including mutated residue) in COSMIC for #{ name }", :caption => caption do
       - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
         - counts = v["Counts"]
         - location = feature_locations[feature]
@@ -88,17 +98,3 @@
           - ""
 
       - tsv
-
-  .column
-    =fragment do
-      - mutations = association_items.source.sort
-      - interfaces = Structure.job(:interfaces, nil, :mutations => mutations, :organism => organism, :watson => false, :principal => true).run
-      - header "Partner protein", "Protein"
-      = table :table_id => "Affected #{name} PPIs from COSMIC mutations" do
-        - counts = Misc.counts(interfaces.column("Ensembl Protein ID").values.collect{|v| v.uniq }.flatten)
-        - TSV.setup(counts, :key_field => "Partner protein", :fields => ["Counts"], :type => :single, :namespace => organism)
-
-- header "Genomic Mutation", GenomicMutation, :watson => false
-= table :page => "1~COSMIC Sample", :table_id => "COSMIC feature annotations for #{name}" do
-  - mutation_isoform_info
-

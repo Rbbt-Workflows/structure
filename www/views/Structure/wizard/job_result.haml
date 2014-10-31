@@ -1,20 +1,115 @@
 - mis = result.column("Mutated Isoform").values.flatten.compact.uniq
 - MutatedIsoform.setup(mis, result.namespace)
 
-- mis.each do |mi|
-  - mi_values = result.select("Mutated Isoform" => mi)
-  - mi_values.unnamed = false
-  %h5= mi.name
-  %dl
-    %dt Appris
-    %dd
-      %ul
-        - mi_values = result.slice(result.fields.select{|f| f =~ /Appris/  and not f =~ /Neigh/})
-        - mi_values.each do |k,values|
-          - Misc.zip_fields(values).each do |v|
-            %li= mi_values.fields.zip(v).collect{|p| p * "="} * ", "
-      %ul
-        - mi_values = result.slice(result.fields.select{|f| f =~ /Appris/  and f =~ /Neigh/})
-        - mi_values.each do |k,values|
-          - Misc.zip_fields(values.collect{|v| v.first.split(";")}).each do |v|
-            %li= mi_values.fields.zip(v).collect{|p| p * "="} * ", "
+- databases = Structure::ANNOTATORS.keys
+- database_feature_counts = {}
+- feature_locations = {}
+
+
+- organism = result.namespace
+- proteins = {}
+- mis.collect{|mi| protein = mi.partition(":").first; proteins[protein] ||= []; proteins[protein] << mi}
+%dl.rbbt_tabs
+  - first = true
+  - proteins.each do |protein,protein_mis|
+    - protein = Protein.setup(protein.dup, "Ensembl Protein ID", organism)
+    - name = protein.name
+    %dt.next=name
+    %dd(class="#{first ? 'show' : ''}")
+      - first = false
+      - mutation_isoform_info = TSV.setup(protein_mis, :fields => [], :type => :double, :namespace => organism, :key_field => "Mutated Isoform")
+      - databases.each do |database|
+        - next if database == "COSMIC"
+        - annotator = Structure::ANNOTATORS[database]
+
+        - feature_counts = Hash.new(0)
+        - feature_pos = nil
+        - location_pos = nil
+
+        - annotator.fields.each_with_index do |f,i|
+          - feature_pos ||= i if f =~ /description|ID/i
+          - location_pos ||= i if f =~ /location|range/i
+
+        - mutation_isoform_info = mutation_isoform_info.add_fields annotator.fields do |mi,v|
+          - new = [[]] * annotator.fields.length
+          - c = mi.split(":").last
+          - residue = c.match(/(\d+)/)[1].to_i
+          - values = annotator.annotate(protein, residue, organism)
+          - next if values.nil?
+          - seen = []
+          - if location_pos
+            - Misc.zip_fields(values.values_at(feature_pos, location_pos)).each do |entry|
+              - feature, location = entry
+              - next if feature.nil? or feature.empty? or seen.include? feature
+              - seen << feature
+              - feature_counts[feature] += 1
+              - feature_locations[feature] ||= location.split(":").collect{|p| p.to_i}
+          - values.each_with_index do |v,i|
+            - new[i] += v
+          - new.compact!
+          
+
+        - database_feature_counts[database] = feature_counts
+
+      - feature_counts = {}
+      - database_feature_counts.each{|d,c| feature_counts.merge!(c)}
+        
+      - all_sample_hits = protein_mis
+      - num_samples = all_sample_hits.uniq.length.to_f
+      - aas = protein.sequence.length.to_f * num_samples
+      - global_frequency = all_sample_hits.length.to_f / aas
+      - TSV.setup(feature_counts, :key_field => "Feature", :fields => ["Counts"], :type => :single, :namespace => organism)
+      - header "Binomial Significance", NumericValue
+
+      .row
+        .column
+          = table :page => "1~Binomial Significance", :table_id => "Most affected features in for #{ name }" do
+            - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
+              - counts = v["Counts"]
+              - location = feature_locations[feature]
+              - size = location.last - location.first + 1
+              - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ global_frequency }, 'greater')$p.value")
+
+            - tsv = tsv.add_field "Location" do |feature,v|
+              - feature_locations[feature] * ":"
+
+            - tsv = tsv.add_field "Size" do |feature,v|
+              - location = feature_locations[feature]
+              - size = location.last - location.first + 1
+              - size.to_s
+
+            - tsv = tsv.add_field "Description" do |feature,v|
+              - case
+              - when feature =~ /^IPR\d/
+                - feature = InterProDomain.setup(feature.dup, organism) 
+                - feature.link
+              - when (defined? PfamDomain and feature =~ /^PF\d/)
+                - feature = PfamDomain.setup(feature.dup, organism) 
+                - feature.link
+              - else
+                - ""
+
+            - tsv
+
+
+      - header "Genomic Mutation", GenomicMutation, :watson => false
+      = table :table_id => "Annotations for #{name}" do
+        - mutation_isoform_info
+
+      -# mis.each do |mi|
+        - mi_values = result.select("Mutated Isoform" => mi)
+        - mi_values.unnamed = false
+        %h5= mi.name
+        %dl
+          %dt Appris
+          %dd
+            %ul
+              - mi_values = result.slice(result.fields.select{|f| f =~ /Appris/  and not f =~ /Neigh/})
+              - mi_values.each do |k,values|
+                - Misc.zip_fields(values).each do |v|
+                  %li= mi_values.fields.zip(v).collect{|p| p * "="} * ", "
+            %ul
+              - mi_values = result.slice(result.fields.select{|f| f =~ /Appris/  and f =~ /Neigh/})
+              - mi_values.each do |k,values|
+                - Misc.zip_fields(values.collect{|v| (v and v.any?) ? v.first.split(";") : []}).each do |v|
+                  %li= mi_values.fields.zip(v).collect{|p| p * "="} * ", "

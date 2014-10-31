@@ -1,0 +1,58 @@
+form
+  +leading-border(1px)
+  +container
+  .input
+    +rhythm(0.5,0.5,0.5,0.5)
+    +medium_block
+    +first
+    &.array, &.tsv, &.text, &.file
+      @media #{$not-large}
+        width: 100%
+      @media #{$only-large}
+        +large_block
+
+    textarea
+      width: 100%
+      +rhythm(0,0.25,0.25,0,$base-font-size)
+      padding-left: 0.5em
+      padding-right: 0.5em
+      min-height: rhythm(7)
+
+    span.file_or_text_area
+      display: block
+    label
+      display: block
+      +medium
+      +ellipsis_text
+
+span.file_or_text_area
+  display: block
+  &:before
+    content: "\02026"
+
+input[type=text], input[type=number], input[type=file]
+  padding-left: 0.5em
+  padding-right: 0.5em
+  height: 2em
+
+input[type=submit], select, input[type=file]
+  height: 2em
+
+
+input.jobname
+  float: left
+  width: auto
+
+select.format
+  float: left
+  width: auto
+
+.input.submit:last-child
+  @media #{$only-large}
+    width: 99%
+  clear: both
+  min-height: 0
+  text-align: left
+  +leading-border(1px)
+    
+

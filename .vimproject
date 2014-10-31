@@ -55,7 +55,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
 
  www=www {
   views=views {
+   tasks.haml
+   form.haml
    Structure=Structure{
+    layout.haml
     wizard=wizard{
      job_result.haml
     }
@@ -63,12 +66,39 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    partials=partials{
     download.haml
    }
-   tasks.haml
    compass=compass{
+    fonts.sass
+    font-scale.sass
+    text.sass
+    columns.sass
+    blocks.sass
+
+    buttons.sass
+    lists.sass
+    forms.sass
+    table.sass
+    reveal.sass
+
+    grid.sass
+
     jmol.sass
     isoform_svg.sass
     sequence.sass
     protein.sass
+
+    ggs.scss
+    ggs2.scss
+    ggs=ggs{
+     normalize.sass
+     fluid.sass
+     baseline.sass
+     typography.sass
+     colours.sass
+     ie.sass
+     grid.sass
+    }
+    ggs.sass
+    structure.sass
    }
    public=public{
     js=js{
@@ -93,6 +123,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     Protein.haml
     Protein=Protein{
      COSMIC.haml
+     COSMIC_neighbours.haml
     }
    }
   }

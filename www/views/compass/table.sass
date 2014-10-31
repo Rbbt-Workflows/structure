@@ -1,0 +1,190 @@
+$triglecolor: rgba(0,0,0,0.15)
+$margin_table_actions: 7px
+$padding_table: rhythm(0.5) 0.5em
+$table_color: #fff
+$color_table_border: darken($table_color, 5 * $golden-ratio)
+
+=css-triangle($a,$b,$c)
+
+=rbbt_table()
+  +normal
+  min-width: span(1 of 3)
+  max-width: 100%
+
+  caption
+    text-align: left
+    span
+      +normal
+      color: #999
+
+  background-color: lighten($table_color, 5 * $golden-ratio)
+  border: 1px solid $color_table_border
+  padding: $padding_table
+  font-size: 14px
+  margin: rhythm(1)
+  border-collapse: collapse
+  +rhythm(2,0,0,2)
+ 
+  td, th
+    margin: 0
+    padding: rhythm(0.5)
+    text-align: left
+    vertical-align: center
+    height: 2em
+
+  tr:nth-child(2n)
+    background-color: lighten($table_color, 2 * $golden-ratio)
+ 
+  th
+    background-color: darken($table_color, 5 * $golden-ratio)
+
+  &.wide
+    td
+      max-width: 200px
+      overflow: hidden
+      text-overflow: ellipsis
+
+  tfoot
+    th
+      background-color: lighten($table_color, 5)
+    ul.table_actions li
+      margin-left: $margin_table_actions
+    ul.table_pagination
+      +clean_list
+      margin-bottom: 0
+      float: left
+      margin-right: 1em
+    li
+      margin-left: $margin_table_actions
+      &.active a
+        text-decoration: underline
+
+
+    ul.table_actions
+      +clean_list
+      margin-bottom: 0
+      float: left
+      li.filter
+      @media print
+        &
+          display: none
+
+    
+  &.sorted
+    thead
+      tr
+        th
+          position: relative
+
+          &:hover 
+            cursor: pointer
+
+          &.headerSortUp:after, &.headerSortDown:after
+            content: " "
+            float: right
+            right: 0
+ 
+          &.headerSortDown:after
+            margin-top: 5px
+            @include css-triangle(5px, $triglecolor, top)
+
+          &.headerSortUp:after
+            margin-bottom: 5px
+            @include css-triangle(5px, $triglecolor, bottom)
+
+=table_column_selector
+  li
+    @include grid-row()
+
+    span
+      @include ellipsis_text()
+      @include grid-column(8)
+    a
+      @include grid-column(2, $last-column:false)
+
+=responsive_table()
+  caption
+    display: block
+  display: block
+  position: relative
+  width: 100%
+  border-collapse: collapse
+  border-spacing: 0
+  th, td 
+    margin: 0
+    vertical-align: top
+    height: 2em
+
+  th 
+    text-align: left
+
+  thead 
+    display: block
+    float: left
+    max-width: 40%
+    white-space: nowrap
+    overflow: auto
+    overflow-y: hidden
+
+  tfoot
+    width: 100%
+
+  tbody 
+    display: block
+    width: auto
+    position: relative
+    overflow-x: auto
+    white-space: nowrap
+   
+
+  thead tr 
+    display: block
+   
+
+  th 
+    display: block
+    text-align: right
+   
+
+  tbody tr 
+    display: inline-block
+    vertical-align: top
+   
+
+  td 
+    display: block
+    min-height: 1.25em
+    text-align: left
+ 
+  /* sort out borders */
+
+  th 
+    border-bottom: 0
+    border-left: 0
+   
+
+  td 
+    border-left: 0
+    border-right: 0
+    border-bottom: 0
+   
+
+  tbody tr 
+    border-left: 1px solid #babcbf
+   
+
+  //th:last-child, td:last-child 
+  //tfoot
+    border: 2px solid #babcbf
+    border-top: 1px solid #babcbf
+     
+
+@media #{$only-very-small} 
+  table.wide, table.flip
+    +responsive_table
+
+table
+  +rbbt_table
+
+.rbbt_reveal_content
+  +rbbt_reveal_content

@@ -1,0 +1,69 @@
+@import "compass/reset"
+@import "normalize"
+
+//@import "fonts"
+@import "reveal"
+@import "font-scale"
+@import "text"
+@import "columns"
+@import "blocks"
+
+@import "forms"
+@import "lists"
+@import "buttons"
+@import "table"
+
+
+// STYLES
+
+=stripes
+  background: repeating-linear-gradient( 0deg, #BBBBBB 24px, #FFFFFF 48px)
+
+=page-title
+  +medium
+
+body
+  //+stripes
+  padding: 0 span(1 of 32)
+  @media #{$only-large}
+    padding: 0 span(1 of 16)
+
+  +normal
+  & > header:first-child
+    +large
+    .title
+      +font-scale(1)
+
+=box($size: 1 of 2)
+  @media #{$not-small}
+    +column($size)
+
+article, header
+  +container()
+  @media #{$not-small}
+    margin: 0 span(1 of 18)
+
+section.documentation
+  @media #{$not-small}
+    +column_text
+  +rhythm(1,0,2,0)
+
+navigation
+  +rhythm(0,0,0,2)
+  +box(first 1 of 4)
+  margin-right: 0px !important
+  dd
+    +font-scale(0.8)
+
+article
+  +box(last 3 of 4)
+  
+.clean_list
+  +clean_list
+  dt
+    +button(0px)
+  dd
+    +indented
+    p
+      margin: 0px
+

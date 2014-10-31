@@ -17,10 +17,11 @@ module Structure
              :protein
            when /.*:\w+\d+\w+/
              index = Organism.identifiers(organism).index :target => "Ensembl Gene ID", :order => true, :persist => true
-             gene2isoform = Organism.transcripts(organism).tsv :key_field => "Ensembl Gene ID", :fields => ["Ensembl Protein ID"], :type => :flat, :persist => true
+             gene2isoform = Organism.transcripts(organism).tsv :key_field => "Ensembl Gene ID", :fields => ["Ensembl Protein ID"], :type => :flat, :persist => true, :merge => true
+             Log.tsv gene2isoform
              mutations = mutations.collect do |m|
-                gene, _sep, change = m.partition ":"
-                gene = index[gene]
+                orig_gene, _sep, change = m.partition ":"
+                gene = index[orig_gene]
                 gene_proteins = gene2isoform[gene]
                 protein = ( Appris::PRINCIPAL_ISOFORMS & gene_proteins).first
                 [protein, change] * ":"
@@ -73,5 +74,6 @@ module Structure
 
     all_annotations
   end
+
   export_asynchronous :wizard
 end

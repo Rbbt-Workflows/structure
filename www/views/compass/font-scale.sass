@@ -1,0 +1,33 @@
+@import "compass/typography/vertical_rhythm"
+
+$base-font-size: 16px
+$base-line-height: 24px
+
+$golden-ratio: 1.618
+$golden-stepup: $golden-ratio - 1 
+
+@include establish-baseline
+
+=font-scale($step,$font-size: $base-font-size)
+  $new-font-size: $font-size * $step
+  @if $step > 1
+    @include adjust-font-size-to($new-font-size,2)
+  @else
+    @if $step < 1
+      @include adjust-font-size-to($new-font-size,1/2)
+    @else
+      @include adjust-font-size-to($new-font-size,1)
+
+=normal
+  +font-scale(1)
+
+=medium
+  +font-scale(1 + $golden-stepup)
+
+=large
+  +font-scale(1 + $golden-stepup*2)
+
+=very-large
+  +font-scale(1 + $golden-stepup*3)
+
+

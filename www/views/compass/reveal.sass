@@ -1,0 +1,48 @@
+=rbbt_reveal_content
+  display: none !important
+
+=modal
+  +block
+  position: fixed
+  top: 0
+  z-index: 20
+
+  @media #{$not-large}
+    border: 5px solid rgba(0,0,0,0.3)
+  @media #{$only-large}
+    border: 5px solid rgba(0,0,0,0.3)
+
+  min-width: 70%
+  max-height: 90%
+  margin: 50px
+  @media #{$not-large}
+    margin-left: 10px
+    margin-right: 10px
+  overflow: auto
+  & > .header
+    font-size: 1.5em
+    .controls
+      float: right
+      a
+        margin-left: $indent
+    .title
+      float: left
+
+    width: 100%
+    +clear_fix
+    border-bottom: 1px solid grey
+    margin-bottom: $vindent
+
+  &:not(.url)
+    .controls
+      a.link-reveal-modal
+        display: none
+  &:not(.entity)
+    .controls
+      a.toggle_favourite
+        display: none
+
+  a.toggle_favourite.active > i
+    color: gold !important
+
+

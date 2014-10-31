@@ -1,0 +1,20 @@
+p
+  +rhythm(0,0,0,1)
+
+h1
+  +font-scale(1 + $golden-stepup*2)
+  +rhythm(0,0,0,1,$base-font-size * (1 + $golden-stepup*2))
+
+h2 
+  +font-scale(1 + $golden-stepup)
+  +rhythm(0,0,0,1,$base-font-size * (1 + $golden-stepup))
+
+h3, h4
+  margin: 0
+  +font-scale(1 + $golden-stepup/2)
+  +rhythm(0,0,0,0,$base-font-size * (1 + $golden-stepup/2))
+
+h5, h6
+  margin: 0
+  +font-scale(1 + $golden-stepup/3)
+  +rhythm(0,0,0,0,$base-font-size * (1 + $golden-stepup/3))
