@@ -78,12 +78,14 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     }
     text.sass
 
-    buttons.sass
     lists.sass
     forms.sass
     table.sass
     reveal.sass
 
+    buttons.sass
+    menu.sass
+    result.sass
     grid.sass
 
     jmol.sass

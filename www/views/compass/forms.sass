@@ -22,14 +22,10 @@ span.file_or_text_area
   &:before
     content: "\02026"
 
-input[type=text], input[type=number], input[type=file]
+input[type=text], input[type=number], input[type=file], input[type=submit], select, input[type=file]
   padding-left: 0.5em
   padding-right: 0.5em
   height: 2em
-
-input[type=submit], select, input[type=file]
-  height: 2em
-
 
 input.jobname
   float: left
@@ -48,6 +44,8 @@ select.format
 
 .input:not(.submit)
   +small_block
+  input
+    width: 100%
   &.masonry
     margin: 0 !important
     margin-right: 1em !important
