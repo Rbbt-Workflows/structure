@@ -26,3 +26,4 @@ $title = "Structure PPI"
 post '/wizard' do
   template_render('wizard', params, "Wizard", :cache_type => :sync)
 end
+

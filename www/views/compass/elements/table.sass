@@ -1,3 +1,5 @@
+@import "layout/reveal"
+
 $triglecolor: rgba(0,0,0,0.15)
 $margin_table_actions: 7px
 $padding_table: rhythm(0.5) 0.5em
@@ -21,7 +23,6 @@ $color_table_border: darken($table_color, 5 * $golden-ratio)
   border: 1px solid $color_table_border
   padding: $padding_table
   font-size: 14px
-  margin: rhythm(1)
   border-collapse: collapse
   +rhythm(2,0,0,2)
  
@@ -30,7 +31,6 @@ $color_table_border: darken($table_color, 5 * $golden-ratio)
     padding: rhythm(0.5)
     text-align: left
     vertical-align: center
-    height: 2em
 
   tr:nth-child(2n)
     background-color: lighten($table_color, 2 * $golden-ratio)
@@ -51,6 +51,7 @@ $color_table_border: darken($table_color, 5 * $golden-ratio)
       margin-left: $margin_table_actions
     ul.table_pagination
       +clean_list
+      +flat_list
       margin-bottom: 0
       float: left
       margin-right: 1em
@@ -58,16 +59,17 @@ $color_table_border: darken($table_color, 5 * $golden-ratio)
       a
         +medium
         text-decoration: none
-        +button(0,$golden-stepup/2)
+        +button(0px,$golden-stepup/2)
       &.active a
-        +button(0,$golden-stepup)
+        +button(0px,$golden-stepup)
 
       &.inactive a
-        +button(0,$golden-stepup/2)
+        +button(0px,$golden-stepup/2)
 
 
     ul.table_actions
       +clean_list
+      +flat_list
       margin-bottom: 0
       float: left
       li.filter
@@ -179,8 +181,8 @@ $color_table_border: darken($table_color, 5 * $golden-ratio)
     border-left: 1px solid #babcbf
    
 
-  //th:last-child, td:last-child 
-  //tfoot
+  th:last-child, td:last-child 
+  tfoot
     border: 2px solid #babcbf
     border-top: 1px solid #babcbf
      

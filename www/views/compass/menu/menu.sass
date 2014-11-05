@@ -1,0 +1,124 @@
+@import "compass/css3/transform"
+
+$subtle: #999
+=expandable_sign
+  &:after
+    content: "V"
+    float: right
+    margin-right: -2em
+    display: inline-block
+  &.show
+    &:after
+      +rotate(90deg)
+  &:not(.show)
+    &:after
+      color: $subtle
+
+=active
+  font-weight: bold
+
+=hide_next
+  &.next:not(.show) + dd:not(.show)
+    display: none
+  &.next.show
+    +active
+
+=expandable
+  padding-right: 3em
+  overflow: hidden
+  text-overflow: ellipsis
+  +expandable_sign
+  +hide_next
+
+    
+=menu
+  +clean_list
+  +flat_list
+  & > dt
+    +hide_next
+    +noselect
+    +pointer
+    font-family: monospace
+    a
+      +clean_style
+
+=below
+  position: relative
+  & > dd
+    position: absolute
+
+=below_left
+  +below
+  & > dd
+    left: 0
+    
+=below_right
+  +below
+  & > dd
+    right: 0
+
+=top_right
+  position: relative
+  & > dd
+    position: absolute
+    top: 0
+
+=boxed
+  background: white
+  min-height: rhythm(2)
+  +bleed-x(5px)
+  +rhythm-borders(1px, 1/8)
+  padding: 0.25em
+  
+
+=right_content
+  position: absolute
+  top: 0
+  right: 0
+
+=float_content
+  & > dd
+    float: right
+    
+=vertical_menu
+  & > dt
+    float:left
+    clear:both
+    width: 30%
+    overflow: hidden
+    display: block
+
+  & > dd
+    +right_content
+    +boxed
+    border-right: 0
+    border-top: 0
+    border-bottom: 0
+
+    width: 70%
+    height: 100%
+    overflow-x: auto
+
+=horizontal_menu
+  & > dt
+    margin-right: 1em !important
+  & > dd
+    +boxed
+    min-width: 100%
+    
+.rbbt_tabs
+  +menu
+
+.rbbt_menu
+  +menu
+  +horizontal_menu
+  +below_right
+
+.rbbt_vertical_menu
+  +menu
+  +vertical_menu
+
+.tabs
+  +menu
+  +horizontal_menu
+  +float_content

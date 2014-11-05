@@ -5,11 +5,11 @@
   li, dt, dd
     margin: 0px
     padding: 0px
-  li
-    display: inline-block
 
-=indented($offset: 1em)
-  @media #{$only-large}
-    margin-left: $offset
-  @media #{$only-small}
-    margin-left: $offset
+=flat_list()
+  & > li, & > dt
+    display: inline-block
+    vertical-align: bottom
+    & > * 
+      vertical-align: bottom
+

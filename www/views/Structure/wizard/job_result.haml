@@ -14,7 +14,7 @@
   - proteins.each do |protein,protein_mis|
     - protein = Protein.setup(protein.dup, "Ensembl Protein ID", organism)
     - name = protein.name
-    %dt.next=name
+    %dt.next(class="#{first ? 'show' : ''}")=name
     %dd(class="#{first ? 'show' : ''}")
       - first = false
       - mutation_isoform_info = TSV.setup(protein_mis, :fields => [], :type => :double, :namespace => organism, :key_field => "Mutated Isoform")
@@ -63,7 +63,7 @@
 
       .row
         .column
-          = table :page => "1~Binomial Significance", :table_id => "Most affected features in for #{ name }" do
+          = table :page => "1~Binomial Significance", :table_id => "Most affected features for #{ name }" do
             - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
               - counts = v["Counts"]
               - location = feature_locations[feature]

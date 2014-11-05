@@ -2,36 +2,25 @@
   display: none !important
 
 =modal
-  +block
   position: fixed
-  top: 0
-  z-index: 20
+  display: none
+  background: white
 
-  @media #{$not-large}
-    border: 5px solid rgba(0,0,0,0.3)
-  @media #{$only-large}
-    border: 5px solid rgba(0,0,0,0.3)
-
-  min-width: 70%
-  max-height: 90%
-  margin: 50px
-  @media #{$not-large}
-    margin-left: 10px
-    margin-right: 10px
   overflow: auto
+
   & > .header
-    font-size: 1.5em
+    +medium
     .controls
       float: right
       a
-        margin-left: $indent
+        margin-left: 1em
     .title
       float: left
 
     width: 100%
-    +clear_fix
+    +clearfix
     border-bottom: 1px solid grey
-    margin-bottom: $vindent
+    margin-bottom: rhythm(1)
 
   &:not(.url)
     .controls

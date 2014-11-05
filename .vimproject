@@ -55,45 +55,47 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
 
  www=www {
   views=views {
-   tasks.haml
-   form.haml
-   Structure=Structure{
-    layout.haml
-    wizard=wizard{
-     job_result.haml
-    }
-   }
-   partials=partials{
-    download.haml
-   }
    compass=compass{
+    isoform_svg.sass
+    jmol.sass
+    protein.sass
+    sequence.sass
+
     base=base{
      misc.sass
 
-     columns.sass
-     blocks.sass
-     fonts.sass
      font-scale.sass
+     fonts.sass
      text.sass
+
+     blocks.sass
     }
+    elements=elements{
+     buttons.sass
+     forms.sass
+     lists.sass
+     table.sass
+    }
+    menu=menu{
+     menu.sass
+    }
+    layout=layout{
+     footer.sass
+     navigation.sass
+     result.sass
+     reveal.sass
+     top_menu.sass
+    }
+
     text.sass
+    elements.sass
 
-    lists.sass
-    forms.sass
-    table.sass
-    reveal.sass
-
-    buttons.sass
-    menu.sass
-    result.sass
     grid.sass
 
-    jmol.sass
-    isoform_svg.sass
-    sequence.sass
-    protein.sass
     structure.sass
+    app.sass
    }
+
    public=public{
     js=js{
      jquery-jmol=jquery-jmol{
@@ -107,17 +109,34 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      protein.js
     }
    }
+
    tools=tools{
     jmol.haml
     isoform_svg.haml
     sequence.haml
    }
+
    entity=entity{
     MutatedIsoform.haml
     Protein.haml
     Protein=Protein{
      COSMIC.haml
      COSMIC_neighbours.haml
+    }
+   }
+
+   partials=partials{
+    download.haml
+    isotope_form.haml
+   }
+
+   tasks.haml
+   form.haml
+   Structure=Structure{
+    layout.haml.save
+    tasks.haml
+    wizard=wizard{
+     job_result.haml
     }
    }
   }

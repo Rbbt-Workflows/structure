@@ -18,7 +18,7 @@
 
   %dl.tabs
     - if user
-      %dt Controls
+      %dt.next Controls
       %dd
         .controls
           %ul.controls
@@ -31,7 +31,7 @@
             - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
             - input :color, :select, "Color to use", 'green', :select_options => colors
 
-    %dt.show SVG
+    %dt.next.show SVG
     %dd.show
       .controls
         %ul.controls
@@ -44,7 +44,7 @@
       .sequence
         = tool :sequence, :protein => entity, :sequence => entity.sequence, :svg => '.isoform_svg_tool svg', :height => 200
 
-    %dt JMOL
+    %dt.next JMOL
     %dd
       .controls
         %ul.controls
@@ -55,7 +55,7 @@
       .jmol
         = tool :jmol, :protein => entity
 
-    %dt Appris
+    %dt.next Appris
     %dd.Appris
       .controls
         %ul.controls
@@ -73,7 +73,7 @@
                   %a.appris_highlight(href="#" attr-start="#{range['start']}" attr-end="#{range['end']}") Highlight
                   == (#{range['start']}..#{range['end']})
 
-    %dt COSMIC mutations
+    %dt.next COSMIC mutations
     %dd.COSMIC
       = fragment do
 
@@ -150,7 +150,7 @@
       - uniprot_alignment, ensembl_alignment = SmithWaterman.align(UniProt.sequence(entity.uniprot), entity.sequence)
       - alignment_map = Structure.alignment_map(uniprot_alignment, ensembl_alignment)
 
-      %dt UniProt mutations
+      %dt.next UniProt mutations
       %dd.UniProt
         = fragment do
 
@@ -217,7 +217,7 @@
               return false;
             })
 
-      %dt UniProt features
+      %dt.next UniProt features
       %dd.UniProt_features
         .controls
           %ul.controls

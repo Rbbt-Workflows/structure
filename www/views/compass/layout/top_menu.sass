@@ -1,0 +1,50 @@
+=top_menu
+  position: fixed
+  background: white
+  top: 0
+  left: 0
+  & > ul 
+    +clean_list
+    +flat_list
+    & > li 
+      height: rhythm(1)
+      display: inline-block
+
+#top_menu
+  .hide_toggle
+    display: none
+
+  li > a
+    +clean_style
+  +top_menu
+  border-bottom: 1px solid #888
+  padding: rhythm(0.25) rhythm(0.5)
+  width: 100%
+
+  li > dl > dd
+    border-top: 2px solid #eee
+    +medium_size
+    height: +rhythm(25)
+
+    padding-top: rhythm(0.5)
+    padding-left: 0.5em
+
+    & > dl > dd 
+      padding-top: rhythm(0.5)
+      padding-left: 0.5em
+      
+      & > ul
+        +clean_list
+
+  li.user
+    float: right
+    & > dl
+      +below_right
+
+  li.favourites
+    & > dl
+      +below_left
+
+
+body
+  margin-top: rhythm(3)

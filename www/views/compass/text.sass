@@ -5,6 +5,11 @@
 
 $base-font-size: 16px
 $base-line-height: 24px
+$rhythm-unit: "rem"
+
+=stripes
+  +debug-vertical-alignment
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.25) 50%, transparent 50%)
 
 @import 'base/font-scale'
 
@@ -22,18 +27,18 @@ p
 
 h1
   +font-scale(1 + $golden-stepup*2)
-  +rhythm(0,0,0,1,$base-font-size * (1 + $golden-stepup*2))
+  +rhythm(0,0,0,1/2)
 
 h2 
   +font-scale(1 + $golden-stepup)
-  +rhythm(0,0,0,1,$base-font-size * (1 + $golden-stepup))
+  +rhythm(0,0,0,1/2)
 
 h3, h4
   margin: 0
   +font-scale(1 + $golden-stepup/2)
-  +rhythm(0,0,0,0,$base-font-size * (1 + $golden-stepup/2))
+  +rhythm(0,0,0,1/2, $base-line-height)
 
 h5, h6
   margin: 0
   +font-scale(1 + $golden-stepup/3)
-  +rhythm(0,0,0,0,$base-font-size * (1 + $golden-stepup/3))
+  +rhythm(0,0,0,1/2, $base-line-height)

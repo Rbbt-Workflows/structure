@@ -1,21 +1,42 @@
+@import "compass/css3/box-sizing"
+
+body *
+  @include box-sizing(border-box)
+
+@import "susy"
+@import "screen_sizes"
+
 =border( $size: 1px, $padding: 0.25 ) 
   +rhythm-borders($size,$padding)
 
 =block
   text-overflow: ellipsis
-  //max-width: 100%
-  //overflow: hidden
+  @media #{$not-large}
+    width: 100% !important
+
+=medium_size
+  @media #{$only-small}
+    width: 100% !important
+  @media #{$not-very-large}
+    width: span(1 of 2)
+  @media #{$only-very-large}
+    width: span(1 of 3)
+
+
+=full_block
+  +block
+  width: 100%
+  overflow: show
+  text-overflow: show
 
 =large_block
   +block
-  @media #{$only-small}
-    width: 100%
   @media #{$only-very-large}
     +gallery(1 of 2)
 
 =medium_block
   +block
-  @media #{$not-small}
+  @media #{$only-large}
     +gallery(1 of 2)
   &.masonry
     @media #{$only-very-large}
@@ -32,3 +53,9 @@
       +gallery(3 of 8)
     @media #{$only-very-large}
       +gallery(1 of 5)
+
+=panel
+  *
+    overflow: hidden
+    text-overflow: ellipsis
+  +bleed-x(0.5em)

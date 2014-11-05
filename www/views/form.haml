@@ -56,13 +56,6 @@
           })
         })
 
-:defferjs
-  var form = $("form#" + '#{id}')
-  form.find('.input').addClass('masonry')
-  form.isotope({itemSelector: '.input',
-    masonry: {
-    //columnWidth: '.grid-sizer'
-    }
-  })
+=partial_render('partials/isotope_form', :id => id)
 
     

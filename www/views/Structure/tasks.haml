@@ -1,0 +1,64 @@
+
+%navigation
+  %dl.tasks.clean_list
+    - tasks = workflow.exec_exports + workflow.synchronous_exports + workflow.asynchronous_exports
+
+    - tasks.sort.each do |task|
+      %dt.next
+        %a(href="#{File.join("/", workflow.to_s, task.to_s)}" title="#{task.to_s}")= task
+      - info = workflow.task_info(task)
+      %dd
+        - if info[:description]
+          %p= info[:description].split(/\n\s*\n/).first
+
+%article
+  - @reload_page = false
+  - unless workflow.documentation[:description].empty?
+    :documentation 
+      #{workflow.documentation[:description]}
+
+  :documentation
+
+    ### Wizard
+
+    Use the following textbox to input your mutations and retrieve all
+    annotations, including neighbours and interfaces.  This method is limited
+    to 1000 variants, use the other (more granular) tasks if your mutation set
+    is larger. Mutations can be specified as genomic mutation `18:6237978:G`, a
+    mutated isoform `ENSP00000382976:L257R`, or using any identifier instead of
+    the `Ensembl Protein ID` such as `Associated Gene Name` or gene symbol `KRAS:G12V`. 
+    
+    If genomic mutations are given, only principal isoforms are considered. If
+    the protein is specified with any id other than `Ensembl Protein ID`, it
+    will be translated to `Ensembl Gene ID` and then its principal isoform will
+    be extracted from Appris. For instance, if the mutation is given using
+    `UniProt/SwissProt Accession`, and the change is relative to the sequence
+    reported in UniProt, inconsistencies may appear from wrong isoform mappings
+    or due to discrepancies in the sequence. No attempt is made to fix such
+    inconsistencies in this wizard.
+
+    The organism is assumed to be `#{Organism.default_code("Hsa")}`. If genomic
+    mutations are introduced, they are assumed to be relative to the watson or
+    forward strand.
+
+  = action_parameters nil, {}, :action => "/Structure/wizard", :method => "POST" do
+    - input :mutations, :array, "Mutations (e.g. 18:6237978:G, ENSP00000382976:L257R, L3MBTL4:L257R)", nil, :no_file => true
+
+:defferjs
+  $('navigation .tasks dt a').click(function(){
+
+    var article = $('article')
+    var href = $(this).attr('href')
+
+    window.location = href
+    return false
+  })
+
+  $('navigation').prepend("<span class='toggle_navigation'></span>");
+
+  $('navigation .toggle_navigation').click(function(){
+    console.log("cic")
+    $('navigation').toggleClass('shifted');
+    $('form').isotope('layout') 
+    return false
+  })

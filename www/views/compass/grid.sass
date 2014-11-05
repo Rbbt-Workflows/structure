@@ -5,106 +5,111 @@
 @import "text"
 
 @import "base/blocks"
-@import "base/columns"
 
-@import "reveal"
-@import "forms"
-@import "lists"
-@import "buttons"
-@import "table"
-@import "menu"
-@import "result"
+@import "elements/buttons"
+@import "elements/forms"
+@import "elements/lists"
+@import "elements/table"
 
+@import "menu/menu"
 
 // STYLES
 
 @import "compass/css3/border-radius"
 
-=stripes
-  background: repeating-linear-gradient( 0deg, #BBBBBB 24px, #FFFFFF 48px)
-
+@import "layout/top_menu"
+@import "layout/reveal"
+@import "layout/result"
+//@import "layout/navigation"
+@import "layout/footer"
 
 body
-  //+stripes
-  padding: 0 span(1 of 32)
-  @media #{$only-large}
-    padding: 0 span(1 of 16)
-
   +normal
   & > header:first-child
     +very-large
     margin-bottom: rhythm(1)
+    min-height: rhythm(4.25)
     .title
       display: block
       +font-scale(0.7)
-
-=box($size: 1 of 2)
-  @media #{$not-small}
-    +column($size)
-
-article
-  +container()
-  @media #{$not-small}
-    margin: 0 span(1 of 18)
 
 section.documentation
   @media #{$not-small}
     +column_text
   +rhythm(0,0,1,0)
 
-navigation
-  +rhythm(0,0,0,2)
-  +box(first 1 of 4)
-  margin-right: 0px !important
-
-article
-  +box(last 3 of 4)
-  
-ul.main_navigation
-  +clean_list
-  margin: 0
-  padding: 0
-  li
-    margin: 0
-    padding: 0
-    display: block
-  a
-    text-decoration: none
-    +button(0)
-  
-.clean_list
-  +clean_list
-  dt
-    +button(0)
-    
-    &:hover
-      background: linear-gradient( 10deg, #fff 24px, #eee 48px)
-      +border-radius(5px,5px)
-
-    +expandable
-    margin: 0
-    margin-top: rhythm(0.5)
-    *, &
-      text-decoration: none
-  dd
-    +showable
-    +indented
-    p
-      margin: 0px
-
-body:before
-  +very-small
-  clear: both
-  content: "Beta"
-  display: inline-block
-  height: rhythm(1)
-  background: rgba(255,255,255,250)
-  position: fixed
-  bottom: 0
-  right: 1em
-  text-align: right
-
 .examples
-  +clean_list
+  ul 
+    +clean_list
+    +flat_list
   a
-    +button(0,0.5)
+    +clean_style
+    +button(0px,0.5)
+  
+
+#modal
+  +modal
+  top: rhythm(1)
+  +rhythm-borders(2px,1)
+  width: 97%
+
+@import "compass/layout/grid-background"
+body
+  +layout(50)
+  margin-left: span(1) 
+  margin-right: span(1) 
+
+  article
+    +span(1 of 1)
+
+  navigation, .sidebar
+    +panel
+    +span(first 8)
+    & + article, & + .content
+      +span(last 42)
+
+  navigation
+    dl
+      +clean_list
+
+  #top_menu
+    li.title
+      +span(first 7)
+
+    li.reload
+      +span(1)
+
+    li.favourites
+      +span(20)
+
+    li.user
+      +span(last 22)
+      & > dl
+        text-align: right
+        & > dd, & >  dt
+          text-align: left
+
+=card_title
+  +trailer(1)
+  .name
+    +large
+  .long_name
+    +normal
+
+.sidebar
+  .meta dl
+    +clean_list
+    & > dt 
+      font-weight: bold
+    & > dd 
+      margin-left: 1em
+
+.card, .entity_card
+  .title
+    +card_title
+
+//#top_menu
+  display: none
+
+//body
+  +stripes
