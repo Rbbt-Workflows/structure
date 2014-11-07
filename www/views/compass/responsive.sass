@@ -1,4 +1,17 @@
 @import 'offcanvas'
+
+
+$total-columns  : 7
+$column-width   : 4.25em
+$gutter-width   : 1em
+$grid-padding   : $gutter-width
+
+#content
+  +container
+
+#footer
+  +bleed($grid-padding)
+
 body
   @media #{$only-large}
     .rbbt_tabs, .tabs
