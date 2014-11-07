@@ -23,8 +23,16 @@
 //@import "layout/navigation"
 @import "layout/footer"
 
-body
+@import "compass/css3/box-sizing"
+body 
+  *
+    @include box-sizing(border-box)
+
   +normal
+  +main_font
+  +main_font_color
+  +normal_weight
+
   & > header:first-child
     +very-large
     margin-bottom: rhythm(1)
@@ -36,7 +44,8 @@ body
 section.documentation
   @media #{$not-small}
     +column_text
-  +rhythm(0,0,1,0)
+  &:not(:last-child)
+    +rhythm(0,0,0,1)
 
 .examples
   ul 
@@ -54,62 +63,59 @@ section.documentation
   width: 97%
 
 @import "compass/layout/grid-background"
-body
-  +layout(50)
-  margin-left: span(1) 
-  margin-right: span(1) 
+@import "responsive"
+@import "cards"
 
-  article
-    +span(1 of 1)
+.row
+  +container
+  clear: both
 
-  navigation, .sidebar
-    +panel
-    +span(first 8)
-    & + article, & + .content
-      +span(last 42)
+.list_management > ul
+  +clean_list
+  +flat_list
+  +clearfix
+  li
+    +gallery(10 of 30)
+    +button
+    +button_text
+    margin-bottom: rhythm(0.25)
 
-  navigation
-    dl
-      +clean_list
+@media #{$only-very-small} 
+  table.wide, table.flip
+    +responsive_table
 
-  #top_menu
-    li.title
-      +span(first 7)
+table
+  +rbbt_table
 
-    li.reload
-      +span(1)
+.rbbt_reveal_content
+  +rbbt_reveal_content
 
-    li.favourites
-      +span(20)
+dl > dd
+  margin-left: 1em
+ul
+  +clean_list
 
-    li.user
-      +span(last 22)
-      & > dl
-        text-align: right
-        & > dd, & >  dt
-          text-align: left
+a:not(:hover)
+  +clean_style
 
-=card_title
-  +trailer(1)
-  .name
-    +large
-  .long_name
-    +normal
+a[href="#"]
+  +main_font_color
+  +clean_style
+  +button
+  +button_text
 
-.sidebar
-  .meta dl
-    +clean_list
-    & > dt 
-      font-weight: bold
-    & > dd 
-      margin-left: 1em
+ul.controls, ul.actions, ul.table_actions, ul.table_pagination
+  +button_set
+  li > .button, li.button, li
+    +button
+    +button_text
 
-.card, .entity_card
-  .title
-    +card_title
-
-//#top_menu
-  display: none
+.clean_list
+  +clean_list
 
 //body
   +stripes
+
+.content dl
+  .add_gene_list, .database_neighbours, .maps, .select_gene_list
+    +gallery(1 of 2)

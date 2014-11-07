@@ -5,6 +5,15 @@
   position: fixed
   display: none
   background: white
+  max-height: 95%
+  z-index: 10
+
+  &.show + div
+    overflow: hidden
+    height: 100px !important
+    * 
+      overflow: hidden
+      
 
   overflow: auto
 

@@ -1,92 +1,92 @@
 
-ul.main_navigation
-  +clean_list
-  margin: 0
-  padding: 0
-  li
-    margin: 0
-    padding: 0
-    display: block
-  a
-    text-decoration: none
-    +button(0px)
-
-navigation 
-  .clean_list
-    +clean_list
-    margin-top: 1.25em
-    dt
-      margin: 0
-      *, &
-        text-decoration: none
-      +button(0px,0.25/2)
-      margin-left: - rhythm(0.15/2)
-      
-      &:hover, &.show
-        background: #eee
-        +border-radius(5px,5px)
-      &.show
-        +border-bottom-radius(0px)
-
-      +expandable
-    dd
-      background: #f9f9f9
-      padding: 0.5em
-      +border-bottom-radius(5px)
-      +font-scale(0.9)
-      margin-left: - rhythm(0.15/2)
-      p
-        margin: 0px
-
-
-
-navigation
-  .toggle_navigation
-    +border-radius(5px)
-    border: 1px solid $subtle
-    display: inline-block
-    cursor: pointer 
-
-    float: left
-    height: rhythm(1)
-    width: span(1 of 3)
-    margin-left: - span(1 of 3)
-    margin-top: - rhythm(1)
-
-
-navigation
-  +span(first 1 of 5)
-  &.shifted
-    *
-      color: #eee !important
-    margin-left: - span(first 3 of 20) 
-    margin-right: 0px
-    padding-right: 0px
-    .toggle_navigation
-      float: right
-      background: white
-      margin-right: span(2 of 6)
-    + article
-      +span( 18 of 20)
-      
-
-article
-  +span(last 4 of 5)
-  +container()
-
-@media #{$not-large}
-  navigation, article
-    +span(first 30 of 32)
-    +push(1 of 32)
-
-  navigation
-    .toggle_navigation
-      margin: 0 
-      width: 100%
-    &.shifted
-      margin: 0
-      *
-        display: none
-      .toggle_navigation
-        display: block
-  
+//ul.main_navigation
+//  +clean_list
+//  margin: 0
+//  padding: 0
+//  li
+//    margin: 0
+//    padding: 0
+//    display: block
+//  a
+//    text-decoration: none
+//    +button(0px)
+//
+//navigation 
+//  .clean_list
+//    +clean_list
+//    margin-top: 1.25em
+//    dt
+//      margin: 0
+//      *, &
+//        text-decoration: none
+//      +button(0px,0.25/2)
+//      margin-left: - rhythm(0.15/2)
+//      
+//      &:hover, &.show
+//        background: #eee
+//        +border-radius(5px,5px)
+//      &.show
+//        +border-bottom-radius(0px)
+//
+//      +expandable
+//    dd
+//      background: #f9f9f9
+//      padding: 0.5em
+//      +border-bottom-radius(5px)
+//      +font-scale(0.9)
+//      margin-left: - rhythm(0.15/2)
+//      p
+//        margin: 0px
+//
+//
+//
+//navigation
+//  .toggle_navigation
+//    +border-radius(5px)
+//    border: 1px solid $subtle
+//    display: inline-block
+//    cursor: pointer 
+//
+//    float: left
+//    height: rhythm(1)
+//    width: span(1 of 3)
+//    margin-left: - span(1 of 3)
+//    margin-top: - rhythm(1)
+//
+//
+//navigation
+//  +span(first 1 of 5)
+//  &.shifted
+//    *
+//      color: #eee !important
+//    margin-left: - span(first 3 of 20) 
+//    margin-right: 0px
+//    padding-right: 0px
+//    .toggle_navigation
+//      float: right
+//      background: white
+//      margin-right: span(2 of 6)
+//    + article
+//      +span( 18 of 20)
+//      
+//
+//article
+//  +span(last 4 of 5)
+//  +container()
+//
+//@media #{$not-large}
+//  navigation, article
+//    +span(first 30 of 32)
+//    +push(1 of 32)
+//
+//  navigation
+//    .toggle_navigation
+//      margin: 0 
+//      width: 100%
+//    &.shifted
+//      margin: 0
+//      *
+//        display: none
+//      .toggle_navigation
+//        display: block
+//  

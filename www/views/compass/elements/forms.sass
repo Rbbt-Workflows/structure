@@ -1,3 +1,14 @@
+=label_prefix
+  //&:before
+    content: ""
+    width: 1em
+    margin: 0
+    display: inline-block
+
+=label
+  +label_prefix
+  +noselect
+
 form
   +container
   .input
@@ -15,12 +26,7 @@ form
     label
       display: block
       +ellipsis_text
-      &:before
-        content: "\02699" 
-        width: 1em
-        margin: 0
-        margin-right: 0.25em
-        display: inline-block
+      +label
         
 
 span.file_or_text_area
@@ -49,19 +55,27 @@ select.format
   width: auto
 
 .input.submit:last-child
-  width: 100%
-  clear: both
+  width: 100% !important
+  clear: both !important
   min-height: 0
   text-align: left
     
 .input.boolean
+  label, input
+    +pointer
   input
     +boolean 
+.input.multiple
+  +padded_block
+  width: 100% !important
+  span.choice
+    float: left
+    min-width: span(1 of 10)
+    margin-right: 1em
 
-=file_or_textarea
 
 .input:not(.submit)
-  +medium_block
+  +small_block
   input
     width: 100%
   &.masonry
@@ -69,16 +83,13 @@ select.format
     margin-right: 1em !important
   &.array, &.tsv, &.text, &.file
     overflow: hidden
-    +large_block
-    +file_or_textarea
-
-
+    +medium_block
 
 span.input_default
   +subtle_text
 
-
 .input
-  min-height: rhythm(4)
+  +bleed_block
+  min-height: rhythm(3)
   padding-bottom: rhythm(1)
 

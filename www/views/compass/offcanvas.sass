@@ -1,0 +1,82 @@
+@import "compass/css3/transition"
+
+=after_button
+  overflow: visible
+  position: relative
+  &:after
+    content: " "
+    position: absolute
+    top: +rhythm(1)
+
+    +subtle_background
+    +border(1px,0.5)
+    background-color: $subtle-background
+    border-color: $subtle-border
+    height: rhythm(1)
+    width: rhythm(0.8)
+
+    text-align: right
+    padding-right: 0
+
+  &.show:after
+    content: " "
+    padding-left: 0
+    margin: 0
+    left: - 1em
+
+  &:not(.show):after
+    content: " "
+    right: - 1em 
+
+=hide_left
+  &:not(.show)
+    * 
+      width: 0%
+      max-width: 0%
+      min-width: 0%
+      overflow: hidden
+    width: 0%
+    max-width: 0%
+    min-width: 0%
+    padding-right: 0
+    padding-left: 0
+    margin-right: 0
+    margin-left: - rhythm(1)
+    & + *
+      margin-left: 0
+      width: 100% !important
+
+  +after_button
+   
+=nodisplay
+  &:not(.show)
+    display: none
+  
+=shrink
+  &:not(.show)
+    height: 0
+    min-height: 0
+    max-height: 0
+    margin-left: 0
+    overflow: visible
+    * 
+      height: 0px !important
+      overflow: hidden !important
+      min-height: 0 !important
+      max-height: 0 !important
+  +after_button
+  &:not(.show):after
+    left: 0
+    margin-left: - 2*rhythm(1) 
+    margin-right: 0 
+  &.show:after
+    left: 0
+    margin-right: - 2*rhythm(1) 
+
+=offcanvas
+  +hide_left
+  +pointer
+  dl, li 
+    cursor: default
+    
+

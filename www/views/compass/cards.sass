@@ -1,0 +1,76 @@
+=card_title
+  +leader(2)
+  +trailer(2)
+  width: 100%
+  .name
+    +large
+  .long_name
+    +normal
+
+=card_description
+  width: 100%
+
+=card_actions
+  +leader(1)
+  min-height: rhythm(10)
+  width: 100%
+
+=card_sidebar
+  meta > dl, .entity_info > dl
+    +clean_list
+    & > dt 
+      +bold
+
+.sidebar
+  +card_sidebar
+
+.card, .entity_card, .entity_list_card, .action_card
+  & > .title
+    +card_title
+  & > .content
+    & > .description
+      +card_description
+    & > .actions
+      +card_actions
+
+.action_card
+  & > .action_content
+    & > div 
+      & > .title, & > .action_parameters, & > .action_description
+        display: none
+
+.action_controller
+  +bleed_block(first 1 of 1)
+  float: none
+  margin-bottom: 0
+  width: 100%
+  & > ul
+    &:not(:last-child)
+      margin-bottom: rhythm(1)
+    li
+      +button(1px,1/4)
+      text-align: center
+      a
+        width: 100%
+        display: inline-block
+
+    &.controls > li
+      width: span(1 of 10)
+      color: green
+      &:not(.active)
+        +inactive_button
+        
+    &.actions > li
+      min-width: span(1 of 5)
+      &.active
+        +active
+      &.loading
+        +loading
+
+.star, .reload
+  i
+    +pointer
+    width: 100%
+    display: inline-block
+.star.active > i
+  +gold

@@ -3,6 +3,7 @@
   background: white
   top: 0
   left: 0
+
   & > ul 
     +clean_list
     +flat_list
@@ -10,22 +11,19 @@
       height: rhythm(1)
       display: inline-block
 
-#top_menu
-  .hide_toggle
-    display: none
 
-  li > a
-    +clean_style
+#top_menu
   +top_menu
   border-bottom: 1px solid #888
-  padding: rhythm(0.25) rhythm(0.5)
+  padding: rhythm(0.25) rhythm(1)
   width: 100%
 
-  li > dl > dd
-    border-top: 2px solid #eee
-    +medium_size
-    height: +rhythm(25)
+  ul.entities, ul.entity_lists
+    li
+      width: 100%
+      display: block
 
+  li > dl > dd
     padding-top: rhythm(0.5)
     padding-left: 0.5em
 
@@ -36,15 +34,18 @@
       & > ul
         +clean_list
 
-  li.user
-    float: right
-    & > dl
-      +below_right
-
-  li.favourites
-    & > dl
-      +below_left
-
+  li.find
+    form
+      padding: 0
+      input[type=text]
+        width: 100%
+        height: $base-line-height
+      button[type=submit]
+        display: none
+        position: absolute
+        top: 0px
+        right: 0
+        height: 2em
 
 body
-  margin-top: rhythm(3)
+  +leader(3)

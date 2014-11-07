@@ -1,7 +1,12 @@
 $golden-ratio: 1.618
-$golden-stepup: 1 - $golden-ratio
+$golden-stepup: $golden-ratio - 1
+$golden-percent: $golden-stepup * 100
 
-$color: #000
-$subtle: darken($color, $golden-stepup/2)
-$subtler: darken($color, $golden-stepup)
+$background-color: white
+$extremely-subtle-color: darken($background-color, 15)
+$very-subtle-color: darken($background-color, 40)
+$subtle-color: darken($background-color, 50)
+
+$subtle-border: $very-subtle-color
+$subtle-background: $extremely-subtle-color
 

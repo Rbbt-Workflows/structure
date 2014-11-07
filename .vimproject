@@ -89,7 +89,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
 
     text.sass
     elements.sass
+    cards.sass
 
+    responsive.sass
     grid.sass
 
     structure.sass

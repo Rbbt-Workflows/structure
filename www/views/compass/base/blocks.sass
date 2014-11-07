@@ -1,18 +1,39 @@
-@import "compass/css3/box-sizing"
-
-body *
-  @include box-sizing(border-box)
-
+@import "base/misc"
 @import "susy"
 @import "screen_sizes"
 
 =border( $size: 1px, $padding: 0.25 ) 
   +rhythm-borders($size,$padding)
+  border-color: $subtle-border
+  &:hover
+    border-color: darken($subtle-border, 20)
 
 =block
   text-overflow: ellipsis
-  @media #{$not-large}
-    width: 100% !important
+  @media #{$only-small}
+    width: 100% 
+
+=subtle_background
+  background: $subtle-background
+
+
+=padded_block($padsize: 1 of 50, $verticalpad: 1)
+  padding-left: span($padsize)
+  padding-right: span($padsize)
+  padding-top: rhythm($verticalpad)
+  padding-bottom: rhythm($verticalpad)
+  
+
+=bleed_block($size: 1 of 3, $padsize: 1 of 50, $verticalpad: 1)
+  +span($size)
+  min-width: span($size)
+  min-width: span($size) + 2 * span($padsize) + gutter($padsize)
+  max-width: span($size) + 2 * span($padsize) + gutter($padsize)
+  +bleed-x($padsize)
+  width: auto
+  padding-right: span($padsize) 
+  +bleed-y(rhythm($verticalpad))
+  //+subtle_background
 
 =medium_size
   @media #{$only-small}
@@ -21,7 +42,6 @@ body *
     width: span(1 of 2)
   @media #{$only-very-large}
     width: span(1 of 3)
-
 
 =full_block
   +block
@@ -36,11 +56,13 @@ body *
 
 =medium_block
   +block
-  @media #{$only-large}
+  @media #{$not-small}
     +gallery(1 of 2)
+  @media #{$only-large}
+    +gallery(1 of 3)
   &.masonry
     @media #{$only-very-large}
-      +gallery(1 of 3)
+      +gallery(1 of 4)
 
 =small_block
   +block
@@ -49,13 +71,17 @@ body *
   @media #{$only-very-large}
     +gallery(1 of 4)
   &.masonry
+    +gallery(1 of 2)
     @media #{$only-large}
-      +gallery(3 of 8)
+      +gallery(4 of 12)
     @media #{$only-very-large}
       +gallery(1 of 5)
+
+=panel_background($color: white)
+  background: $color
 
 =panel
   *
     overflow: hidden
     text-overflow: ellipsis
-  +bleed-x(0.5em)
+  +panel_background

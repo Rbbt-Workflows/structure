@@ -1,33 +1,60 @@
+@import "elements/lists"
+
+=button_padding($horizontal: 1em, $vertical: 0.5)
+  +padded_block($horizontal, $vertical)
+
+=small_button_padding($horizontal: 0.5em, $vertical: 0.125)
+  +padded_block(0.5em, 0.125)
+
 =button( $border-size: 1px, $padding: 0.25 ) 
-  +border($border-size, $padding)
-  text-decoration: none
-  a
+  +button_padding
+  +border
+
+  overflow: hidden
+  text-overflow: ellipsis
+  +noselect
+  & > a
+    +clean_style
+    border: 0
+    padding: 0
+    margin: 0
+    width: 100%
+    height: 100%
     display: inline-block
-    overflow: hidden
-    text-overflow: ellipsis
-    max-width: 100%
-    
+
+=inactive_button
+  *
+    +subtle_color
+    +normal_cursor
+  &:hover
+    border-color: $subtle-border
+
+=button_set
+  +clean_list
+  +flat_list
+
 =boolean
   position:absolute 
-  z-index: -1000 
-  left: -1000px 
   overflow: hidden 
   clip: rect(0 0 0 0)
+  z-index: -1000 
+  left: -1000px 
   height: 1px
   width: 1px
   margin: -1px
   padding: 0
   border: 0
   display: none
+  float: right
+  input 
+    +pointer
             
   & + label:after
     content: "false"
-    display: inline-block
-    float: right
+    display: block
+    clear: both
     margin-left: 1em
-    margin-right: 50%
-    //margin-top: 0.25em
 
   &:checked + label:after
-    font-weight: bold
+    +bold
     content: "true"

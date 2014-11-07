@@ -1,6 +1,5 @@
 @import "compass/css3/transform"
 
-$subtle: #999
 =expandable_sign
   &:after
     content: "V"
@@ -12,48 +11,63 @@ $subtle: #999
       +rotate(90deg)
   &:not(.show)
     &:after
-      color: $subtle
+      color: $very-subtle
 
-=active
-  font-weight: bold
+=actionable
+  +pointer
+  +noselect
+  &:not(.show):hover
+    +subtle_color
+  &.show
+    +active
+  &.loading
+    +loading
+  &.error
+    +error
+
+=shifted_up
+  position: absolute
+  width: 10px
+  height: 10px
+  overflow: hidden
+  top: -9999px
+
+=gone
+  &:not(.show)
+    +shifted_up
 
 =hide_next
-  &.next:not(.show) + dd:not(.show)
-    display: none
-  &.next.show
-    +active
+  &.next:not(.show) + dd
+    +gone
 
-=expandable
-  padding-right: 3em
-  overflow: hidden
-  text-overflow: ellipsis
-  +expandable_sign
+=toggle_button
   +hide_next
+  +actionable
+  +button_text
 
+=action_top
+  border-top: 2px solid #eee
     
 =menu
   +clean_list
   +flat_list
   & > dt
-    +hide_next
-    +noselect
-    +pointer
-    font-family: monospace
-    a
+    +toggle_button
+    & > a
       +clean_style
 
-=below
+=absolute
   position: relative
   & > dd
     position: absolute
 
 =below_left
-  +below
+  +absolute
   & > dd
     left: 0
     
 =below_right
-  +below
+  +absolute
   & > dd
     right: 0
 
@@ -63,24 +77,31 @@ $subtle: #999
     position: absolute
     top: 0
 
-=boxed
-  background: white
+=border_block
+  +rhythm-borders(1px, 1)
   min-height: rhythm(2)
-  +bleed-x(5px)
-  +rhythm-borders(1px, 1/8)
-  padding: 0.25em
+
+=boxed
+  +padded_block
+  +border_block
+  overflow: auto
+  background: white
   
 
 =right_content
-  position: absolute
-  top: 0
-  right: 0
+  & > dd
+    position: absolute
+    top: 0
+    right: 0
 
 =float_content
   & > dd
     float: right
     
 =vertical_menu
+  +menu
+  +right_content
+
   & > dt
     float:left
     clear:both
@@ -89,7 +110,6 @@ $subtle: #999
     display: block
 
   & > dd
-    +right_content
     +boxed
     border-right: 0
     border-top: 0
@@ -100,25 +120,41 @@ $subtle: #999
     overflow-x: auto
 
 =horizontal_menu
+  +menu
   & > dt
-    margin-right: 1em !important
+    +small_button_padding
+    display: inline-block
   & > dd
     +boxed
     min-width: 100%
     
-.rbbt_tabs
+=tab_menu
   +menu
+  +clearfix
+  & > dt
+    +small_button_padding
+    padding-bottom: rhythm(0.5)
+  & > dd
+    //+boxed
+    border: 0
+    float: left
+    width: 100%
+    overflow: auto
+    +clearfix
 
-.rbbt_menu
-  +menu
+=dropdown_menu
   +horizontal_menu
   +below_right
 
-.rbbt_vertical_menu
+=accordion_menu
   +menu
-  +vertical_menu
-
-.tabs
-  +menu
-  +horizontal_menu
   +float_content
+  & > dt
+    width: 100%
+    padding-bottom: rhythm(0.5)
+    clear: both
+  & > dd
+    width: 100%
+    padding-bottom: rhythm(0.5)
+    +clearfix
+

@@ -1,0 +1,140 @@
+@import 'offcanvas'
+body
+  @media #{$only-large}
+    .rbbt_tabs, .tabs
+      +tab_menu
+
+    .rbbt_menu
+      +dropdown_menu
+
+    .rbbt_vertical_menu
+      +vertical_menu
+
+    .rbbt_accordion
+      +accordion_menu
+
+    .column
+      +gallery(1 of 2)
+    .small_column
+      +gallery(1 of 3)
+
+  @media #{$not-large}
+    .rbbt_tabs, .tabs, .rbbt_menu, .rbbt_vertical_menu, .rbbt_accordion
+      +accordion_menu
+      & > dd, & > dt
+        background: white
+        width: 100% !important
+
+body
+  navigation, .sidebar
+    +bleed_block(first 10 of 50)
+    +trailer(1)
+  navigation
+    dl
+      +clean_list
+
+  #content
+    margin-left: rhythm(1)
+    margin-right: rhythm(1)
+
+  @media #{$only-large}
+    
+    .offcanvas
+      +offcanvas
+
+    +layout(50)
+
+    article
+      +span(1 of 1)
+
+
+    navigation, .sidebar
+      & + article, & + .content
+        +span(last 38 of 50)
+
+
+    #top_menu
+
+      li > dl > dd
+        +action_top
+        +medium_size
+        height: +rhythm(25)
+
+      li.title
+        +span(first 6)
+
+      li.reload
+        +span(2)
+        text-align: center
+
+      li.favourites
+        +span(19)
+        
+      li.user
+        float: right
+        & > dl
+          +below_right
+
+      li.favourites
+        & > dl
+          +below_left
+
+      li.find
+        +span(4)
+        @media #{$only-large}
+          width: 5em
+        @media #{$only-very-large}
+          width: 10em
+        @media #{$not-large}
+          width: 50%
+          margin: 0 
+          padding: 0
+        form
+          width: 98%
+          @media #{$not-large}
+            margin-left: auto
+            margin-right: auto
+          position: relative
+          padding: 0
+
+      li.user
+        +span(last 15)
+        & > dl
+          text-align: right
+          & > dd, & >  dt
+            text-align: left
+
+      .hide_toggle
+        display: none
+
+  @media #{$not-large}
+    navigation, .sidebar
+      +shrink
+      +trailer(1)
+      width: 100% !important
+      max-width: 100%
+      &:after
+        display: none
+
+    #top_menu
+      li
+        float: left
+
+      li.container
+        float: right
+        margin: 0
+        padding: 0
+        .hide_toggle
+          display: inline-block
+          +button_text
+          &:not(:last-child)
+            margin-right: 1em
+
+      li.favourites, li.user, li.find
+        width: 104% 
+        margin-left: - 2%
+        padding-left: 2%
+        height: 100%
+        &:not(.show)
+          +nodisplay
+
