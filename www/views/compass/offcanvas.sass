@@ -6,14 +6,12 @@
   &:after
     content: " "
     position: absolute
-    top: +rhythm(1)
+    top: 0
 
-    +subtle_background
     +border(1px,0.5)
-    background-color: $subtle-background
     border-color: $subtle-border
     height: rhythm(1)
-    width: rhythm(0.8)
+    width: $indent
 
     text-align: right
     padding-right: 0
@@ -22,7 +20,7 @@
     content: " "
     padding-left: 0
     margin: 0
-    left: - 1em
+    left: - 2 * $indent
 
   &:not(.show):after
     content: " "
@@ -42,38 +40,28 @@
     padding-left: 0
     margin-right: 0
     margin-left: - rhythm(1)
+    float: left
     & + *
       margin-left: 0
       width: 100% !important
 
-  +after_button
    
 =nodisplay
   &:not(.show)
     display: none
   
+=shrinked
+  max-height: 0 !important
+  //border: 0 
+  padding-top: 0 
+  padding-bottom: 0 
+  margin-top: 0 
+  margin-bottom: 0 
+  overflow: hidden
+
 =shrink
   &:not(.show)
-    height: 0
-    min-height: 0
-    max-height: 0
-    margin-left: 0
-    padding: 0
-    margin: 0
-    overflow: visible
-    * 
-      height: 0px !important
-      overflow: hidden !important
-      min-height: 0 !important
-      max-height: 0 !important
-  +after_button
-  &:not(.show):after
-    left: 0
-    margin-left: - 2*rhythm(1) 
-    margin-right: 0 
-  &.show:after
-    left: 0
-    margin-right: - 2*rhythm(1) 
+    +shrinked
 
 =offcanvas
   +hide_left

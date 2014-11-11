@@ -44,7 +44,8 @@ module PDBHelper
     atom_positions = {}
     while line = stream.gets
       break if line =~ /^END/
-        next unless line =~ /^ATOM/
+        #next unless line =~ /^ATOM/
+        next unless line =~ /^\w*ATO?M/
         code = line[13..26]
       x = line[30..37].to_f
       y = line[38..45].to_f
@@ -95,8 +96,10 @@ module PDBHelper
     close_residues = {}
     Log.low "Computing residue distances (#{distance}): #{pdb || "pdbfile"}"
     atom_distances.each do |atom1, atom2, dist|
-      aa1 = atom1.split(/\s+/).values_at(2,3) * ":"
-      aa2 = atom2.split(/\s+/).values_at(2,3) * ":"
+      aa1 = atom1.strip.split(/\s+/).values_at(2,3) * ":"
+      aa2 = atom2.strip.split(/\s+/).values_at(2,3) * ":"
+      aa1 = aa1[0] + ":" + aa1[1..-2] if aa1[-1] == ":"
+      aa2 = aa2[0] + ":" + aa2[1..-2] if aa2[-1] == ":"
       close_residues[aa1] ||= []
       close_residues[aa1] << aa2
     end

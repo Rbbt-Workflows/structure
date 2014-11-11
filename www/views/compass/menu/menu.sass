@@ -1,4 +1,6 @@
 @import "compass/css3/transform"
+@import "elements/materials"
+@import "elements/movement"
 
 =expandable_sign
   &:after
@@ -25,16 +27,9 @@
   &.error
     +error
 
-=shifted_up
-  position: absolute
-  width: 10px
-  height: 10px
-  overflow: hidden
-  top: -9999px
-
 =gone
   &:not(.show)
-    +shifted_up
+    +shrinking("up")
 
 =hide_next
   &.next:not(.show) + dd
@@ -49,10 +44,16 @@
   border-top: 1px solid $subtle-border
     
 =menu
+  overflow: hidden
   +clean_list
   +flat_list
+  & > dd
+    +ease
   & > dt
+    +small_button_padding
     +toggle_button
+    +subtle_background
+    display: inline-block
     & > a
       +clean_style
 
@@ -85,9 +86,6 @@
 =boxed
   +padded_block
   +border_block
-  overflow: auto
-  background: white
-  
 
 =right_content
   & > dd
@@ -118,44 +116,45 @@
 
     width: 70%
     height: 100%
-    overflow-x: auto
 
 =horizontal_menu
   +menu
-  & > dt
-    +small_button_padding
-    display: inline-block
   & > dd
-    +boxed
     min-width: 100%
     
 =tab_menu
-  +menu
-  +clearfix
-  & > dt
-    +small_button_padding
-    padding-bottom: rhythm(0.5)
+  +horizontal_menu
+  position: relative
   & > dd
-    //+boxed
-    border: 0
+    +shifting(up)
     float: left
-    width: 100%
-    overflow: auto
-    +clearfix
+    top: rhythm(1)
 
 =dropdown_menu
   +horizontal_menu
   +below_right
+  overflow: visible
+  z-index: 1
+  & > dt
+    display: inline-block
+  & > dd
+    +boxed
+    +white_background
+    +shrinking(up)
+    overflow-y: auto
+
+=bottom_divider
+  border-bottom: 1px solid $extremely-subtle-color
 
 =accordion_menu
   +menu
-  +float_content
   & > dt
     width: 100%
-    padding-bottom: rhythm(0.5)
-    clear: both
+    +bottom_divider
   & > dd
+    +shrinking(up)
+    +padded_block
     width: 100%
     padding-bottom: rhythm(0.5)
-    +clearfix
+    //+spillout_block
 

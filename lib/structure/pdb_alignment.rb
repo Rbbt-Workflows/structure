@@ -83,12 +83,11 @@ module Structure
 
     Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
 
-    chain ||=  positions_in_pdb.sort{|c,p| p.nil? ? 0 : p.length}.last.first
+    chain ||=  positions_in_pdb.collect.reject{|c,p| p.nil? }.sort_by{|c,p| p.length}.first.first
 
     return neighbours_in_pdb if positions_in_pdb.nil? or positions_in_pdb[chain].nil?
 
     neighbour_map = neighbour_map_job(pdb,pdbfile,distance)
-
     return neighbours_in_pdb if neighbour_map.nil?
 
     inverse_neighbour_map = {}
@@ -115,7 +114,13 @@ module Structure
 
   def self.neighbour_map(distance, pdb = nil, pdbfile = nil)
     close_residues = PDBHelper.pdb_close_residues(distance, pdb, pdbfile)
-    TSV.setup close_residues, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat
+    tsv = TSV.setup close_residues, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat
+    new = {}
+    tsv.each do |p,ns|
+      ns.each{|n| new[n] ||= []; new[n] << p }
+    end
+    new.each{|p,ns| tsv[p] ||= []; tsv[p].concat ns }
+    tsv
   end
 
 end

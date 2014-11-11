@@ -20,11 +20,14 @@ $color_table_border: $subtle-border
       +normal
       +subtle_color
 
-  background-color: lighten($table_color, 5 * $golden-ratio)
-  border: 1px solid $color_table_border
+  background-color: lighten($table_color, 20)
+  +rhythm-borders(1,1,1,1)
   padding: $padding_table
   border-collapse: collapse
-  +rhythm(2,0,0,2)
+
+  tr:first-child
+    th
+      border-bottom: 1px solid $color_table_border
  
   td, th
     margin: 0
@@ -35,7 +38,7 @@ $color_table_border: $subtle-border
       white-space: nowrap
 
   tr:nth-child(2n)
-    background-color: lighten($table_color, 2 * $golden-ratio)
+    background-color: lighten($table_color, 10)
  
   th
     background-color: $table_color

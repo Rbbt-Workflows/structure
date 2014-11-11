@@ -14,8 +14,10 @@
     width: 100% 
 
 =subtle_background
-  background: $subtle-background
+  //background: $subtle-background
 
+=white_background
+  //background: white
 
 =padded_block($padsize: 1 of 50, $verticalpad: 1)
   padding-left: span($padsize)
@@ -23,6 +25,9 @@
   padding-top: rhythm($verticalpad)
   padding-bottom: rhythm($verticalpad)
   
+=spillout_block
+  //overflow: visible !important
+
 
 =bleed_block($size: 1 of 3, $padsize: 1 of 50, $verticalpad: 1)
   +span($size)
@@ -85,3 +90,27 @@
     overflow: hidden
     text-overflow: ellipsis
   +panel_background
+
+=ease_margin
+  @include transition-property(margin)
+  @include transition-duration(3s)
+  @include transition-timing-function(ease-in)
+=ease_width
+  @include transition-property(width)
+  @include transition-duration(3s)
+  @include transition-timing-function(ease-in)
+=ease_height
+  @include transition-property(border)
+  @include transition-property(max-height)
+  @include transition-duration(1s)
+  @include transition-timing-function(ease-in)
+=ease_color
+  @include transition-property(color)
+  @include transition-duration(3s)
+  @include transition-timing-function(ease-in)
+
+=ease
+  @include transition-property(top)
+  @include transition-duration(0.6s)
+  @include transition-timing-function(ease-in)
+  

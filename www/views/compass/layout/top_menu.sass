@@ -1,54 +1,52 @@
-=top_menu
-  position: fixed
-  background: white
-  top: 0
-  left: 0
+@import "elements"
 
-  & > ul 
-    +clean_list
-    +flat_list
-    & > li 
-      height: rhythm(1)
-      display: inline-block
+$top_menu_height: rhythm(2)
+
+$susy: ( debug: (image: show) )
 
 
 #top_menu
-  +top_menu
-  border-bottom: 1px solid #888
-  padding: rhythm(0.25) rhythm(1)
-  width: 100%
+  height: $top_menu_height
 
-  ul.entities, ul.entity_lists
-    li
+=top_menu_anchor
+  position: fixed
+  top: 0
+  left: 0
+
+=finder
+  form
+    padding: 0
+    input[type=text]
       width: 100%
-      display: block
+      height: $base-line-height
+    button[type=submit]
+      display: none
+      position: absolute
+      top: 0px
+      right: 0
+      height: 2em
 
-  li > dl > dd
-    padding-top: rhythm(0.5)
-    padding-left: 0.5em
+=first_level_top_menu
+  +tab_menu
+  overflow: auto
+  & > dd > dl
+    +accordion_menu
 
-    & > dl > dd 
-      padding-top: rhythm(0.5)
-      padding-left: 0.5em
-      
-      & > ul
-        +clean_list
+=top_menu_items
+  +slider(right, 2)
+  width: 100%
+  //position: absolute
+  //top: $top_menu_height
+  left: 0
+  //min-height: $vindent
 
-  li.reload
-    +small_button_padding
-    display: inline-block
-  li.find
-    form
-      padding: 0
-      input[type=text]
-        width: 100%
-        height: $base-line-height
-      button[type=submit]
-        display: none
-        position: absolute
-        top: 0px
-        right: 0
-        height: 2em
+  & > dl
+    +first_level_top_menu
 
+#top_menu
+  +top_menu_anchor
+  +material(2)
+  +subtle_background
+  
 body
-  +leader(3)
+  margin-top: $top_menu_height

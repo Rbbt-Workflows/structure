@@ -1,5 +1,4 @@
 =card_title
-  +leader(2)
   +trailer(2)
   width: 100%
   .name
@@ -9,6 +8,7 @@
 
 =card_description
   width: 100%
+  +trailer(1)
 
 =card_actions
   +leader(1)
@@ -25,22 +25,24 @@
   +card_sidebar
 
 .card, .entity_card, .entity_list_card, .action_card
+  +clearfix
   & > .title
     +card_title
   & > .content
+    +clearfix
     & > .description
       +card_description
     & > .actions
       +card_actions
 
-.action_card
-  & > .action_content
-    & > div 
-      & > .title, & > .action_parameters, & > .action_description
-        display: none
+.action_content > .action_card
+  & > .title, & > .action_parameters, & > .action_description
+    display: none
+
+.action_loader
+  margin-top: rhythm(1)
 
 .action_controller
-  +bleed_block(first 1 of 1)
   float: none
   margin-bottom: 0
   width: 100%

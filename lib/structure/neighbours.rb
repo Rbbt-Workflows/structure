@@ -87,20 +87,21 @@ module Structure
 
     uni2iso = uni2iso(organism)
 
-    forward_positions = ["PROT2", "CHAIN1", "CHAIN2", "FILENAME"].collect{|f| I3D_INTERACTIONS.identify_field f}
-    reverse_positions = ["PROT1", "CHAIN2", "CHAIN1", "FILENAME"].collect{|f| I3D_INTERACTIONS_REVERSE.identify_field f}
+    forward_positions = ["PDB_ID", "PROT2", "CHAIN1", "CHAIN2", "FILENAME"].collect{|f| I3D_INTERACTIONS.identify_field f}
+    reverse_positions = ["PDB_ID", "PROT1", "CHAIN2", "CHAIN1", "FILENAME"].collect{|f| I3D_INTERACTIONS_REVERSE.identify_field f}
 
     {:forward => I3D_INTERACTIONS,
       :reverse => I3D_INTERACTIONS_REVERSE}.each do |db_direction, db|
 
       next unless db.include? uniprot
-      Misc.zip_fields(db[uniprot]).each do |values|
-
+      values_list = db[uniprot]
+      seen_pbs = []
+      Misc.zip_fields(values_list).each do |values|
         if db_direction == :forward
-          partner, chain, partner_chain, filename = values.values_at *forward_positions
+          pdb, partner, chain, partner_chain, filename = values.values_at *forward_positions
           chain, partner_chain = "A", "B"
         else
-          partner, chain, partner_chain, filename = values.values_at *reverse_positions
+          pdb, partner, chain, partner_chain, filename = values.values_at *reverse_positions
           chain, partner_chain = "B", "A"
         end
 
@@ -135,6 +136,36 @@ module Structure
           partner_neighbours_in_sequence = pdb_chain_position_in_sequence(url, nil, partner_chain, partner_neighbours, partner_sequence).values.compact.flatten
           next if partner_neighbours_in_sequence.empty?
           tsv.zip_new(protein, [position, partner_ensembl, url, partner_neighbours_in_sequence * ";"])
+        end
+
+        if not seen_pbs.include? pdb
+          seen_pbs << pdb
+          url = pdb
+          Log.debug "Processing: #{ url }"
+
+          positions_in_pdb = sequence_position_in_pdb(sequence, positions, url, nil)[chain]
+          next if positions_in_pdb.nil? or positions_in_pdb.empty?
+
+          map = neighbour_map_job url, nil, 8
+          map.unnamed = true
+
+          next if map.nil? or map.empty?
+
+          positions_in_pdb.zip(positions).each do |pdb_position, position|
+            code = [chain,pdb_position]*":"
+            begin
+              neighbours = map[code]
+            rescue
+              Log.exception $!
+              next
+            end
+            next if neighbours.nil? or neighbours.empty?
+            partner_neighbours = neighbours.select{|c| c.split(":").first == partner_chain }.collect{|c| c.split(":").last}
+            next if partner_neighbours.empty?
+            partner_neighbours_in_sequence = pdb_chain_position_in_sequence(url, nil, partner_chain, partner_neighbours, partner_sequence).values.compact.flatten
+            next if partner_neighbours_in_sequence.empty?
+            tsv.zip_new(protein, [position, partner_ensembl, url, partner_neighbours_in_sequence * ";"])
+          end
         end
       end
     end

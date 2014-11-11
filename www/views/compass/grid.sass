@@ -1,6 +1,11 @@
-@import "compass/utilities/general/clearfix"
 @import "compass/reset"
 @import "normalize"
+
+=clearfix
+  &:after
+    content: ""
+    display: inline-block
+    clear: both
 
 @import "text"
 
@@ -24,6 +29,7 @@
 @import "layout/footer"
 
 @import "compass/css3/box-sizing"
+
 body 
   *
     @include box-sizing(border-box)
@@ -54,31 +60,23 @@ section.documentation
   a
     +clean_style
     +button(0px,0.5)
-  
-
-#modal
-  +modal
-  top: rhythm(1)
-  +rhythm-borders(2px,1)
-  width: 97%
 
 @import "compass/layout/grid-background"
 @import "responsive"
 @import "cards"
+@import "menu"
 
 .row
   +container
   clear: both
 
-.list_management > ul
-  +clean_list
-  +flat_list
-  +clearfix
-  li
-    +gallery(10 of 30)
-    +button
-    +button_text
-    margin-bottom: rhythm(0.25)
+.list_management 
+  & > ul
+    +button_set
+    +container
+    li
+      +gallery(1 of 3)
+      margin-bottom: gutter(10 of 30)
 
 @media #{$only-very-small} 
   table.wide, table.flip
@@ -113,9 +111,18 @@ ul.controls, ul.actions, ul.table_actions, ul.table_pagination
 .clean_list
   +clean_list
 
-body
-  +stripes
-
 .content dl
   .add_gene_list, .database_neighbours, .maps, .select_gene_list
     +gallery(1 of 2)
+
+//body
+  +stripes
+
+body
+  navigation, .sidebar
+    +trailer(1)
+  navigation
+    dl
+      +clean_list
+.spill
+  +spillout_block

@@ -75,9 +75,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      forms.sass
      lists.sass
      table.sass
-    }
-    menu=menu{
-     menu.sass
+
+     movement.sass
+     materials.sass
     }
     layout=layout{
      footer.sass
@@ -86,8 +86,12 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      reveal.sass
      top_menu.sass
     }
+    menu=menu{
+     menu.sass
+    }
 
     text.sass
+    menu.sass
     elements.sass
     cards.sass
 
@@ -132,6 +136,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     download.haml
     isotope_form.haml
    }
+   layout=layout{
+    top_menu.haml
+    }
 
    tasks.haml
    form.haml
