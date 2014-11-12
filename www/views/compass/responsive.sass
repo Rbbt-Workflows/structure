@@ -1,5 +1,6 @@
 @import 'offcanvas'
 
+
 =left_sidebar_position
   position: absolute
   top: rhythm(2)
@@ -41,34 +42,11 @@ body
 
 // LAYOUT
 
-$tile: 8px
-$vgap: $tile
-$large-vgap: 4 * $tile
-
-$mini-vsize: $tile * 3
-$medium-vsize: $tile * 6
-$small-vsize: $tile * 7
-
-$mobile-tall: 420
-$mobile-wide: 320
-
-
-$gutter: 2 * $tile
-$column: 5 * $tile
-$pre-space: 9 * $tile
-
-$mobile-width-columns: $mobile-wide / $column
-
-$susy: (columns: $mobile-width-columns)
-
-$susy : ( columns: 4, output: isolate, gutter: 2/5)
-
 #top_menu
-  li.reload
-    +small_button_padding
+  .reload
     display: inline-block
 
-  li.find
+  .find
     +finder
 
   & > div
@@ -80,13 +58,6 @@ $susy : ( columns: 4, output: isolate, gutter: 2/5)
           width: 100%
           display: block
 
-    //&.container
-      float: right
-      .hide_toggle
-        +button_text
-        +small_button_padding
-        +pointer
-
     &.favourites, &.user, &.find
       +top_menu_items
 
@@ -96,14 +67,41 @@ $susy : ( columns: 4, output: isolate, gutter: 2/5)
   padding-right: $gutter
   +container
   +show_grid
-  .title
-    +span(last 3)
-  .reload
-    +span(first 1)
-  .container
-    +container(full break)
-    +clearfix
-    clear:both
-    & > a
-      +gallery(1)
+  width: 100%
 
+  & > div
+
+    &.title
+      +set_item_height( rhythm(2) )
+      +span(first 1)
+    &.reload
+      +set_item_height( rhythm(2) )
+      +but
+      position: absolute
+      top: 0
+      right: 0
+      width: $gutter * 2
+    &.container
+      +container(4)
+      +span(last 4)
+      display: flex
+      & > a
+        +set_item_height( rhythm(2) )
+        +but
+
+
+    &.favourites, &.user, &.find
+      width: 100%
+      +subtle_background
+      padding-left: $gutter
+      padding-right: $gutter
+      border-top: 1px solid $subtle_border
+      position: absolute
+      top: $top_menu_height
+      left: 0
+      & > dl > dt
+        +but(span(1 of 5))
+
+@media #{$only-small}
+  table.wide
+    +responsive_table

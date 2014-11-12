@@ -13,3 +13,37 @@ $subtle-background: #F5F5F5
 $indent: 2.5%
 $vindent: rhythm(1)
 
+$tile: 8px
+$font-line: 2 * $tile
+$mini-tile: 4px
+$vgap: $tile
+$large-vgap: 4 * $tile
+
+$mini-vsize: $tile * 3
+$very-small-vsize: $tile * 5
+$small-vsize: $tile * 6
+$medium-vsize: $tile * 7
+$large-vsize: $tile * 9
+
+$minimum-height: $medium-vsize
+$minimum-width: $medium-vsize
+
+$mobile-tall: 420
+$mobile-wide: 320
+
+
+$gutter: 2 * $tile
+$column: 5 * $tile
+$pre-space: 9 * $tile
+
+$mobile-width-columns: $mobile-wide / $column
+
+$susy : ( columns: 5, output: isolate, gutter: 2/5)
+
+
+=clearfix
+  &:after
+    content: ""
+    display: inline-block
+    clear: both
+

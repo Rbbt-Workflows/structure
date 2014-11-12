@@ -76,9 +76,11 @@ span.choice
     float: left
     min-width: span(1 of 10)
     margin-right: 1em
+  span, label
+    +pointer
 
 
-.input:not(.submit)
+//.input:not(.submit)
   +small_block
   input
     width: 100%
@@ -92,8 +94,13 @@ span.choice
 span.input_default
   +subtle_text
 
-.input
+//.input
   +bleed_block
   min-height: rhythm(3)
   padding-bottom: rhythm(1)
 
+.input
+  +oneline
+  +button_padding
+  &:hover
+    +subtle_background

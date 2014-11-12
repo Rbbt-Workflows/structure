@@ -1,0 +1,50 @@
+=large_menus
+  .rbbt_menu
+    +dropdown_menu
+
+  .rbbt_tabs, .tabs
+    +tab_menu
+
+  .rbbt_vertical_menu
+    +accordion_menu
+
+  .rbbt_accordion
+    +accordion_menu
+
+  .rbbt_dropdown
+    +dropdown_menu
+
+  .column
+    +gallery(1 of 2)
+  .small_column
+    +gallery(1 of 3)
+=small_menus
+  .rbbt_tabs, .tabs, .rbbt_menu, .rbbt_vertical_menu, .rbbt_accordion, .rbbt_dropdown
+    +accordion_menu
+    & > dd, & > dt
+      width: 100% 
+  .column
+    width: 100%
+
+=very_small_menus
+  +small_menus
+  .column, .small_column
+    width: 100%
+    width: 100%
+
+=responsive_column
+  @media #{$only-large}
+    +gallery(1 of 2)
+  @media #{$not-large}
+    clear: both
+.responsive_column
+  +responsive_column
+  
+
+#content, #modal
+  @media #{$only-large}
+    +large_menus
+  @media #{$not-large}
+    +small_menus
+  @media #{$only-small}
+    +very_small_menus

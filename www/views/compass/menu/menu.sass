@@ -1,6 +1,12 @@
 @import "compass/css3/transform"
+@import "base/blocks"
+@import "base/fonts"
+@import "base/text"
+@import "elements/buttons"
 @import "elements/materials"
 @import "elements/movement"
+
+@import "compass/typography/vertical_rhythm"
 
 =expandable_sign
   &:after
@@ -139,22 +145,39 @@
     display: inline-block
   & > dd
     +boxed
-    +white_background
     +shrinking(up)
     overflow-y: auto
 
 =bottom_divider
   border-bottom: 1px solid $extremely-subtle-color
 
+=dropdown_menu_item
+  line-height: rhythm(2)
+  +button_background
+  padding-left: rhythm(1)
+  &:not(:hover)
+    +oneline
+
+
 =accordion_menu
   +menu
   & > dt
-    width: 100%
     +bottom_divider
+    +dropdown_menu_item
+    width: 100%
+    & > a:first-child
+      font-size: 1.2em
+      width: 5em
+      text-align: center
+      display: inline-block
+      &:hover
+        border-right: 1px solid $subtle_border
   & > dd
     +shrinking(up)
     +padded_block
     width: 100%
     padding-bottom: rhythm(0.5)
+    +white_background
+    +clearfix
     //+spillout_block
 

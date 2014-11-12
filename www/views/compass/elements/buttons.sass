@@ -3,8 +3,8 @@
 =button_padding($horizontal: 1em, $vertical: 0.5)
   +padded_block($horizontal, $vertical)
 
-=small_button_padding($horizontal: 0.5em, $vertical: 0.125)
-  +padded_block(0.5em, 0.125)
+=small_button_padding($horizontal: 1em, $vertical: 0.125)
+  +padded_block($horizontal, $vertical)
 
 =button( $border-size: 1px, $padding: 0.25 ) 
   +button_padding
@@ -33,8 +33,46 @@
   +clean_list
   +flat_list
   li
-    +button
     +button_text
+    &:not(.inactive)
+      +button
+
+$medium-button-width: 11 * $tile
+
+=button_border
+  //border: 1px solid $very-subtle-color
+
+$button-color: $subtle-background
+=button_background($button-color: $button-color)
+  $hover-button-color: darken($button-color, 20)
+  $pressed-button-color: darken($button-color, 40)
+  $disabbled-button-text-color: darken($font-color, 26)
+
+  background-color: $button-color
+  &:hover
+    background-color: $hover-button-color
+  &:active
+    background-color: $pressed-button-color
+  &.show
+    background-color: $hover-button-color
+
+=button_margin
+  margin-left: $mini-tile
+  margin-right: $mini-tile
+  padding-left: $tile
+  padding-right: $tile
+  margin-top: $tile
+  margin-bottom: $tile
+
+=but($width: 2 * $column)
+  +text_item(2em, $width)
+  text-align: center
+  +button_border
+  +button_background
+  +button_margin
+  +pointer
+  & > a
+    width: 100%
 
 =boolean
   position:absolute 

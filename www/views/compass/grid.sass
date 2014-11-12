@@ -1,12 +1,6 @@
 @import "compass/reset"
 @import "normalize"
 
-=clearfix
-  &:after
-    content: ""
-    display: inline-block
-    clear: both
-
 @import "text"
 
 @import "base/blocks"
@@ -78,7 +72,7 @@ section.documentation
       +gallery(1 of 3)
       margin-bottom: gutter(10 of 30)
 
-@media #{$only-very-small} 
+//@media #{$only-very-small} 
   table.wide, table.flip
     +responsive_table
 
@@ -99,21 +93,23 @@ a:not(:hover)
 a[href="#"]
   +main_font_color
   +clean_style
-  +button
   +button_text
+  &:not(.inactive)
+    +button
 
 ul.controls, ul.actions, ul.table_actions, ul.table_pagination
   +button_set
   li > .button, li.button, li
-    +button
     +button_text
+    &:not(.inactive)
+      +button
 
 .clean_list
   +clean_list
 
 .content dl
   .add_gene_list, .database_neighbours, .maps, .select_gene_list
-    +gallery(1 of 2)
+    +responsive_column
 
 //body
   +stripes
@@ -126,3 +122,7 @@ body
       +clean_list
 .spill
   +spillout_block
+.clearfix
+  +clearfix
+.container, .row
+  +container

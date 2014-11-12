@@ -25,14 +25,16 @@ $color_table_border: $subtle-border
   padding: $padding_table
   border-collapse: collapse
 
-  tr:first-child
+  //tr:first-child
     th
       border-bottom: 1px solid $color_table_border
+  tbody, thead
+    td, th
+      margin: 0
+      padding: rhythm(0.5)
+      text-align: left
  
   td, th
-    margin: 0
-    padding: rhythm(0.5)
-    text-align: left
     vertical-align: center
     a
       white-space: nowrap
@@ -59,9 +61,12 @@ $color_table_border: $subtle-border
       +clean_list
       +flat_list
       +button_set
+      display: flex
       li > .button, li.button, li
-        +button
-        +button_text
+        min-width: 3em
+        text-align: center
+        //+set_item_height(rhythm(1))
+        //vertical-align: top
       float: left
       margin-right: 1em
 
@@ -118,7 +123,7 @@ $color_table_border: $subtle-border
   th, td 
     margin: 0
     vertical-align: top
-    height: 2em
+    height: 3em
 
   th 
     text-align: left
@@ -175,12 +180,15 @@ $color_table_border: $subtle-border
    
 
   tbody tr 
-    border-left: 1px solid #babcbf
+    border-left: 1px solid $subtle_border
    
 
   th:last-child, td:last-child 
-  tfoot
-    border: 2px solid #babcbf
-    border-top: 1px solid #babcbf
+  tfoot > tr > th
+    padding: 0
+
+  //tfoot
+    border: 2px solid $subtle_border
+    border-top: 1px solid $subtle_border
      
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 ENV["RBBT_NO_LOCKFILE_ID"] = "true"
+ENV["RBBT_RESPAWN"] = "true"
 
 require 'rbbt-util'
 require 'rbbt/util/simpleopt'
@@ -15,16 +16,17 @@ Bootstrap the Structure workflow
 $ rbbt workflow cmd Structure bootstrap
 
 -h--help Print this help
+--cpus Number of cpus to use
 
 EOF
 rbbt_usage and exit 0 if options[:help]
 
+$cpus ||= options[:cpus] || 3
 Workflow.require_workflow "Structure"
 Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
 FileUtils.mkdir_p Structure.workdir.find
 
 organisms = Organism.organism_codes
-$cpus = 3
 
 organisms.each do |organism|
 

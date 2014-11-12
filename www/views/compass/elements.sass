@@ -1,0 +1,6 @@
+=slider($direction: right, $depth: 2)
+  +box($depth)
+  +shifting($direction)
+  &:not(.show)
+    +noshadow
+    z-index: ($depth * 2) - 1

@@ -1,26 +1,30 @@
-@import 'grid_system'
-@import 'rbbt/button'
+@import 'screen_sizes'
+@import 'menu/menu'
 
-dd 
-  max-height: 700px
-  overflow: auto
 
 dd > select
   @media #{$only-large}
     width: 300px
+
 ul.controls, ul.highlight
   width: auto
-  margin-bottom: $vindent
   li
     display: inline-block
-    &.button
-      +rbbt_button()
-    //a
-      width: 100px
-    //select
-      width: auto
 
 div.sequence_tool
   &>span
     overflow: auto
     display: inline-block
+
+dl.protein_tool
+  @media #{$not-large}
+    +accordion_menu
+  @media #{$only-large}
+    +dropdown_menu
+
+  & > dd 
+    max-height: 700px
+    overflow: auto
+    background: rgba(230,230,230,0.8)
+    & >  dl
+      background: white

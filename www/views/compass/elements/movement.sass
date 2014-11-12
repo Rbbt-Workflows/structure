@@ -1,0 +1,93 @@
+=ease_position
+  @include transition-property(top left margin-top margin-left )
+  @include transition-duration(0.3s)
+  @include transition-timing-function(ease-in)
+
+=ease_width
+  @include transition-property(width)
+  @include transition-duration(0.3s)
+  @include transition-timing-function(ease-in)
+
+=ease_height
+  @include transition-property(height)
+  @include transition-duration(0.3s)
+  @include transition-timing-function(ease-in)
+  
+=shrink_horizontal
+  width: 0
+  padding-left: 0
+  padding-right: 0
+
+=shrink_vertically
+  height: 0
+  padding-top: 0
+  padding-bottom: 0
+
+=shrink_direction($direction: right)
+  overflow: hidden
+
+  @if $direction  == left
+    +shrink_horizontal
+
+  @if $direction  == up
+    +shrink_vertically
+
+  @if $direction  == down
+    +shrink_vertically
+
+  @if $direction  == right
+    +shrink_horizontal
+
+=shift_direction($direction: right)
+  overflow: hidden
+  $offset: 100%
+
+  @if $direction  == left
+    margin-left: - $offset
+    max-width: $offset
+
+  @if $direction  == up
+    margin-top: - $offset
+    max-height: $offset
+
+  @if $direction  == down
+    margin-top: - $offset
+    max-height: $offset
+
+  @if $direction  == right
+    margin-left: $offset
+    max-width: $offset
+
+=placed_up
+  position: absolute
+  width: 10px !important
+  height: 10px !important
+  overflow: hidden
+  top: -99999px
+
+=shifting($direction: right)
+  +ease_position
+  &:not(.show)
+    +shift_direction($direction)
+    z-index: 0
+
+=shrinking($direction: right)
+  @if $direction  == left
+    +ease_width
+    min-width: 0
+
+  @if $direction  == up
+    +ease_height
+    min-height: 0
+
+  @if $direction  == down
+    +ease_height
+    min-height: 0
+
+  @if $direction  == right
+    +ease_width
+    min-width: 0
+    
+  &:not(.show)
+    +shrink_direction($direction)
+    z-index: 0

@@ -13,10 +13,9 @@
     %dd
       %a(href="http://www.uniprot.org/uniprot/#{entity.uniprot}")= entity.uniprot
 
+= link_css '/stylesheets/protein'
 - entity_card.description do
-  -#= link_css '/stylesheets/protein'
-
-  %dl.tabs
+  %dl.protein_tool.menu
     - if user
       %dt.next Controls
       %dd
@@ -30,30 +29,6 @@
           = action_parameters nil, {:klass => ''}, :action => '#' do
             - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
             - input :color, :select, "Color to use", 'green', :select_options => colors
-
-    %dt.next.show SVG
-    %dd.show
-      .controls
-        %ul.controls
-          %li.button
-            %a.clear(href="#") clear
-          %li.button
-            %a.aligned(href="#") mark alignment
-      .svg
-        = tool :isoform_svg, :protein => entity, :sequence => entity.sequence, :height => 200
-      .sequence
-        = tool :sequence, :protein => entity, :sequence => entity.sequence, :svg => '.isoform_svg_tool svg', :height => 200
-
-    %dt.next JMOL
-    %dd
-      .controls
-        %ul.controls
-          %li.button
-            %a.clear(href="#") clear
-          %li.button
-            %a.aligned(href="#") mark alignment
-      .jmol
-        = tool :jmol, :protein => entity
 
     %dt.next Appris
     %dd.Appris
@@ -225,22 +200,21 @@
               %select(name='color')
                 - colors.each do |c|
                   %option(value=c)= c
-        %ul
-          - features = UniProt.features(entity.uniprot)
-          - feature_types = {}
-          - features.each{|info| feature_types[info[:type]] ||= [] ; feature_types[info[:type]] << info}
-          %dl
-            - feature_types.sort_by{|k,v| k}.each do |type, list|
-              %dt= type
-              %dd
-                - list.sort_by{|info| info[:start].to_i}.each do |info|
-                  - type, start, eend, description = info.values_at :type, :start, :end, :description
-                  - start = alignment_map[start]
-                  - eend = alignment_map[eend]
-                  - next if start.nil? or eend.nil?
-                  %li
-                    %a.feature_highlight(href="#" attr-start="#{start}" attr-end="#{eend}") Highlight
-                    == #{ type } (#{start}..#{eend}): #{description}
+        - features = UniProt.features(entity.uniprot)
+        - feature_types = {}
+        - features.each{|info| feature_types[info[:type]] ||= [] ; feature_types[info[:type]] << info}
+        %dl
+          - feature_types.sort_by{|k,v| k}.each do |type, list|
+            %dt= type
+            %dd
+              - list.sort_by{|info| info[:start].to_i}.each do |info|
+                - type, start, eend, description = info.values_at :type, :start, :end, :description
+                - start = alignment_map[start]
+                - eend = alignment_map[eend]
+                - next if start.nil? or eend.nil?
+                %li
+                  %a.feature_highlight(href="#" attr-start="#{start}" attr-end="#{eend}") Highlight
+                  == #{ type } (#{start}..#{eend}): #{description}
 
   :javascript
     deffer(function(){
@@ -311,6 +285,29 @@
         return false
       })
     })
+    
+  .window
+    .controls
+      %ul.controls
+        %li.button
+          %a.clear(href="#") clear
+        %li.button
+          %a.aligned(href="#") mark alignment
+
+    .row.flex
+      .jmol.responsive_column
+        %h3 JMOL structures
+        = tool :jmol, :protein => entity
+
+      .protein.responsive_column
+        %h3 Protein sequence
+        .svg
+          = tool :isoform_svg, :protein => entity, :sequence => entity.sequence, :height => 200
+        .sequence
+          = tool :sequence, :protein => entity, :sequence => entity.sequence, :svg => '.isoform_svg_tool svg', :height => 200
+
+
+
 
 - entity_card.action_controller = default_action_controller entity
 

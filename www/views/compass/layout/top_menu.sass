@@ -1,8 +1,8 @@
 @import "elements"
 
-$top_menu_height: rhythm(2)
-
-$susy: ( debug: (image: show) )
+$top_menu_height: 3em
+body
+  margin-top: $top_menu_height
 
 
 #top_menu
@@ -16,9 +16,10 @@ $susy: ( debug: (image: show) )
 =finder
   form
     padding: 0
+    margin-bottom: 1em
     input[type=text]
       width: 100%
-      height: $base-line-height
+      height: 2em 
     button[type=submit]
       display: none
       position: absolute
@@ -31,22 +32,18 @@ $susy: ( debug: (image: show) )
   overflow: auto
   & > dd > dl
     +accordion_menu
+    margin-bottom: 1em
 
 =top_menu_items
-  +slider(right, 2)
-  width: 100%
-  //position: absolute
-  //top: $top_menu_height
-  left: 0
-  //min-height: $vindent
-
+  border-top: $subtle-color
+  +material(1)
+  +shifting(right)
   & > dl
+    width: 100%
     +first_level_top_menu
 
 #top_menu
   +top_menu_anchor
-  +material(2)
+  +material(1)
   +subtle_background
   
-body
-  margin-top: $top_menu_height

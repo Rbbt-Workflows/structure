@@ -1,12 +1,25 @@
 
-=ellipsis_text
+=set_item_height($size: $minimum-height)
+  height: $size
+  line-height: $size
+
+=text_item($height: $minimum-height, $width: $column)
+  +set_item_height($height)
+  width: $width
+  +oneline
+
+=oneline
   white-space: nowrap
-  text-overflow: ellipsis
   overflow: hidden
+  text-overflow: ellipsis
+
+=ellipsis_text
+  +oneline
   &:hover
     overflow: visible
     text-overflow: none
-    background: #fff
+    background: rbga(200,200,200,0.4)
+    width: 200%
 
 @import "compass/css3/columns"
 =column_text($size: 3)

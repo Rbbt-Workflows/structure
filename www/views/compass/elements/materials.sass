@@ -1,0 +1,140 @@
+// Creating Google Material Design in SCSS
+// (specifically Material Shadow, uses compass)
+// see: http://www.google.com/design/spec/layout/layout-principles.html#layout-principles-paper-craft
+
+// Demo: http://codepen.io/stoikerty/full/Glwxi/
+
+// Animating Box-Shadow is EXPENSIVE:
+// http://www.html5rocks.com/en/tutorials/speed/high-performance-animations/#toc-
+
+// Moving between z-index-depths is done via opacity & multiple
+// box-shadows, as transitioning the box-shadow's y-axis is buggy
+// (tested on Chrome v.35)
+
+$easeOutExpo   : cubic-bezier(0.190, 1.000, 0.220, 1.000)
+$easeInExpo    : cubic-bezier(0.950, 0.050, 0.795, 0.035)
+$easeInOutExpo : cubic-bezier(1.000, 0.000, 0.000, 1.000)
+
+@import "compass/css3/opacity"
+@import "compass/css3/transition"
+@import "compass/css3/box-shadow"
+
+=top_shadow($depth: 1)
+  $z1 : 0
+  $z2 : 0
+  $z3 : 0
+  $z4 : 0
+  $z5 : 0
+
+  @if $depth == 1 
+    $z1 : 1 
+  @if $depth == 2 
+    $z2 : 1 
+  @if $depth == 3 
+    $z3 : 1 
+  @if $depth == 4 
+    $z4 : 1 
+  @if $depth == 5 
+    $z5 : 1 
+
+  @if $depth == 1
+    @include opacity(0.12) 
+  @if $depth == 2
+    @include opacity(0.16) 
+  @if $depth == 3
+    @include opacity(0.19) 
+  @if $depth == 4
+    @include opacity(0.25) 
+  @if $depth == 5
+    @include opacity(0.30) 
+
+  @include box-shadow( 0px 1px 1.5px rgba(#000, $z1), 0px 3px 3px rgba(#000, $z2), 0px 10px 10px rgba(#000, $z3), 0px 14px 14px rgba(#000, $z4), 0px 19px 19px rgba(#000, $z5))
+
+@mixin materialShadow($depth)
+  $z1 : 0
+  $z2 : 0
+  $z3 : 0
+  $z4 : 0
+  $z5 : 0
+  @if $depth == 1 
+    $z1 : 1 
+  @if $depth == 2 
+    $z2 : 1 
+  @if $depth == 3 
+    $z3 : 1 
+  @if $depth == 4 
+    $z4 : 1 
+  @if $depth == 5 
+    $z5 : 1 
+
+  &:before, &:after
+    @include transition( box-shadow 0.7s 0.01s $easeOutExpo)
+
+  // Top Shadow
+  &:before
+    @if $depth == 1
+      @include opacity(0.12) 
+    @if $depth == 2
+      @include opacity(0.16) 
+    @if $depth == 3
+      @include opacity(0.19) 
+    @if $depth == 4
+      @include opacity(0.25) 
+    @if $depth == 5
+      @include opacity(0.30) 
+
+    @include box-shadow( 0px 1px 1.5px rgba(#000, $z1), 0px 3px 3px rgba(#000, $z2), 0px 10px 10px rgba(#000, $z3), 0px 14px 14px rgba(#000, $z4), 0px 19px 19px rgba(#000, $z5))
+  
+
+  // Bottom Shadow
+  &:after
+    @if $depth == 1
+      @include opacity(0.24) 
+    @if $depth == 2
+      @include opacity(0.23) 
+    @if $depth == 3
+      @include opacity(0.23) 
+    @if $depth == 4
+      @include opacity(0.22) 
+    @if $depth == 5
+      @include opacity(0.22) 
+
+    @include box-shadow( 0px 1px 1px rgba(#000, $z1), 0px 3px 3px rgba(#000, $z2), 0px 6px 3px rgba(#000, $z3), 0px 10px 5px rgba(#000, $z4), 0px 15px 6px rgba(#000, $z5))
+  
+
+
+// Example Usage:
+/*
+=material($depth: 1)
+  z-index: $depth * 2
+
+  @include transition( box-shadow 0.7s 0.01s $easeOutExpo)
+  &:before, &:after
+    z-index: -1
+
+    position: absolute
+    display: block
+    content: ' '
+
+    width: 100%
+    height: 100%
+
+    top: 0px
+    left: 0px
+
+    margin: 0
+    padding: 0
+
+  @include materialShadow($depth)
+
+=noshadow
+  &:before, &:after
+    +box-shadow(0px 0px 0px, 0px 0px 0px, 0px 0px 0px, 0px 0px 0px)
+
+=box($depth: 2)
+  +material($depth)
+  +subtle_background
+  +border
+  +padded_block
+
+/**/
