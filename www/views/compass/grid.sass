@@ -103,6 +103,8 @@ ul.controls, ul.actions, ul.table_actions, ul.table_pagination
     +button_text
     &:not(.inactive)
       +button
+    &.active
+      +bold
 
 .clean_list
   +clean_list
@@ -113,6 +115,8 @@ ul.controls, ul.actions, ul.table_actions, ul.table_pagination
 
 //body
   +stripes
+  * 
+    background: rgba(0,0,0,0.05) !important
 
 body
   navigation, .sidebar

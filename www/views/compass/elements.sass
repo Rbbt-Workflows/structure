@@ -4,3 +4,42 @@
   &:not(.show)
     +noshadow
     z-index: ($depth * 2) - 1
+
+=text_table
+  +trailer(1)
+
+#content table
+  +text_table
+
+$column_gutter: $gutter
+=flexible_columns
+  display: flex
+  & > *
+    margin-right: $column_gutter
+  
+.flexible_columns
+  +flexible_columns
+
+.responsive_flexible_columns
+  @media #{$only-large}
+    +flexible_columns
+
+=card_background
+  +subtle_background
+
+=card($depth: 1)
+  +material($depth)
+  +card_background
+  +card_padding
+
+
+=fragment
+  &.reloading:after
+    display: inline-block
+    content: 'loading...'
+    margin-left: $indent
+    color: grey
+    margin-bottom: $vindent
+a.fragment
+  +fragment
+

@@ -1,4 +1,5 @@
 @import "compass/css3/transform"
+@import "compass/css3/border-radius"
 @import "base/blocks"
 @import "base/fonts"
 @import "base/text"
@@ -23,7 +24,12 @@
 
 =actionable
   +pointer
+
+=actionable
+  +pointer
   +noselect
+  +button_background
+  +border-radius(2px)
   &:not(.show):hover
     +subtle_color
   &.show
@@ -32,6 +38,10 @@
     +loading
   &.error
     +error
+  & > a
+    display: inline-block
+    height: 100%
+    width: 100%
 
 =gone
   &:not(.show)
@@ -53,8 +63,7 @@
   overflow: hidden
   +clean_list
   +flat_list
-  & > dd
-    +ease
+  +noinlinegaps
   & > dt
     +small_button_padding
     +toggle_button
@@ -125,27 +134,52 @@
 
 =horizontal_menu
   +menu
+  & > dt
+    display: inline-block
+    +tab
   & > dd
     min-width: 100%
     
-=tab_menu
-  +horizontal_menu
+
+=raisable($depth: 1)
+  &.show, &.active
+    //border: 1px $subtle_border
+    //border-bottom: none
+    +material($depth)
+  &:not(.show), &:not(.active)
+    //border-top: #{$depth}px solid rgba(0,0,0,0)
+    //border-bottom: #{$depth}px solid rgba(255,255,255,0)
+
+=tab
+  +text_line
+  +raisable
+  +actionable
   position: relative
-  & > dd
-    +shifting(up)
-    float: left
-    top: rhythm(1)
+  border-bottom: 0px
+
+=shadow_content
+  +boxed
+  &:not(.show)
+    border: none
+  &.show
+    +bottom_shadow(2)
 
 =dropdown_menu
   +horizontal_menu
-  +below_right
+  +below_left
   overflow: visible
-  z-index: 1
-  & > dt
-    display: inline-block
   & > dd
-    +boxed
     +shrinking(up)
+    +ease_height
+    overflow-y: auto
+
+=tab_menu
+  +horizontal_menu
+  +float_content
+  overflow: visible
+  & > dd
+    +shrinking(up)
+    +ease_height
     overflow-y: auto
 
 =bottom_divider

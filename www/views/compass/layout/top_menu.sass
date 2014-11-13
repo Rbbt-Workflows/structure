@@ -1,12 +1,6 @@
 @import "elements"
 
-$top_menu_height: 3em
-body
-  margin-top: $top_menu_height
-
-
-#top_menu
-  height: $top_menu_height
+$top_depth: 2
 
 =top_menu_anchor
   position: fixed
@@ -30,13 +24,16 @@ body
 =first_level_top_menu
   +tab_menu
   overflow: auto
+  & > dt 
+    margin-left: 0  !important
+    margin-right: 0 !important
   & > dd > dl
     +accordion_menu
     margin-bottom: 1em
 
 =top_menu_items
   border-top: $subtle-color
-  +material(1)
+  +material($top_depth)
   +shifting(right)
   & > dl
     width: 100%
@@ -44,6 +41,95 @@ body
 
 #top_menu
   +top_menu_anchor
-  +material(1)
+  +material($top_depth)
   +subtle_background
   
+$top_menu_height: $app-bar-vsize-large
+$top_menu_font_size: $top_menu_height / 3
+$body_top_margin: $top_menu_height  * 2
+
+body
+  margin-top: $body_top_margin
+
+#top_menu
+  height: $top_menu_height
+
+#top_menu
+  .reload
+    display: inline-block
+
+  .find
+    +finder
+
+  & > div
+    display: inline-block
+
+    &.favourites
+      ul.entities, ul.entity_lists
+        li
+          width: 100%
+          display: block
+
+    &.favourites, &.user, &.find
+      +top_menu_items
+
+=top_menu_title
+  +text_line($top_menu_font_size)
+  position: absolute
+  left: $indent * 2
+
+=button_sheet
+  & > *:not(:last-child)
+    +button_hmargin
+
+#top_menu
+  padding-left: $gutter
+  padding-right: $gutter
+  +container
+  +show_grid
+  width: 100%
+  z-index: 10
+
+  & > div
+
+    &.title
+      +top_menu_title
+    &.reload
+      +reload_icon
+      +text_line($top_menu_font_size)
+      position: absolute
+      top: 0
+      right: 0
+      +pointer
+    &.container
+      +container(4)
+      +span(last 4)
+      +button_sheet
+      display: flex
+      +text_line($top_menu_font_size)
+      & > a
+        &.hide_toggle[data-title=Favs]
+          +favs_icon
+        &.hide_toggle[data-title=User]
+          +user_icon
+        &.hide_toggle[data-title=Side]
+          +side_icon
+        &.hide_toggle[data-title=Find]
+          +find_icon
+        +actionable
+        +button_hpadding
+        height: 100%
+
+    &.favourites, &.user, &.find
+      width: 100%
+      +subtle_background
+      padding-left: $gutter
+      padding-right: $gutter
+      border-top: 1px solid $subtle_border
+      position: absolute
+      top: $top_menu_height
+      left: 0
+      & > dl > dt
+        +but(span(1 of 5))
+
+    

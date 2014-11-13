@@ -20,41 +20,38 @@ $color_table_border: $subtle-border
       +normal
       +subtle_color
 
-  background-color: lighten($table_color, 20)
-  +rhythm-borders(1,1,1,1)
+  tfoot
+    th
+      //background-color: lighten($table_color, 5)
+
   padding: $padding_table
   border-collapse: collapse
 
-  //tr:first-child
-    th
-      border-bottom: 1px solid $color_table_border
   tbody, thead
-    td, th
-      margin: 0
-      padding: rhythm(0.5)
-      text-align: left
+    & > tr
+      & > td, & > th
+        margin: 0
+        padding: rhythm(0.5)
+        text-align: left
+      & > th
+        background-color: rgba(0,0,0,0.05)
+        +noselect
  
   td, th
     vertical-align: center
     a
       white-space: nowrap
 
-  tr:nth-child(2n)
-    background-color: lighten($table_color, 10)
- 
-  th
-    background-color: $table_color
-    +noselect
-
   &.wide
     td
       max-width: 200px
       overflow: hidden
       text-overflow: ellipsis
+      @media #{$only-large}
+        &:first-child
+          max-width: 400px
 
   tfoot
-    th
-      background-color: lighten($table_color, 5)
     ul.table_actions li
       margin-left: $margin_table_actions
     ul.table_pagination, ul.table_actions
@@ -65,8 +62,6 @@ $color_table_border: $subtle-border
       li > .button, li.button, li
         min-width: 3em
         text-align: center
-        //+set_item_height(rhythm(1))
-        //vertical-align: top
       float: left
       margin-right: 1em
 
@@ -75,32 +70,28 @@ $color_table_border: $subtle-border
         &
           display: none
 
-    
-  &.sorted
-    thead
-      tr
-        th
-          position: relative
-          &, &:hover
-            +down_cursor
-            &.headerSortDown
-              +up_cursor
+  &.sorted > thead > tr > th
+    position: relative
+    &, &:hover
+      +down_cursor
+      &.headerSortDown
+        +up_cursor
 
-          &.headerSortDown, &.headerSortUp
-            +bold
+    &.headerSortDown, &.headerSortUp
+      +bold
 
-          &.headerSortUp:after, &.headerSortDown:after
-            content: " "
-            float: right
-            right: 0
- 
-          &.headerSortDown:after
-            margin-top: 5px
-            @include css-triangle(5px, $triglecolor, top)
+    &.headerSortUp:after, &.headerSortDown:after
+      content: " "
+      float: right
+      right: 0
 
-          &.headerSortUp:after
-            margin-bottom: 5px
-            @include css-triangle(5px, $triglecolor, bottom)
+    &.headerSortDown:after
+      margin-top: 5px
+      @include css-triangle(5px, $triglecolor, top)
+
+    &.headerSortUp:after
+      margin-bottom: 5px
+      @include css-triangle(5px, $triglecolor, bottom)
 
 =table_column_selector
   li
@@ -120,75 +111,57 @@ $color_table_border: $subtle-border
   width: 100%
   border-collapse: collapse
   border-spacing: 0
-  th, td 
-    margin: 0
-    vertical-align: top
-    height: 3em
+  & > thead, & > tbody
+    & > tr
+      & > th, & > td 
+        margin: 0
+        vertical-align: top
+        height: 3em
 
-  th 
-    text-align: left
+      & > th
+        display: block
+        text-align: right
 
-  thead 
+      & > td
+        display: block
+        text-align: left
+
+  & > thead 
     display: block
     float: left
     max-width: 40%
     white-space: nowrap
     overflow: auto
     overflow-y: hidden
+    & > tr 
+      display: block
+      & > th 
+        text-align: left
 
-  tfoot
+  & > tfoot
     width: 100%
+    & > tr > th
+      padding: 0
 
-  tbody 
+  & > tbody 
     display: block
     width: auto
     position: relative
     overflow-x: auto
     white-space: nowrap
+    & > tr 
+      display: inline-block
+      vertical-align: top
    
-
-  thead tr 
-    display: block
-   
-
-  th 
-    display: block
-    text-align: right
-   
-
-  tbody tr 
-    display: inline-block
-    vertical-align: top
-   
-
-  td 
-    display: block
-    min-height: 1.25em
-    text-align: left
- 
   /* sort out borders */
 
-  th 
-    border-bottom: 0
-    border-left: 0
-   
+  & > thead, & > tbody, & > tfoot
+    & > tr > th, & > tr > td
+      border-left: 0
+      border-right: 0
+      border-bottom: 0
 
-  td 
-    border-left: 0
-    border-right: 0
-    border-bottom: 0
-   
-
-  tbody tr 
+  & > tbody > tr 
     border-left: 1px solid $subtle_border
-   
 
-  th:last-child, td:last-child 
-  tfoot > tr > th
-    padding: 0
-
-  //tfoot
-    border: 2px solid $subtle_border
-    border-top: 1px solid $subtle_border
-     
 

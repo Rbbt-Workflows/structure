@@ -42,66 +42,6 @@ body
 
 // LAYOUT
 
-#top_menu
-  .reload
-    display: inline-block
-
-  .find
-    +finder
-
-  & > div
-    display: inline-block
-
-    &.favourites
-      ul.entities, ul.entity_lists
-        li
-          width: 100%
-          display: block
-
-    &.favourites, &.user, &.find
-      +top_menu_items
-
-
-#top_menu
-  padding-left: $gutter
-  padding-right: $gutter
-  +container
-  +show_grid
-  width: 100%
-
-  & > div
-
-    &.title
-      +set_item_height( rhythm(2) )
-      +span(first 1)
-    &.reload
-      +set_item_height( rhythm(2) )
-      +but
-      position: absolute
-      top: 0
-      right: 0
-      width: $gutter * 2
-    &.container
-      +container(4)
-      +span(last 4)
-      display: flex
-      & > a
-        +set_item_height( rhythm(2) )
-        +but
-
-
-    &.favourites, &.user, &.find
-      width: 100%
-      +subtle_background
-      padding-left: $gutter
-      padding-right: $gutter
-      border-top: 1px solid $subtle_border
-      position: absolute
-      top: $top_menu_height
-      left: 0
-      & > dl > dt
-        +but(span(1 of 5))
-
 @media #{$only-small}
   table.wide
     +responsive_table

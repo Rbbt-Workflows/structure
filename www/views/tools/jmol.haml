@@ -1,13 +1,17 @@
 - jmol_id = 'Jmol-' << protein
+- select_id = jmol_id + '-select'
 - pdbs = protein.pdbs
 
 = link_css '/stylesheets/jmol'
 
 .jmol_tool(id=jmol_id)
 
-  %h4 Select pdb to load
+  .window
 
-  %select.pdb(style='width: 200px')
+  
+  %label(for=select_id) Select pdb to load
+
+  %select.pdb(id=select_id style='width: 200px')
     %option(selected="selected") Select a pdb
     - (pdbs || []).each do |pdb, info| 
       %option(attr-pdb="=#{pdb}")= "#{pdb}"
@@ -29,8 +33,6 @@
         -# url =  "http://darthcaedus:28873/" << ["Structure", "get_interaction_pdb"] * "/"  << "?" << Misc.hash2GET_params(:_format => :raw, :filename => filename)
         %option.interaction(attr-pdb=url)= "#{filename}"
  
-
-  .window
 
   .row(style='margin-top:20px')
     %dl.pdb_info

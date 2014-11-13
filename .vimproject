@@ -67,6 +67,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      font-scale.sass
      fonts.sass
      text.sass
+     icons.sass
 
      blocks.sass
     }
@@ -75,6 +76,8 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      forms.sass
      lists.sass
      table.sass
+
+     tool.sass
 
      movement.sass
      materials.sass

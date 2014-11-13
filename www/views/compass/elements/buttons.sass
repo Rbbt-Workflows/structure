@@ -1,10 +1,31 @@
 @import "elements/lists"
 
+$action-hpadding: 8px
+$action-vpadding: 1em
+$action-hmargin: 8px
+$action-vmargin: 1em
+
+=button_hmargin($size: $action-hmargin)
+  margin-right: $size
+
+=button_vmargin($size: $action-vmargin)
+  margin-top: $size
+  margin-bottom: $size
+
+=button_hpadding($size: $action-hpadding)
+  padding-left: $size
+  padding-right: $size
+
+=button_vpadding($size: $action-vpadding)
+  padding-top: $size
+  padding-bottom: $size
+
 =button_padding($horizontal: 1em, $vertical: 0.5)
-  +padded_block($horizontal, $vertical)
+  +button_hpadding($horizontal)
+  //+padded_block($horizontal, $vertical)
 
 =small_button_padding($horizontal: 1em, $vertical: 0.125)
-  +padded_block($horizontal, $vertical)
+  +button_hpadding($horizontal)
 
 =button( $border-size: 1px, $padding: 0.25 ) 
   +button_padding
@@ -56,13 +77,18 @@ $button-color: $subtle-background
   &.show
     background-color: $hover-button-color
 
+=noinlinegaps
+  word-spacing: -3px
+  letter-spacing: -3px
+  & > * 
+    word-spacing: normal
+    letter-spacing: normal
+
 =button_margin
   margin-left: $mini-tile
   margin-right: $mini-tile
   padding-left: $tile
   padding-right: $tile
-  margin-top: $tile
-  margin-bottom: $tile
 
 =but($width: 2 * $column)
   +text_item(2em, $width)

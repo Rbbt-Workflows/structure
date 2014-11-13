@@ -59,44 +59,42 @@
 - TSV.setup(feature_counts, :key_field => "Feature", :fields => ["Counts"], :type => :single, :namespace => organism)
 - header "Binomial Significance", NumericValue
 
-.row
-  .column
-    = table :page => "1~Binomial Significance", :table_id => "Most affected features in COSMIC for #{ name }" do
-      - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
-        - counts = v["Counts"]
-        - location = feature_locations[feature]
-        - size = location.last - location.first + 1
-        - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ global_frequency }, 'greater')$p.value")
+.responsive_flexible_columns
+  = table :page => "1~Binomial Significance", :table_id => "Most affected features in COSMIC for #{ name }" do
+    - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
+      - counts = v["Counts"]
+      - location = feature_locations[feature]
+      - size = location.last - location.first + 1
+      - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ global_frequency }, 'greater')$p.value")
 
-      - tsv = tsv.add_field "Location" do |feature,v|
-        - feature_locations[feature] * ":"
+    - tsv = tsv.add_field "Location" do |feature,v|
+      - feature_locations[feature] * ":"
 
-      - tsv = tsv.add_field "Size" do |feature,v|
-        - location = feature_locations[feature]
-        - size = location.last - location.first + 1
-        - size.to_s
+    - tsv = tsv.add_field "Size" do |feature,v|
+      - location = feature_locations[feature]
+      - size = location.last - location.first + 1
+      - size.to_s
 
-      - tsv = tsv.add_field "Description" do |feature,v|
-        - case
-        - when feature =~ /^IPR\d/
-          - feature = InterProDomain.setup(feature.dup, organism) 
-          - feature.link
-        - when (defined? PfamDomain and feature =~ /^PF\d/)
-          - feature = PfamDomain.setup(feature.dup, organism) 
-          - feature.link
-        - else
-          - ""
+    - tsv = tsv.add_field "Description" do |feature,v|
+      - case
+      - when feature =~ /^IPR\d/
+        - feature = InterProDomain.setup(feature.dup, organism) 
+        - feature.link
+      - when (defined? PfamDomain and feature =~ /^PF\d/)
+        - feature = PfamDomain.setup(feature.dup, organism) 
+        - feature.link
+      - else
+        - ""
 
-      - tsv
+    - tsv
 
-  .column
-    =fragment do
-      - mutations = association_items.source.sort
-      - interfaces = Structure.job(:interfaces, nil, :mutations => mutations, :organism => organism, :watson => false, :principal => true).run
-      - header "Partner protein", "Protein"
-      = table :table_id => "Affected #{name} PPIs from COSMIC mutations" do
-        - counts = Misc.counts(interfaces.column("Ensembl Protein ID").values.collect{|v| v.uniq }.flatten)
-        - TSV.setup(counts, :key_field => "Partner protein", :fields => ["Counts"], :type => :single, :namespace => organism)
+  = fragment do
+    - mutations = association_items.source.sort
+    - interfaces = Structure.job(:interfaces, nil, :mutations => mutations, :organism => organism, :watson => false, :principal => true).run
+    - header "Partner protein", "Protein"
+    = table :table_id => "Affected #{name} PPIs from COSMIC mutations" do
+      - counts = Misc.counts(interfaces.column("Ensembl Protein ID").values.collect{|v| v.uniq }.flatten)
+      - TSV.setup(counts, :key_field => "Partner protein", :fields => ["Counts"], :type => :single, :namespace => organism)
 
 - header "Genomic Mutation", GenomicMutation, :watson => false
 = table :page => "1~COSMIC Sample", :table_id => "COSMIC feature annotations for #{name}" do

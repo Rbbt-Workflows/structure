@@ -3,11 +3,16 @@
   height: $size
   line-height: $size
 
-=text_item($height: $minimum-height, $width: $column)
-  +set_item_height($height)
-  width: $width
-  +oneline
 
+=text_line($font-size: $base-font-size)
+  font-size: $font-size 
+  line-height: $font-size * 3
+
+=text_item($height: $minimum-height, $width: $column)
+  +text_line
+  +oneline
+  width: $width
+  
 =oneline
   white-space: nowrap
   overflow: hidden

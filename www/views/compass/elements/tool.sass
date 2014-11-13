@@ -1,0 +1,32 @@
+@import 'screen_sizes'
+@import 'elements/movement'
+@import 'menu/menu'
+
+=tool($height: 700px)
+  dl.tool_menu, & > .menu
+    +clearfix
+    @media #{$not-large}
+      +accordion_menu
+    @media #{$only-large}
+      +dropdown_menu
+
+    & > dd
+      +padded_block
+      background: rgba(230,230,230,0.6)
+      max-height: $height
+      &.show
+        +bottom_shadow(1)
+        background: rgba(230,230,230,0.9)
+      &:not(.show)
+        border: none
+        background: rgba(230,230,230,1)
+
+  .tool_window, & > .window
+    +padded_block
+    +clearfix
+    border-left: 2px solid $subtle_border
+    @media #{$only-large}
+      height: $height
+      border: 1px solid $subtle_border
+      overflow: auto
+

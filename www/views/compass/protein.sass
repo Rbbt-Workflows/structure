@@ -1,6 +1,5 @@
 @import 'screen_sizes'
-@import 'menu/menu'
-
+@import 'elements/tool'
 
 dd > select
   @media #{$only-large}
@@ -16,15 +15,5 @@ div.sequence_tool
     overflow: auto
     display: inline-block
 
-dl.protein_tool
-  @media #{$not-large}
-    +accordion_menu
-  @media #{$only-large}
-    +dropdown_menu
-
-  & > dd 
-    max-height: 700px
-    overflow: auto
-    background: rgba(230,230,230,0.8)
-    & >  dl
-      background: white
+.protein_tool
+  +tool

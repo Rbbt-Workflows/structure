@@ -1,0 +1,49 @@
+
+//$icon-font-path: "/public/fonts/"
+//
+//@function fa-font-path($path) 
+//  @return url('#{$icon-font-path}#{$path}')
+
+@import "font-awesome"
+@import "font-awesome-compass"
+
+=icon($type: 'bullet', $size: 1em)
+  @extend .fa
+  @extend .fa-#{$type}
+  font-size: $size
+  content: ""
+  max-width: 3em
+  white-space: nowrap
+  overflow: hidden
+  line-height: 3em
+  width: $size * 3
+  padding-left: $size 
+  position: relative
+  &:before
+    margin-right: $size * 4
+    height: 100%
+    width: 100%
+
+=rotate_icon($deg: '90')
+  @extend .fa-rotate-#{$deg}
+
+=menu_icon($size: 1em)
+  +icon('bolt', $size)
+
+=reload_icon($size: 1em)
+  +icon('refresh', $size)
+
+=user_icon($size: 1em)
+  +icon('user', $size)
+
+=favs_icon($size: 1em)
+  +icon('heart', $size)
+
+=find_icon($size: 1em)
+  +icon('search', $size)
+
+=side_icon($size: 1em)
+  +icon('ellipsis-h', $size)
+  &.show
+    +rotate_icon
+
