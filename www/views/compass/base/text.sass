@@ -23,8 +23,9 @@
   &:hover
     overflow: visible
     text-overflow: none
-    background: rbga(200,200,200,0.4)
-    width: 200%
+    z-index: 3
+    ~ *
+      z-index: 2
 
 @import "compass/css3/columns"
 =column_text($size: 3)

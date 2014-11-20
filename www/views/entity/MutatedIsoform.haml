@@ -19,6 +19,9 @@
     %dt Change
     %dd= entity.change
 
+    %dt Damaged? (based on RadialSVM score or truncating mutations)
+    %dd= entity.damaged? ? "true" : "false"
+
     - if entity.truncated
       - ablated_domains = entity.ablated_domain_positions
       - if ablated_domains.any?
@@ -34,23 +37,18 @@
                 - else
                   == #{domain.link} [#{s} - #{e}]
 
+    %dt DbNSFP RadialSVM score (damaged if above 0)
+    %dd= entity.dbnsfp_radialSVM_score || "NA"
 
     - if defined? DbNSFP
-      %dt Mutation Assessor 
+      %dt Mutation Assessor (damaged if above 1.938)
       %dd= entity.mutation_assessor_scores || "NA"
 
-      %dt SIFT
+      %dt SIFT (p-value; damaged if close to 0)
       %dd= entity.sift_scores || "NA"
-
-
-- if entity =~ /ENSP/
-  - entity_card.description do
-    .svg(style="width:100%")
-      - begin
-        = entity.marked_svg 
-      - rescue Exception
-        Could not download protein SVG, try again later. #{$!.message}
 
 - entity_card.action_controller = default_action_controller entity
 
-= entity_card_render entity_card
+= entity_card_render entity_card  do
+  - if entity =~ /ENSP/
+    = tool :secondary_structure, :protein => entity.protein, :positions => entity.change.scan(/\d+/)

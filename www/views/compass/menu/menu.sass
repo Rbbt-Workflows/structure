@@ -28,8 +28,8 @@
 =actionable
   +pointer
   +noselect
-  +button_background
   +border-radius(2px)
+  +button_background
   &:not(.show):hover
     +subtle_color
   &.show
@@ -110,7 +110,7 @@
 
 =float_content
   & > dd
-    float: right
+    float: left
     
 =vertical_menu
   +menu
@@ -152,7 +152,6 @@
 
 =tab
   +text_line
-  +raisable
   +actionable
   position: relative
   border-bottom: 0px
@@ -169,6 +168,7 @@
   +below_left
   overflow: visible
   & > dd
+    overflow: auto
     +shrinking(up)
     +ease_height
     overflow-y: auto
@@ -178,17 +178,19 @@
   +float_content
   overflow: visible
   & > dd
+    +padded_block
     +shrinking(up)
     +ease_height
     overflow-y: auto
 
-=bottom_divider
-  border-bottom: 1px solid $extremely-subtle-color
+=top_divider
+  &:not(:first-child)
+    border-top: 1px solid $extremely-subtle-color
 
 =dropdown_menu_item
   line-height: rhythm(2)
   +button_background
-  padding-left: rhythm(1)
+  padding-left: $gutter
   &:not(:hover)
     +oneline
 
@@ -196,22 +198,23 @@
 =accordion_menu
   +menu
   & > dt
-    +bottom_divider
+    +top_divider
     +dropdown_menu_item
     width: 100%
-    & > a:first-child
+    & > a:first-child:not(:last-child)
       font-size: 1.2em
       width: 5em
       text-align: center
       display: inline-block
       &:hover
         border-right: 1px solid $subtle_border
+
   & > dd
     +shrinking(up)
     +padded_block
     width: 100%
     padding-bottom: rhythm(0.5)
+    overflow: hidden
     +white_background
     +clearfix
-    //+spillout_block
 

@@ -1,4 +1,5 @@
 @import 'solarized'
+@import 'base/font-scale'
 $font-color: darken($base01,20)
 
 =main_font_color
@@ -21,6 +22,9 @@ $url: "http://fonts.googleapis.com/css?family=" + $main + ":400,700"
 =italic
   font-style: italic
 
+=light_weight
+  font-weight: 200
+
 =normal_weight
   font-weight: 500
 
@@ -34,7 +38,32 @@ $url: "http://fonts.googleapis.com/css?family=" + $monospace + ":400,700"
 =monospace
   font-family: $monospace, monospace
 
+
+
+=tiny
+  +font-scale(1 - $golden-stepup)
+
+=very-small
+  +font-scale(1 - $golden-stepup/2)
+
+=small
+  +font-scale(1 - $golden-stepup/3)
+  
+=normal
+  +font-scale(1)
+
+=medium
+  +font-scale(1 + $golden-stepup/2)
+  +light_weight
+
+=large
+  +font-scale(1 + $golden-stepup)
+
+=very-large
+  +font-scale(1 + $golden-stepup*2)
+
 =button_text
   +monospace
-
-
+  +light_weight
+  text-transform: capitalize
+  font-variant: small-caps

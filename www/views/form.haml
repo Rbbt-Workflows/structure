@@ -17,7 +17,7 @@
   - if workflow.libdir.examples[task.to_s].exists?
     .examples
 
-      Click the links bellow to load example data:
+      Click below to load example data:
         
       :javascript
         example_inputs = [];
@@ -32,30 +32,27 @@
           %li
             %a.load_example(href="#" task=task name=name)= name
 
-      :javascript
-        deffer(function(){
-          var form = $('.workflow_task[id=#{id}] > .form > form')
+      :deferjs
+        var form = $('.workflow_task[id=#{id}] > .form > form')
 
-          $("a.load_example").click(function(){
-            var link = $(this);
-            var name = $(link).attr('name');
-            var inputs = example_inputs[name];
-            form[0].reset()
+        $("a.load_example").click(function(){
+          var link = $(this);
+          var name = $(link).attr('name');
+          var inputs = example_inputs[name];
+          form[0].reset()
 
-            for (var input in inputs){
-              var value = inputs[input]
-              var input = form.find('[name=' + input + ']')
-              if (input.is('[type=checkbox]')){
-                input.prop('checked', value)
-              }else{
-                input.val(value)
-              }
+          for (var input in inputs){
+            var value = inputs[input]
+            var input = form.find('[name=' + input + ']')
+            if (input.is('[type=checkbox]')){
+              input.prop('checked', value)
+            }else{
+              input.val(value)
             }
-            form.find('[name=jobname]').val(name)
-            return false
-          })
+          }
+          form.find('[name=jobname]').val(name)
+          return false
         })
 
-=partial_render('partials/isotope_form', :id => id)
 
     

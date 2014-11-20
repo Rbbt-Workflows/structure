@@ -4,14 +4,25 @@
 //@function fa-font-path($path) 
 //  @return url('#{$icon-font-path}#{$path}')
 
-@import "font-awesome"
-@import "font-awesome-compass"
+//@import "font-awesome"
+//@import "font-awesome-compass"
+@import "base/misc"
+@import "base/icon_content"
+
+$icon-default-width: 6 * $tile
+
+=icon_base
+  font-family: FontAwesome
+  display: inline-block
+  text-rendering: auto
+  -webkit-font-smoothing: antialiased
+  -moz-osx-font-smoothing: grayscale
 
 =icon($type: 'bullet', $size: 1em)
-  @extend .fa
-  @extend .fa-#{$type}
+  +icon_base
+  $content: icon_content($type)
   font-size: $size
-  content: ""
+  content: $content
   max-width: 3em
   white-space: nowrap
   overflow: hidden
@@ -20,12 +31,13 @@
   padding-left: $size 
   position: relative
   &:before
+    content: $content
     margin-right: $size * 4
     height: 100%
     width: 100%
 
 =rotate_icon($deg: '90')
-  @extend .fa-rotate-#{$deg}
+  transform: rotate(#{$deg}deg)
 
 =menu_icon($size: 1em)
   +icon('bolt', $size)
@@ -41,6 +53,21 @@
 
 =find_icon($size: 1em)
   +icon('search', $size)
+
+=actions_icon($size: 1em)
+  +icon('gears', $size)
+
+=entity_icon($size: 1em)
+  +icon('minus', $size)
+
+=list_icon($size: 1em)
+  +icon('list', $size)
+
+=maps_icon($size: 1em)
+  +icon('table', $size)
+
+=new_icon($size: 1em)
+  +icon('plus', $size)
 
 =side_icon($size: 1em)
   +icon('ellipsis-h', $size)

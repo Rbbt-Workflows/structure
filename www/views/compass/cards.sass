@@ -1,19 +1,47 @@
+$card_title_height: 5 * $base-line-height
+
 =card_title
   +trailer(2)
   width: 100%
   .name
     +large
   .long_name
-    +normal
+    +medium
 
 =card_description
   width: 100%
   +trailer(1)
 
+
+=toggle_actions
+  +fix_to_bar
+  .action_controller
+    +padded_block
+  .action_loader
+    +white_background
+    +padded_block
+    border: 1px solid $subtle_color
+    min-height: 10em
+    &:empty
+      &:before
+        content: "Use controls above to select an Action"
+    &.reloading
+      +opacity(0.5)
+
+  &:not(.show)
+    +shrink_direction(up)
+  &.show
+    .action_loader
+      min-height: 10em
+      float: left
+      width: 100%
+
 =card_actions
   +leader(1)
   min-height: rhythm(10)
   width: 100%
+  &:not(:empty)
+    +toggle_actions
 
 =card_sidebar
   meta > dl, .entity_info > dl
@@ -42,6 +70,7 @@
 
 .action_loader
   margin-top: rhythm(1)
+  +clearfix
 
 .action_controller
   float: none
@@ -51,22 +80,32 @@
     &:not(:last-child)
       margin-bottom: rhythm(1)
     li
-      +button(1px,1/4)
+      +actionable
+      +border
       text-align: center
+      &:not(.active)
+        background: none !important
       a
         width: 100%
         display: inline-block
+        border: none !important
+        padding: 0 !important
+        margin: 0 !important
 
     &.controls > li
       width: span(1 of 10)
-      color: green
+      +actionable
       &:not(.active)
         +inactive_button
         
     &.actions > li
       min-width: span(1 of 5)
+      &:not(:hover)
+        border: 1px solid $subtle_border !important
       &.active
         +active
+        background-color: darken($subtle-background, 5)
+        +material(1)
       &.loading
         +loading
 
@@ -77,3 +116,7 @@
     display: inline-block
 .star.active > i
   +gold
+
+.hide_toggle[data-title=Actions]
+  +actions_icon
+    

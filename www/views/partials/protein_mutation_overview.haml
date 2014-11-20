@@ -1,0 +1,75 @@
+- name = protein.name
+- database_feature_counts = {}
+- feature_locations = {}
+
+- databases = Structure::ANNOTATORS.keys
+
+- mutation_isoform_info = result.select(protein_mis)
+- good_fields = mutation_isoform_info.fields - ["Genomic Mutation", "Residue"]
+- interface_fields = good_fields.select{|f| f =~ /\b(partner|PDB)\b/i }
+- neighbours_fields = good_fields.select{|f| f =~ /neighbour/i }
+- direct_fields = good_fields - neighbours_fields - interface_fields
+
+- feature_counts = {}
+- database_feature_counts.each{|d,c| feature_counts.merge!(c)}
+  
+- all_sample_hits = protein_mis
+- num_samples = all_sample_hits.uniq.length.to_f
+- if protein.sequence
+  - aas = protein.sequence.length.to_f * num_samples
+  - global_frequency = all_sample_hits.length.to_f / aas
+- else
+  - aas = "NA"
+  - global_frequency = "NA"
+
+.row
+  - header "Genomic Mutation", GenomicMutation, :watson => false
+  = table :table_id => "Annotations for #{name}" do
+    - mutation_isoform_info.slice(direct_fields)
+
+.row
+  - header "Genomic Mutation", GenomicMutation, :watson => false
+  = table :table_id => "Neighbour annotations for #{name}" do
+    - mutation_isoform_info.slice(neighbours_fields)
+
+.row
+  - header "Genomic Mutation", GenomicMutation, :watson => false
+  = table :table_id => "Affected interfaces for #{name}" do
+    - mutation_isoform_info.slice(interface_fields)
+
+
+- if feature_counts.any?
+  .row
+    - TSV.setup(feature_counts, :key_field => "Feature", :fields => ["Counts"], :type => :single, :namespace => organism)
+    - header "Binomial Significance", NumericValue
+    = table :page => "1~Binomial Significance", :table_id => "Most affected features for #{ name }" do
+      - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
+        - counts = v["Counts"]
+        - location = feature_locations[feature]
+        - size = location.last - location.first + 1
+        - if global_frequency == "NA"
+          - nil
+        - else
+          - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ R.ruby2R global_frequency }, 'greater')$p.value")
+
+
+      - tsv = tsv.add_field "Location" do |feature,v|
+        - feature_locations[feature] * ":"
+
+      - tsv = tsv.add_field "Size" do |feature,v|
+        - location = feature_locations[feature]
+        - size = location.last - location.first + 1
+        - size.to_s
+
+      - tsv = tsv.add_field "Description" do |feature,v|
+        - case
+        - when feature =~ /^IPR\d/
+          - feature = InterProDomain.setup(feature.dup, organism) 
+          - feature.link
+        - when (defined? PfamDomain and feature =~ /^PF\d/)
+          - feature = PfamDomain.setup(feature.dup, organism) 
+          - feature.link
+        - else
+          - ""
+
+      - tsv

@@ -17,25 +17,4 @@ $golden-stepup: $golden-ratio - 1
     @else
       @include adjust-font-size-to($new-font-size,1)
 
-=tiny
-  +font-scale(1 - $golden-stepup)
-
-=very-small
-  +font-scale(1 - $golden-stepup/2)
-
-=small
-  +font-scale(1 - $golden-stepup/3)
-  
-=normal
-  +font-scale(1)
-
-=medium
-  +font-scale(1 + $golden-stepup/2)
-
-=large
-  +font-scale(1 + $golden-stepup)
-
-=very-large
-  +font-scale(1 + $golden-stepup*2)
-
 

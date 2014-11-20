@@ -1,5 +1,4 @@
-
-body:after
+//body:after
   +very-small
   clear: both
   content: "Beta"
@@ -10,4 +9,72 @@ body:after
   bottom: 0
   right: 1em
   text-align: right
+
+#content
+  +clearfix
+  clear: both
+
+#footer
+  clear: both
+  +subtle_background
+  margin-top: rhythm(2)
+  padding-top: rhythm(1)
+  padding-bottom: rhythm(1)
+  padding-left: 5%
+  padding-right: 5%
+  color: $subtle_color
+  +clearfix
+  @media #{$only-large}
+    .logo
+      float: left
+      width: 30%
+
+    .address, .contact
+      text-align: right
+
+  .address
+    +clearfix
+    span
+      display: block
+
+  .contact
+    &:before
+      content: "Contact: "
+    span.where:before
+      content: " at "
+
+
+//#footer
+  clear: both
+  +clearfix
+
+  margin-top: rhythm(2)
+  padding-top: rhythm(1)
+  padding-bottom: rhythm(1)
+  width: 100%
+  padding-left: 5%
+  padding-right: 5%
+  font-size: 0.8em
+  color: $subtle_color
+  background: rgba(0,0,0,0.1)
+
+  .logo
+    float: left
+    width: 30%
+  .address, .contact
+    float: right
+    clear: top
+    width: 70%
+    text-align: right
+
+  .address
+    span
+      clear: both
+      float: right
+      display: inline-block
+  .contact
+    &:before
+      content: "Contact: "
+    span.where:before
+      content: " at "
 

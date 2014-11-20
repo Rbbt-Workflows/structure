@@ -1,5 +1,5 @@
 = link_css '/stylesheets/isoform_svg'
-.isoform_svg_tool
+.isoform_svg_tool(id=id)
   .window
     - log :svg, "Downloading SVG"
     - begin
@@ -9,11 +9,9 @@
         Could not download protein SVG, try again later. #{$!.message}
 
 
-  :javascript
-
-    deffer(function(){
-      require_js("/js/isoform_svg.js")
-      var tool = $('.isoform_svg_tool').last().isoform_svg_tool({protein:"#{ protein }", sequence: "#{sequence}"});
+  :deferjs
+    require_js("/js/isoform_svg.js", function(){
+      var tool = $('.isoform_svg_tool#' + '#{id}').last().isoform_svg_tool({protein:"#{ protein }", sequence: "#{sequence}"});
     })
 
 

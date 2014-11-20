@@ -1,8 +1,6 @@
-:defferjs
+:deferjs
   require_js('/js-find/isotope/isotope.pkgd.min.js', function(){
     var form = $("form#" + '#{id}')
     form.find('.input').addClass('masonry')
-    form.isotope({itemSelector: '.input',
-      masonry: { }
-    })
+    form.isotope({itemSelector: '.input', masonry: { } })
   })

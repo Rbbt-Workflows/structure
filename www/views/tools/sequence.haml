@@ -19,16 +19,13 @@
       - str << ("_" * (10 - txt.length)) << txt
     = str
 
-  :javascript
-
-    deffer(function(){
-      require_js("/js/sequence.js", function(){
-        var tool = $('.sequence_tool').last().sequence_tool({protein:"#{ protein }", sequence: "#{sequence}"});
-        var svg = $('#{svg}')
-        var start  = parseInt(svg.find('rect.ac').attr('x')); // + parseInt(svg.closest('div.svg').css('padding-left')) - parseInt(tool.css('padding-left'));
-        var end    = svg.attr('width')
-        tool.sequence_tool('place', start, end - start)
-      })
+  :deferjs
+    require_js("/js/sequence.js", function(){
+      var tool = $('.sequence_tool').last().sequence_tool({protein:"#{ protein }", sequence: "#{sequence}"});
+      var svg = $('#{svg}')
+      var start  = parseInt(svg.find('rect.ac').attr('x')); // + parseInt(svg.closest('div.svg').css('padding-left')) - parseInt(tool.css('padding-left'));
+      var end    = svg.attr('width')
+      tool.sequence_tool('place', start, end - start)
     })
 
 

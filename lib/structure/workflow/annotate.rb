@@ -15,7 +15,7 @@ module Structure
 
   ANNOTATORS = IndiferentHash.setup({})
 
-  ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample ID', 'Primary site', 'Site subtype', 'Primary histology', 'Histology subtype' do |isoform, residue,organism|
+  ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample ID', 'Primary site', 'Site subtype', 'Primary histology', 'Histology subtype', "PMID" do |isoform, residue,organism|
 
     @cosmic_residue_mutations ||= Structure.COSMIC_residues
     @cosmic_mutation_annotations ||= Structure.COSMIC_mutation_annotations
@@ -488,6 +488,7 @@ module Structure
       end
 
       next if all_annots.empty?
+
       [mutation, Misc.zip_fields(all_annots.uniq)]
     end
   end

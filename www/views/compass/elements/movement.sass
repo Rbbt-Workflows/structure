@@ -1,5 +1,5 @@
 =ease_position($time: 0.3s)
-  @include transition-property(top left margin-top margin-left )
+  @include transition-property(top left margin-top margin-left max-height)
   @include transition-duration($time)
   @include transition-timing-function(ease-in-out)
 
@@ -13,19 +13,26 @@
   @include transition-duration($time)
   @include transition-timing-function(ease-in-out)
   
+=ease($time: 0.3s)
+  @include transition-property(all)
+  @include transition-duration($time)
+  @include transition-timing-function(ease-in-out)
+  
 =shrink_horizontal
+  overflow: hidden
   max-width: 0
   padding-left: 0
   padding-right: 0
+  border: none
 
 =shrink_vertically
+  overflow: hidden
   max-height: 0
   padding-top: 0
   padding-bottom: 0
+  border: none
 
 =shrink_direction($direction: right)
-  overflow: hidden
-
   @if $direction  == left
     +shrink_horizontal
 
@@ -39,11 +46,15 @@
     +shrink_horizontal
 
 =shift_direction($direction: right)
-  overflow: hidden
   $offset: 100%
+  overflow: hidden
 
   @if $direction  == left
     margin-left: - $offset
+    max-width: $offset
+
+  @if $direction  == right
+    margin-left: $offset
     max-width: $offset
 
   @if $direction  == up
@@ -54,10 +65,6 @@
     margin-top: - $offset
     max-height: $offset
 
-  @if $direction  == right
-    margin-left: $offset
-    max-width: $offset
-
 =placed_up
   position: absolute
   width: 10px !important
@@ -65,18 +72,19 @@
   overflow: hidden
   top: -99999px
 
-=shifting($direction: right)
-  +ease_position
-  &:not(.show)
-    +shift_direction($direction)
-    z-index: 0
-
 =max_size_box($hsize: 400px, $vsize: 400px)
   max-width: $hsize
   max-height: $vsize
 
+=shifting($direction: right)
+  +ease_position
+  margin-top: 0
+  &:not(.show)
+    +shift_direction($direction)
+    z-index: inherit
+
 =shrinking($direction: right)
-  +max_size_box(700px, 700px)
+  +max_size_box(10000px, 10000px)
 
   @if $direction  == left
     +ease_width
@@ -99,4 +107,4 @@
     
   &:not(.show)
     +shrink_direction($direction)
-    z-index: 0
+    z-index: inherit

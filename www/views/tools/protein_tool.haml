@@ -1,0 +1,88 @@
+
+= link_css '/stylesheets/protein'
+.protein_tool.fixable(id=id)
+  = partial_render('tools/protein_tool/controls', :protein => protein, :id => id)
+
+  .tool_window
+    .controls
+      %ul.controls
+        %li
+          %a.clear(href="#") clear
+        %li
+          %a.aligned(href="#") mark alignment
+        %li.mark
+          %label Position
+          %input(type="text"  name="position")
+          %a.mark(href="#") mark position
+
+    .row.flex
+      .jmol.gallery_item
+        %h3 JMOL structures
+        = tool :jmol, :protein => protein
+
+      .protein.gallery_item
+        %h3 Protein sequence
+        = tool :secondary_structure, :protein => protein
+
+  :deferjs
+    require_js("/js/protein_tool.js", function(){
+      $('.protein_tool').protein_tool();
+
+      $('.controls > ul.controls > li > a.clear').click(function(){
+        var isoform_svg= $('.isoform_svg_tool');
+        var jmol = $('.jmol_tool');
+        var sequence = $('.sequence_tool');
+
+        var protein_tool = $('.protein_tool#' + '#{id}');
+        protein_tool.protein_tool('clear')
+
+        return false;
+      })
+
+      $('.controls > ul.controls > li > a.mark').click(function(){
+        var protein_tool = $('.protein_tool');
+        position = $('.controls li.mark input').val();
+        protein_tool.protein_tool('mark_position', position, 'red');
+
+        return false;
+      })
+
+      $('.controls > ul.controls > li > a.aligned').click(function(){
+        var protein_tool = $('.protein_tool');
+        protein_tool.protein_tool('clear')
+
+        var jmol = $('.jmol_tool');
+        var isoform_svg= $('.isoform_svg_tool');
+
+        if(jmol.jmol_tool('is_pdb_loaded')){ 
+          var map = jmol.jmol_tool('alignment_map');
+          jmol.jmol_tool('mark_aligned_region', 'blue');
+          isoform_svg.isoform_svg_tool('mark_aligned_region', map, 'blue');
+        }
+        return false;
+      })
+
+      var form = $('.controls > .action_parameters > form');
+      var submit = form.find('input[type=submit]');
+      submit.click(function(){
+        var protein_tool = $('.protein_tool');
+
+        var list = form.find('select[name=list]').val();
+        var color = form.find('select[name=color]').val();
+
+        var jmol = $('.jmol_tool');
+        if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_genomic_mutations', list, color); }
+
+        var isoform_svg= $('.isoform_svg_tool');
+        isoform_svg.isoform_svg_tool('mark_genomic_mutations', list, color);
+
+        var sequence= $('.sequence_tool');
+        sequence.sequence_tool('mark_genomic_mutations', list, color);
+
+        return false
+      })
+    })
+
+
+
+

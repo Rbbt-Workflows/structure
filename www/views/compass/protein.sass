@@ -17,3 +17,12 @@ div.sequence_tool
 
 .protein_tool
   +tool
+  dl.show + *
+    .jmol
+      +shrinking(up)
+      z-index: -1
+      +opacity(0)
+
+dl.pdb_info
+  & > dt, & > dd
+    max-width: 35em !important

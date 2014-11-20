@@ -94,7 +94,7 @@ $.widget("rbbt.jmol_tool", {
 
   //{{{ MANIPULATION
   
-  mark_position: function(chain, position, color){
+  mark_chain_position: function(chain, position, color){
     this._select(position, chain);
     this._style("spacefill")
     if (undefined === color){
@@ -104,13 +104,14 @@ $.widget("rbbt.jmol_tool", {
     }
   },
 
-  mark_region: function(chain, start, end, color){
-   if (start == end){
-    this._select(start - 1, chain);
-   }else{
-    this._select((start - 1) + '-' + (end - 1), chain);
-   }
+  mark_chain_region: function(chain, start, end, color){
+    if (start == end){
+      this._select(start - 1, chain);
+    }else{
+      this._select((start - 1) + '-' + (end - 1), chain);
+    }
 
+    console.log(color)
     this._style("cartoon")
     if (undefined === color){
       this._halos("color");
@@ -121,28 +122,33 @@ $.widget("rbbt.jmol_tool", {
 
   //{{{ HIGH LEVEL
   
-  mark_sequence_positions: function(positions, color){
+  mark_positions: function(positions, color){
     var tool = this;
     tool._sequence_positions_in_pdb(positions, function(pdb_positions){
       for (var chain in pdb_positions){
         var position_list = pdb_positions[chain]
         position_list = $.grep(position_list,function(n){ return(n)});
         if (position_list != null && position_list.length > 0){
-          tool.mark_position(chain, position_list, color);
+          tool.mark_chain_position(chain, position_list, color);
         }
       }
     })
   },
 
-  mark_sequence_range: function(start, end, color){
+  mark_position: function(position, color){
+    this.mark_positions([position], color)
+  },
+
+
+  mark_region: function(start, end, color){
     var tool = this;
     tool._sequence_positions_in_pdb([start, end], function(pdb_positions){
-     for (var chain in pdb_positions){
+    for (var chain in pdb_positions){
       var positions = pdb_positions[chain]
       if (null != positions[0] && null != positions[1]){
-       tool.mark_region(chain, positions[0], positions[1], color)
+      tool.mark_chain_region(chain, positions[0], positions[1], color)
       }
-     }
+    }
     })
   },
 
@@ -174,7 +180,7 @@ $.widget("rbbt.jmol_tool", {
         all_positions = all_positions.concat(positions)
       }
 
-      tool.mark_sequence_positions(all_positions, color)
+      tool.mark_positions(all_positions, color)
     });
   },
 

@@ -239,7 +239,6 @@ end:
 
     end
 
-    # read_seq is query and ref_seq is target
     def self.align(query_sequence, target_sequence)
       Log.low { "Aligning #{ Misc.fingerprint query_sequence } to #{ Misc.fingerprint target_sequence }" }
 
@@ -248,9 +247,7 @@ end:
         raise "No target sequence" if target_sequence.nil?
 
         s_out = Misc.open_pipe do |s_in|
-          #Log.ignore_stderr do
-            SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
-          #end
+          SmithWaterman.ssw_aa(query_sequence, target_sequence, query_sequence.length, target_sequence.length, s_in.fileno)
         end
 
         txt = s_out.read

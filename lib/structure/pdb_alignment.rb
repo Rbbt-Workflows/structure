@@ -2,8 +2,12 @@ require 'structure/alignment'
 
 module Structure
 
+  SSW_ALIGNMENT_REPO = cache_dir.ssw_alignments.find
+  Open.repository_dirs << SSW_ALIGNMENT_REPO unless Open.repository_dirs.include? SSW_ALIGNMENT_REPO
+
   ALIGNMENT_REPO = cache_dir.alignments.find
   Open.repository_dirs << ALIGNMENT_REPO unless Open.repository_dirs.include? ALIGNMENT_REPO
+
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
     protein_alignment, chain_alignment = Misc.insist do
       Persist.persist("SW PDB Alignment", :array,
@@ -11,8 +15,11 @@ module Structure
                       :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) do
       chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
       chain_sequence = chains[chain] 
-      SmithWaterman.align(protein_sequence, chain_sequence)
-                      end
+
+      protein_alignment, chain_alignment =  Persist.persist("SmithWaterman alignment", :marshal, :dir => SSW_ALIGNMENT_REPO, :other => {:source => protein_sequence, :target => chain_sequence}) do 
+        SmithWaterman.align(protein_sequence, chain_sequence)
+      end
+      end
     end
 
     seq_pos = Structure.match_position(positions, chain_alignment, protein_alignment)
@@ -25,7 +32,9 @@ module Structure
 
     result = TSV.setup({}, :key_field => "Sequence position", :fields => ["Chain:Position in PDB"], :type => :flat)
     chains.each do |chain,chain_sequence|
-      chain_alignment, protein_alignment = SmithWaterman.align(chain_sequence, protein_sequence)
+      chain_alignment, protein_alignment =  Persist.persist("SmithWaterman alignment", :marshal, :dir => SSW_ALIGNMENT_REPO, :other => {:source => chain_sequence, :target => protein_sequence}) do 
+        SmithWaterman.align(chain_sequence, protein_sequence)
+      end
 
       map = Structure.alignment_map(protein_alignment, chain_alignment)
 
@@ -59,8 +68,10 @@ module Structure
     alignments = {}
     chains.each do |chain,chain_sequence|
       alignments[chain] = begin
-                            chain_alignment, protein_alignment = SmithWaterman.align(chain_sequence, protein_sequence)
-                              Structure.match_position(protein_positions, protein_alignment, chain_alignment)
+                           chain_alignment, protein_alignment =  Persist.persist("SmithWaterman alignment", :marshal, :dir => SSW_ALIGNMENT_REPO, :other => {:source => chain_sequence, :target => protein_sequence}) do 
+                             SmithWaterman.align(chain_sequence, protein_sequence)
+                           end
+                           Structure.match_position(protein_positions, protein_alignment, chain_alignment)
                           end
     end
 
@@ -69,9 +80,15 @@ module Structure
 
   def self.neighbour_map_job(pdb, pdbfile, distance)
     Misc.insist do
-      Persist.persist("Neighbour map", :marshal, :persist => true, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do 
-        job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance)
-        job.run
+      begin
+        Persist.persist("Neighbour map", :marshal, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do 
+          job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance)
+          job.run
+        end
+      rescue Exception
+        Log.warn "Exception calculating neighbour map: #{$!.message}. Retrying"
+        persist = :update
+        raise $!
       end
     end
   end

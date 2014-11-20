@@ -2,22 +2,26 @@ require 'structure/ssw'
 
 module Structure
 
+  ALIGNMENTS = cache_dir.alignment_maps.find
+  Open.repository_dirs << ALIGNMENTS unless Open.repository_dirs.include? ALIGNMENTS
   def self.alignment_map(alignment_source, alignment_target)
-    map = {}
+    Persist.persist("Alignment maps", :marshal, :dir => ALIGNMENTS, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:alignment_source => alignment_source, :alignment_target => alignment_target}) do
+      map = {}
 
-    offset_source, alignment_source = alignment_source.match(/^(_*)(.*)/).values_at( 1, 2)
-    offset_target, alignment_target = alignment_target.match(/^(_*)(.*)/).values_at( 1, 2)
- 
-    gaps_source = 0 
-    gaps_target = 0
-    alignment_source.chars.zip(alignment_target.chars).each_with_index do |p,i|
-      char_source, char_target = p
-      gaps_source += 1 if char_source == '-'
-      gaps_target += 1 if char_target == '-'
-      map[i + 1 + offset_source.length - gaps_source] = i + 1 + offset_target.length - gaps_target if char_source == char_target  and char_source != "-"
+      offset_source, alignment_source = alignment_source.match(/^(_*)(.*)/).values_at( 1, 2)
+      offset_target, alignment_target = alignment_target.match(/^(_*)(.*)/).values_at( 1, 2)
+
+      gaps_source = 0 
+      gaps_target = 0
+      alignment_source.chars.zip(alignment_target.chars).each_with_index do |p,i|
+        char_source, char_target = p
+        gaps_source += 1 if char_source == '-'
+        gaps_target += 1 if char_target == '-'
+        map[i + 1 + offset_source.length - gaps_source] = i + 1 + offset_target.length - gaps_target if char_source == char_target  and char_source != "-"
+      end
+
+      map
     end
-    
-    map
   end
 
   SEQUENCE_MAP = cache_dir.sequence_map.find

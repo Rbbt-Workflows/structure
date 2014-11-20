@@ -30,6 +30,8 @@ $action-vmargin: 1em
 =button( $border-size: 1px, $padding: 0.25 ) 
   +button_padding
   +border
+  &:not(:hover)
+    border-color: rgba(0,0,0,0)
 
   overflow: hidden
   text-overflow: ellipsis

@@ -37,6 +37,7 @@ module Structure
                                          'Site subtype',
                                          'Primary histology',
                                          'Histology subtype',
+                                         'Pubmed_PMID',
                                          ]
                                        COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true
                                      end

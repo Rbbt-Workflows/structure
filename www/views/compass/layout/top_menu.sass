@@ -27,6 +27,9 @@ $top_depth: 2
   & > dt 
     margin-left: 0  !important
     margin-right: 0 !important
+  & > dd 
+    +shifting(up)
+    padding: 0
   & > dd > dl
     +accordion_menu
     margin-bottom: 1em
@@ -44,9 +47,6 @@ $top_depth: 2
   +material($top_depth)
   +subtle_background
   
-$top_menu_height: $app-bar-vsize-large
-$top_menu_font_size: $top_menu_height / 3
-$body_top_margin: $top_menu_height  * 2
 
 body
   margin-top: $body_top_margin
@@ -94,42 +94,79 @@ body
 
     &.title
       +top_menu_title
+      overflow: hidden
+      text-overflow: ellipsis
     &.reload
-      +reload_icon
       +text_line($top_menu_font_size)
+      +reload_icon
+      +actionable
       position: absolute
       top: 0
       right: 0
-      +pointer
+      font-size: initial !important
+      line-height: $top_menu_height !important
     &.container
-      +container(4)
-      +span(last 4)
-      +button_sheet
+      +container()
+      float: right
+      //+span(last 4)
+      margin-right: $icon-default-width - $gutter
       display: flex
+      flex-direction: row-reverse
+      height: $top_menu_height
+      overflow: hidden
       +text_line($top_menu_font_size)
       & > a
         &.hide_toggle[data-title=Favs]
+          order: 4
           +favs_icon
         &.hide_toggle[data-title=User]
+          order: 3
           +user_icon
         &.hide_toggle[data-title=Side]
+          order: 1
           +side_icon
         &.hide_toggle[data-title=Find]
+          order: 2
+          +side_icon
           +find_icon
         +actionable
         +button_hpadding
         height: 100%
+        margin: 0
+        font-size: initial !important
+        line-height: $top_menu_height !important
 
     &.favourites, &.user, &.find
       width: 100%
+      @media #{$only-large}
+        margin-left: 30%
+        width: 70%
+      @media #{$only-very-large}
+        margin-left: 50%
+        width: 50%
       +subtle_background
-      padding-left: $gutter
-      padding-right: $gutter
+      //padding-left: $gutter
+      //padding-right: $gutter
       border-top: 1px solid $subtle_border
       position: absolute
       top: $top_menu_height
       left: 0
-      & > dl > dt
-        +but(span(1 of 5))
 
     
+@media #{$only-small}
+  #top_menu
+    dt.next.entities 
+      +actionable
+      +entity_icon
+    dt.next.lists
+      +actionable
+      +list_icon
+    dt.next.maps
+      +actionable
+      +maps_icon
+    dt.next.new
+      +actionable
+      +new_icon
+
+
+

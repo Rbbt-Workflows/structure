@@ -85,16 +85,21 @@ $.widget("rbbt.isoform_svg_tool", {
 
   //{{{ MANIPULATION
   
-  mark_position: function(positions, color, jitter){
+  mark_position: function(position, color, jitter){
     var tool = this;
     var svg = tool._svg()
     var seq_len = tool.options.seq_len;
     var width  = parseInt(svg.attr('width'));
     var start  = parseInt(svg.find('rect.ac').attr('x'));
 
-    $(this._position_in_svg($(positions), jitter)).each(function(){
+    $(this._position_in_svg($(position), jitter)).each(function(){
       tool._vline(this, color) 
     })
+  },
+
+  mark_positions: function(positions, color, jitter){
+    var tool = this;
+    $(positions).each(function(){ tool.mark_position(this, color, jitter); })
   },
 
   mark_region: function(r_start, r_end, color){

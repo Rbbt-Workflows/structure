@@ -1,0 +1,15 @@
+- positions = [] unless defined? positions and not positions.nil?
+- color = 'red' unless defined? color and not color.nil?
+
+.secondary_structure_tool(id=id)
+  = tool :isoform_svg, :protein => protein, :sequence => protein.sequence, :height => 200
+  = tool :sequence, :protein => protein, :sequence => protein.sequence, :svg => '.isoform_svg_tool svg', :height => 200
+
+  :deferjs
+    require_js("/js/secondary_structure.js", function(){
+      var tool = $('.secondary_structure_tool#' + '#{id}').last().secondary_structure_tool({positions: #{positions.to_json}, color: '#{color}'});
+      var positions = #{positions.collect{|v| v.to_i}.to_json}
+      var color = '#{color}'
+      tool.secondary_structure_tool('mark_positions', positions, color) 
+    })
+

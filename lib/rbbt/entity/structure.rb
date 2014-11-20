@@ -17,6 +17,11 @@ module Protein
   self.format = ["Partner Ensembl Protein ID"]
 
   property :name => :single do
-    "(#{gene.name}) " << self
+    gene = self.gene
+    if gene
+      "(#{gene.name}) " << self
+    else
+      "(?) " << self
+    end
   end
 end

@@ -1,5 +1,5 @@
 @import "compass/reset"
-@import "normalize"
+//@import "normalize"
 
 @import "text"
 
@@ -19,7 +19,6 @@
 @import "layout/top_menu"
 @import "layout/reveal"
 @import "layout/result"
-//@import "layout/navigation"
 @import "layout/footer"
 
 @import "compass/css3/box-sizing"
@@ -41,11 +40,18 @@ body
       display: block
       +font-scale(0.7)
 
-section.documentation
+section.documentation, .documentation > section
+  clear: both
   @media #{$not-small}
-    +column_text
+    &:not(.short)
+      +column_text
   &:not(:last-child)
     +rhythm(0,0,0,1)
+
+.documentation, section + dl
+  dd.show
+    +boxed
+    border: 1px solid $font-color !important
 
 .examples
   ul 
@@ -72,10 +78,6 @@ section.documentation
       +gallery(1 of 3)
       margin-bottom: gutter(10 of 30)
 
-//@media #{$only-very-small} 
-  table.wide, table.flip
-    +responsive_table
-
 table
   +rbbt_table
 
@@ -97,7 +99,7 @@ a[href="#"]
   &:not(.inactive)
     +button
 
-ul.controls, ul.actions, ul.table_actions, ul.table_pagination
+ul.actions, ul.table_actions, ul.table_pagination
   +button_set
   li > .button, li.button, li
     +button_text
@@ -130,3 +132,11 @@ body
   +clearfix
 .container, .row
   +container
+
+.precomputed, .wizard
+  margin-top: rhythm(2)
+  +clearfix
+  clear: both
+
+article
+  +clearfix

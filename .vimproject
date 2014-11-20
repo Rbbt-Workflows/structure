@@ -13,14 +13,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
   }
   structure=structure{
    annotator.rb
-   workflow=workflow{
-    helpers.rb
-    alignments.rb
-    annotate.rb
-    wizard.rb
-   }
    ssw.rb
    alignment.rb
+
    pdb_helper.rb
    pdb_alignment.rb
 
@@ -34,13 +29,19 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
 
    entity.rb
    sinatra.rb
+
+   workflow=workflow{
+    helpers.rb
+    alignments.rb
+    annotate.rb
+    wizard.rb
+   }
   }
 
  }
  share=share{
-  rbbt_commands=rbbt_commands{
+  rbbt_commands=rbbt_commands filter="*"{
    bootstrap
-   cosmic
    sample_report
   }
   software=software/opt/ssw filter="*"{
@@ -67,6 +68,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      font-scale.sass
      fonts.sass
      text.sass
+     icon_content.scss
      icons.sass
 
      blocks.sass
@@ -113,10 +115,12 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
       jmol-accent.save.js
       jquery.jmol.js
      }
+
      jmol.js
      isoform_svg.js
      sequence.js
-     protein.js
+     secondary_structure.js
+     protein_tool.js
     }
    }
 
@@ -124,6 +128,11 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     jmol.haml
     isoform_svg.haml
     sequence.haml
+    secondary_structure.haml
+    protein_tool=protein_tool{
+     controls.haml
+    }
+    protein_tool.haml
    }
 
    entity=entity{
@@ -138,15 +147,16 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    partials=partials{
     download.haml
     isotope_form.haml
+    protein_mutation_overview.haml
    }
    layout=layout{
     top_menu.haml
-    }
+    footer.haml
+   }
 
    tasks.haml
    form.haml
    Structure=Structure{
-    layout.haml.save
     tasks.haml
     wizard=wizard{
      job_result.haml
