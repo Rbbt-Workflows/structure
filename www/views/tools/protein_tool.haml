@@ -16,13 +16,15 @@
           %a.mark(href="#") mark position
 
     .row.flex
-      .jmol.gallery_item
-        %h3 JMOL structures
-        = tool :jmol, :protein => protein
 
       .protein.gallery_item
         %h3 Protein sequence
         = tool :secondary_structure, :protein => protein
+
+      .jmol.gallery_item
+        %h3 JMOL structures
+        = tool :jmol, :protein => protein
+
 
   :deferjs
     require_js("/js/protein_tool.js", function(){

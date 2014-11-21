@@ -9,6 +9,7 @@ module Structure
   Open.repository_dirs << ALIGNMENT_REPO unless Open.repository_dirs.include? ALIGNMENT_REPO
 
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
+    protein_sequence.gsub!(/\s/,'')
     protein_alignment, chain_alignment = Misc.insist do
       Persist.persist("SW PDB Alignment", :array,
                       :dir => ALIGNMENT_REPO, :persist => true,
@@ -28,6 +29,7 @@ module Structure
   end
 
   def self.pdb_alignment_map(protein_sequence, pdb, pdbfile)
+    protein_sequence.gsub!(/\s/,'')
     chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
 
     result = TSV.setup({}, :key_field => "Sequence position", :fields => ["Chain:Position in PDB"], :type => :flat)
@@ -51,6 +53,7 @@ module Structure
   end
 
   def self.pdb_positions_to_sequence(pdb_positions, sequence, target_chain, pdb = nil, pdbfile = nil)
+    sequence.gsub!(/\s/,'')
     chain_positions = {}
     pdb_positions.collect do |cp|
       chain, position = cp.split(":")
@@ -62,6 +65,7 @@ module Structure
   end
 
   def self.sequence_position_in_pdb(protein_sequence, protein_positions, pdb, pdbfile)
+    protein_sequence.gsub!(/\s/,'')
     chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
 
     protein_positions = [protein_positions] unless Array === protein_positions
@@ -94,6 +98,7 @@ module Structure
   end
 
   def self.neighbours_in_pdb(sequence, positions, pdb = nil, pdbfile = nil, chain = nil, distance = 5)
+    sequence.gsub!(/\s/,'')
     neighbours_in_pdb = TSV.setup({}, :key_field => "Sequence position", :fields => ["Neighbours"], :type => :flat)
 
     positions_in_pdb = Structure.sequence_position_in_pdb(sequence, positions, pdb, pdbfile)

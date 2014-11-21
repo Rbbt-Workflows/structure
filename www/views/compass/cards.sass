@@ -57,6 +57,8 @@ $card_title_height: 5 * $base-line-height
   & > .title
     +card_title
   & > .content
+    float: right
+    width: 100%
     +clearfix
     & > .description
       +card_description
@@ -69,8 +71,20 @@ $card_title_height: 5 * $base-line-height
     display: none
 
 .action_loader
-  margin-top: rhythm(1)
   +clearfix
+
+=action_controller_button
+  +actionable
+  +border
+  text-align: center
+  &:not(.active)
+    background: none !important
+  a
+    width: 100%
+    display: inline-block
+    border: none !important
+    padding: 0 !important
+    margin: 0 !important
 
 .action_controller
   float: none
@@ -80,21 +94,15 @@ $card_title_height: 5 * $base-line-height
     &:not(:last-child)
       margin-bottom: rhythm(1)
     li
-      +actionable
-      +border
-      text-align: center
-      &:not(.active)
-        background: none !important
-      a
-        width: 100%
-        display: inline-block
-        border: none !important
-        padding: 0 !important
-        margin: 0 !important
+      +action_controller_button
+
+    &.controls, &.actions
+      +clearfix
 
     &.controls > li
-      width: span(1 of 10)
-      +actionable
+      font-size: 1.3em
+      width: font-spaces(5)
+      max-width: span(1 of 5)
       &:not(.active)
         +inactive_button
         
@@ -105,7 +113,6 @@ $card_title_height: 5 * $base-line-height
       &.active
         +active
         background-color: darken($subtle-background, 5)
-        +material(1)
       &.loading
         +loading
 

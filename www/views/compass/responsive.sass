@@ -18,12 +18,13 @@ body
 
 
 =push_right($distance: 40%)
-  position: absolute
-  left: $gutter
+  float: left
   +shifting(left)
   width: $distance
   &:not(.show)
+    width: 0px
     height: $distance
+    max-height: 500px
     overflow: hidden
   &.show + *
     float: right

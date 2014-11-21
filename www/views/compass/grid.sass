@@ -71,12 +71,19 @@ section.documentation, .documentation > section
   clear: both
 
 .list_management 
+  +clearfix
+  width: 100%
+  ~ *
+    clear: both
   & > ul
-    +button_set
-    +container
+    float: left
+    width: 35em
     li
+      +button
+      +button_text
       +gallery(1 of 3)
-      margin-bottom: gutter(10 of 30)
+      text-align: center
+      margin-bottom: $gutter
 
 table
   +rbbt_table

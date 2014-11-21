@@ -167,3 +167,12 @@ $color_table_border: $subtle-border
     border-left: 1px solid $subtle_border
 
 
+table > tbody:empty
+  &:before
+    content: "Empty table"
+    width: 100%
+    text-align: center
+    display: inline-block
+    +subtle_color
+  ~ tfoot
+    display: none
