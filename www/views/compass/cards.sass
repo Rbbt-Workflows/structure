@@ -87,17 +87,16 @@ $card_title_height: 5 * $base-line-height
     margin: 0 !important
 
 .action_controller
-  float: none
   margin-bottom: 0
   width: 100%
   & > ul
-    &:not(:last-child)
-      margin-bottom: rhythm(1)
-    li
-      +action_controller_button
+    +clearfix
+    clear: both
+    margin-bottom: rhythm(1)
 
-    &.controls, &.actions
-      +clearfix
+    & > li
+      +action_controller_button
+      float: left
 
     &.controls > li
       font-size: 1.3em
