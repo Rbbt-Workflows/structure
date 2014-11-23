@@ -1,0 +1,52 @@
+$color-one: #3f51b5
+$color-two: tint($color-one, 30)
+$color-accent: #ff9100
+
+$color-link: shade(#FFC200, 30)
+
+a:not([href="#"])
+  color: $color-link
+
+%background-main
+  background: $color-one
+  color: white
+  & > a[href="#"]
+    color: white
+
+%background-subtle
+  background: $color-two
+  color: white
+  & > a[href="#"]
+    color: white
+
+%background-glassy
+  background: transparentize(tint($color-two, 90), 0.10)
+
+%background-hover
+  background: shade($color-two, 20)
+  color: white
+  & > a[href="#"]
+    color: white
+
+%background-active
+  background: shade($color-two, 30)
+  color: white
+  & > a[href="#"]
+    color: white
+  
+%background-error
+  background: shade($color-two, 30)
+  color: $color-accent
+  & > a
+    color: $color-accent
+  
+$background-color: white
+$subtle-color: $color-two
+$very-subtle-color: lighten($subtle-color, 10)
+$extremely-subtle-color: lighten($subtle-color, 15)
+
+$subtle-border: darken($subtle-color, 20)
+$subtle-background: $subtle-color
+
+  
+

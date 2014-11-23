@@ -1,11 +1,9 @@
 @import "elements"
+@import "mixins/all"
 
 $top_depth: 2
+@import "layout/top_bar"
 
-=top_menu_anchor
-  position: fixed
-  top: 0
-  left: 0
 
 =finder
   padding-top: 1em
@@ -27,152 +25,64 @@ $top_depth: 2
       right: 0
       height: 2em
 
-=first_level_top_menu
-  +tab_menu
-  overflow: auto
-  & > dt 
-    margin-left: 0  !important
-    margin-right: 0 !important
-  & > dd 
-    +shifting(up)
-    padding: 0
-  & > dd > dl
-    +accordion_menu
-    margin-bottom: 1em
-
-=top_menu_items
-  border-top: $subtle-color
-  +material($top_depth)
-  +shifting(right)
-  & > dl
-    width: 100%
-    +first_level_top_menu
-
-#top_menu
-  +top_menu_anchor
-  +material($top_depth)
-  +subtle_background
-  
-
-body
-  margin-top: $body_top_margin
-
-#top_menu
-  height: $top_menu_height
-
-#top_menu
-  .reload
-    display: inline-block
-
-  .find
-    +finder
-
-  & > div
-    display: inline-block
-
-    &.favourites
-      ul.entities, ul.entity_lists
-        li
-          width: 100%
-          display: block
-
-    &.favourites, &.user, &.find
-      +top_menu_items
-
-=top_menu_title
-  +text_line($top_menu_font_size)
-  position: absolute
-  left: $indent * 2
 
 =button_sheet
   & > *:not(:last-child)
     +button_hmargin
 
+%clear-top_bar
+  margin-top: 5em
+
+body
+  @extend %clear-top_bar
+
+
+/////
+
+
 #top_menu
-  padding-left: $gutter
-  padding-right: $gutter
-  +container
-  +show_grid
-  width: 100%
-  z-index: 10
+  @extend %top_bar-position
+  @extend %top_bar-size
+  @extend %top_bar-material
+  @extend %top_bar-layout
 
   & > div
+    display: inline-block
 
     &.title
-      +top_menu_title
-      overflow: hidden
-      text-overflow: ellipsis
+      @extend %top_bar-title
+
     &.reload
-      +text_line($top_menu_font_size)
-      +reload_icon
-      +actionable
-      position: absolute
-      top: 0
-      right: 0
-      font-size: initial !important
-      line-height: $top_menu_height !important
+      @extend %top_bar-reload
+
     &.container
-      +container()
-      float: right
-      //+span(last 4)
-      margin-right: $icon-default-width - $gutter
-      display: flex
-      flex-direction: row-reverse
-      height: $top_menu_height
-      overflow: hidden
-      +text_line($top_menu_font_size)
-      & > a
-        &.hide_toggle[data-title=Favs]
-          order: 4
-          +favs_icon
-        &.hide_toggle[data-title=User]
-          order: 3
-          +user_icon
-        &.hide_toggle[data-title=Side]
-          order: 1
-          +side_icon
-        &.hide_toggle[data-title=Find]
-          order: 2
-          +side_icon
-          +find_icon
-        +actionable
-        +button_hpadding
-        height: 100%
-        margin: 0
-        font-size: initial !important
-        line-height: $top_menu_height !important
+      @extend %top_bar-button_container
 
     &.favourites, &.user, &.find
-      width: 100%
-      @media #{$only-large}
-        margin-left: 30%
-        width: 70%
-      @media #{$only-very-large}
-        margin-left: 50%
-        width: 50%
-      +subtle_background
-      //padding-left: $gutter
-      //padding-right: $gutter
-      border-top: 1px solid $subtle_border
-      position: absolute
-      top: $top_menu_height
-      left: 0
+      @extend %top_bar-rail_menus
 
+    &.find
+      +finder
+
+    &.favourites
+      ul.entities, ul.entity_lists
+        & > li
+          width: 100%
+          display: block
+
+#top_menu
+
+  & > div
+    display: inline-block
     
 @media #{$only-small}
   #top_menu
     dt.next.entities 
-      +actionable
       +entity_icon
     dt.next.lists
-      +actionable
       +list_icon
     dt.next.maps
-      +actionable
       +maps_icon
     dt.next.new
-      +actionable
       +new_icon
-
-
 

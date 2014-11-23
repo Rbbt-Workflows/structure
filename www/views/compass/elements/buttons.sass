@@ -62,10 +62,8 @@ $action-vmargin: 1em
 
 $medium-button-width: 11 * $tile
 
-=button_border
-  //border: 1px solid $very-subtle-color
-
-$button-color: $subtle-background
+@import "base/colors"
+$button-color: $color-two
 =button_background($button-color: $button-color)
   $hover-button-color: darken($button-color, 20)
   $pressed-button-color: darken($button-color, 40)
@@ -103,7 +101,7 @@ $button-color: $subtle-background
     width: 100%
 
 =boolean
-  position:absolute 
+  position: absolute 
   overflow: hidden 
   clip: rect(0 0 0 0)
   z-index: -1000 

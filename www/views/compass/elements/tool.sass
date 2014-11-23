@@ -1,16 +1,16 @@
-@import 'screen_sizes'
 @import 'elements/movement'
+@import 'screen_sizes'
 @import 'base/icons'
-@import 'menu/menu'
+@import 'base/blocks'
+@import 'base/colors'
+
+body
+  margin-top: 5em
 
 =tool($height: 700px)
   +clearfix
   dl.tool_menu, & > .menu
     +clearfix
-    @media #{$not-large}
-      +accordion_menu
-    @media #{$only-large}
-      +dropdown_menu
 
     & > dt
       +raisable
@@ -28,11 +28,10 @@
   .tool_window, & > .window
     +padded_block
     +clearfix
-    border-left: 2px solid $subtle_border
+    border: 1px solid $color-two
     @media #{$only-large}
       min-height: $height
       height: $height
-      border: 1px solid $subtle_border
       overflow: auto
 
   &:not(.show)
@@ -42,7 +41,6 @@
         overflow: auto
     .tool_window, & > .window
       @media #{$only-large}
-        border: 1px solid $subtle_border
         overflow: auto
 
   &.show

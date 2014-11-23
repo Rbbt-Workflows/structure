@@ -1,11 +1,17 @@
 @import "base/misc"
 @import "susy"
 @import "screen_sizes"
+@import "base/colors"
+@import "elements/materials"
+
+=raisable($depth: 1)
+  &.show, &.active
+    +material($depth)
 
 =fix_to_top
+  @extend %background-glassy
   +shifting(down)
   +ease_position
-  +subtle_background
   position: absolute
   left: 0
   height: auto
@@ -17,7 +23,7 @@
 
 =fix_to_bar
   +fix_to_top
-  top: $top_menu_height
+  top: 48px
   min-width: 100%
 
 =border( $size: 1px, $padding: 0.25 ) 
@@ -32,7 +38,7 @@
     width: 100% 
 
 =subtle_background
-  background: $subtle-background
+  @extend %background-subtle
 
 =white_background
   background: white

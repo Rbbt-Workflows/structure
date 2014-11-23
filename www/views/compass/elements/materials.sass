@@ -59,19 +59,7 @@ $easeInOutExpo : cubic-bezier(1.000, 0.000, 0.000, 1.000)
   @if $depth == 5 
     $z5 : 1 
 
-  $op: 1
-  @if $depth == 1
-    $op: 0.24
-  @if $depth == 2
-    $op: 0.23 
-  @if $depth == 3
-    $op: 0.23 
-  @if $depth == 4
-    $op: 0.22 
-  @if $depth == 5
-    $op: 0.22
-
-  @include box-shadow( 0px 1px 1px rgba(#000, $z1*$op), 0px 3px 3px rgba(#000, $z2*$op), 0px 6px 3px rgba(#000, $z3*$op), 0px 10px 5px rgba(#000, $z4*$op), 0px 15px 6px rgba(#000, $z5*$op))
+  @include box-shadow( 0px 1px 1px rgba(#000, $z1), 0px 3px 3px rgba(#000, $z2), 0px 6px 3px rgba(#000, $z3), 0px 10px 5px rgba(#000, $z4), 0px 15px 6px rgba(#000, $z5))
   
 
 @mixin materialShadow($depth)
@@ -154,6 +142,10 @@ $easeInOutExpo : cubic-bezier(1.000, 0.000, 0.000, 1.000)
     padding: 0
 
   @include materialShadow($depth)
+
+=material2($depth: 1)
+  +top_shadow($depth)
+  +bottom_shadow($depth)
 
 =noshadow
   &:before, &:after

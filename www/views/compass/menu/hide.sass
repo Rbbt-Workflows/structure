@@ -1,0 +1,19 @@
+=gone
+  &:not(.show)
+    +shrinking("up")
+
+=hide_next
+  &.next:not(.show) + dd
+    +gone
+
+
+%hide-fold
+  position: relative
+  & > dd
+    +ease
+    &:not(.show)
+      max-height: 3em
+      overflow: hidden
+      position: absolute
+      top: 0
+      +opacity(0)

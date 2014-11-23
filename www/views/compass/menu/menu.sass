@@ -7,70 +7,13 @@
 @import "elements/materials"
 @import "elements/movement"
 
+@import "mixins/all"
+
+@import "menu/actionable"
+@import "menu/hide"
+
 @import "compass/typography/vertical_rhythm"
 
-=expandable_sign
-  &:after
-    content: "V"
-    float: right
-    margin-right: -2em
-    display: inline-block
-  &.show
-    &:after
-      +rotate(90deg)
-  &:not(.show)
-    &:after
-      color: $very-subtle
-
-=actionable
-  +pointer
-
-=actionable
-  +pointer
-  +noselect
-  +border-radius(2px)
-  +button_background
-  &:not(.show):hover
-    +subtle_color
-  &.show
-    +active
-  &.loading
-    +loading
-  &.error
-    +error
-  & > a
-    display: inline-block
-    height: 100%
-    width: 100%
-
-=gone
-  &:not(.show)
-    +shrinking("up")
-
-=hide_next
-  &.next:not(.show) + dd
-    +gone
-
-=toggle_button
-  +hide_next
-  +actionable
-  +button_text
-
-=action_top
-  border-top: 1px solid $subtle-border
-    
-=menu
-  overflow: hidden
-  +clean_list
-  +flat_list
-  +noinlinegaps
-  & > dt
-    +small_button_padding
-    +toggle_button
-    +subtle_background
-    display: inline-block
-    & > a
-      +clean_style
 
 =absolute
   position: relative
@@ -110,51 +53,9 @@
 
 =float_content
   & > dd
-    float: left
-    
-=vertical_menu
-  +menu
-  +right_content
-
-  & > dt
-    float:left
-    clear:both
-    width: 30%
-    overflow: hidden
-    display: block
-
-  & > dd
-    +boxed
-    border-right: 0
-    border-top: 0
-    border-bottom: 0
-
-    width: 70%
-    height: 100%
-
-=horizontal_menu
-  +menu
-  & > dt
-    display: inline-block
-    +tab
-  & > dd
-    min-width: 100%
+    @extend %float-left
     
 
-=raisable($depth: 1)
-  &.show, &.active
-    //border: 1px $subtle_border
-    //border-bottom: none
-    +material($depth)
-  &:not(.show), &:not(.active)
-    //border-top: #{$depth}px solid rgba(0,0,0,0)
-    //border-bottom: #{$depth}px solid rgba(255,255,255,0)
-
-=tab
-  +text_line
-  +actionable
-  position: relative
-  border-bottom: 0px
 
 =shadow_content
   +boxed
@@ -163,58 +64,60 @@
   &.show
     +bottom_shadow(2)
 
-=dropdown_menu
-  +horizontal_menu
-  +below_left
-  overflow: visible
-  & > dd
-    overflow: auto
-    +shrinking(up)
-    +ease_height
-    overflow-y: auto
-
-=tab_menu
-  +horizontal_menu
-  +float_content
-  overflow: visible
-  & > dd
-    +padded_block
-    +shrinking(up)
-    +ease_height
-    overflow-y: auto
 
 =top_divider
   &:not(:first-child)
     border-top: 1px solid $extremely-subtle-color
 
-=dropdown_menu_item
-  line-height: rhythm(2)
-  +button_background
-  padding-left: $gutter
-  &:not(:hover)
-    +oneline
 
+=action_top
+  border-top: 1px solid $subtle-border
+    
+%tab
+  +text_line
+  display: inline-block
+  position: relative
+  border-bottom: 0px
+  width: auto
+  min-width: 3em
+  @extend %button
+  text-align: center
 
-=accordion_menu
-  +menu
+%menu
+  overflow: hidden
+  +clean_list
+  +flat_list
+  +noinlinegaps
+  position: relative
+  z-index: 1
   & > dt
-    +top_divider
-    +dropdown_menu_item
-    width: 100%
-    & > a:first-child:not(:last-child)
-      font-size: 1.2em
-      width: 5em
-      text-align: center
-      display: inline-block
-      &:hover
-        border-right: 1px solid $subtle_border
-
+    z-index: 2
+    @extend %tab
+    & > a
+      +clean_style
   & > dd
-    +shrinking(up)
-    +padded_block
-    width: 100%
-    padding-bottom: rhythm(0.5)
-    overflow: hidden
-    +white_background
-    +clearfix
+    z-index: 1
+    @media #{$only-small}
+      max-width: 100%
+
+
+@import "menu/tab_menu"
+@import "menu/dropdown_menu"
+@import "menu/vertical_menu"
+@import "menu/accordion_menu"
+    
+=first_level_top_menu
+  @extend %tab_menu-layout-horizontal
+  overflow: auto
+  & > dt 
+    @extend %hmargin-none
+  & > dd 
+    +shifting(up)
+    @extend %padding-none
+
+  & > dd > dl
+    @extend %accordion_menu
+
+
+
 

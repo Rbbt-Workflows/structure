@@ -1,0 +1,21 @@
+
+%vertical_menu
+  @extend %menu
+  +right_content
+
+  & > dt
+    float: left
+    clear: both
+    width: 30%
+    overflow: hidden
+    display: block
+
+  & > dd
+    +boxed
+    border-right: 0
+    border-top: 0
+    border-bottom: 0
+
+    width: 70%
+    height: 100%
+

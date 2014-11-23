@@ -4,37 +4,37 @@ $triglecolor: rgba(0,0,0,0.15)
 $margin_table_actions: 7px
 $padding_table: rhythm(0.5) 0.5em
 
-$table_color: $subtle-background
+$table_color: $color-two
 $color_table_border: $subtle-border
 
 =css-triangle($a,$b,$c)
 
 =rbbt_table()
   +normal
+  @extend %background-glassy
   min-width: span(1 of 3)
   max-width: 100%
 
   caption
+    margin-left: $padding_table
     text-align: left
     span
       +normal
       +subtle_color
 
-  tfoot
-    th
-      //background-color: lighten($table_color, 5)
-
   padding: $padding_table
   border-collapse: collapse
 
-  tbody, thead
+  tbody, thead, tfoot
+    & > tr:nth-child(2n)
+      background-color: rgba(0,0,0,0.05)
     & > tr
       & > td, & > th
         margin: 0
         padding: rhythm(0.5)
         text-align: left
       & > th
-        background-color: rgba(0,0,0,0.05)
+        background-color: rgba(0,0,0,0.07)
         +noselect
  
   td, th
@@ -65,7 +65,7 @@ $color_table_border: $subtle-border
       float: left
       margin-right: 1em
       li.num.active, li.num.active > *
-        text-decoration: underline !important
+        text-decoration: underline
 
     ul.table_actions
       @media print
@@ -171,6 +171,7 @@ table > tbody:empty
   &:before
     content: "Empty table"
     width: 100%
+    padding: $tile
     text-align: center
     display: inline-block
     +subtle_color

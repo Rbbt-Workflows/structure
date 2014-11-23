@@ -62,6 +62,16 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     protein.sass
     sequence.sass
 
+    mixins=mixins{
+     _deps.sass
+     _blocks.sass
+     _semantic-ui.sass
+
+     _keyframes.scss
+
+     _all.sass
+    }
+
     base=base{
      misc.sass
 
@@ -71,8 +81,11 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      icon_content.scss
      icons.sass
 
+     colors.sass
+
      blocks.sass
     }
+
     elements=elements{
      buttons.sass
      forms.sass
@@ -84,14 +97,23 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      movement.sass
      materials.sass
     }
+
     layout=layout{
      footer.sass
      navigation.sass
      result.sass
      reveal.sass
      top_menu.sass
+     top_bar.sass
     }
+
     menu=menu{
+     actionable.sass
+     hide.sass
+     tab_menu.sass
+     dropdown_menu.sass
+     vertical_menu.sass
+     accordion_menu.sass
      menu.sass
     }
 
@@ -105,6 +127,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     grid.sass
 
     structure.sass
+    new.sass
     app.sass
    }
 
@@ -138,6 +161,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    entity=entity{
     MutatedIsoform.haml
     Protein.haml
+    Gene.haml
     Protein=Protein{
      COSMIC.haml
      COSMIC_neighbours.haml

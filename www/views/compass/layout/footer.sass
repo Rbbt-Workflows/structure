@@ -15,15 +15,18 @@
   clear: both
 
 #footer
+  @extend %background-main
+  color: rgba(255,255,255,45)
+
+  +clearfix
   clear: both
-  +subtle_background
+
   margin-top: rhythm(2)
   padding-top: rhythm(1)
   padding-bottom: rhythm(1)
   padding-left: 5%
   padding-right: 5%
-  color: $subtle_color
-  +clearfix
+
   @media #{$only-large}
     .logo
       float: left

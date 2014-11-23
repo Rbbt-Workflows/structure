@@ -69,14 +69,15 @@ span.choice
       text-align: right
 
     & > :first-child
-      position: absolute
-      right: 70%
+      float: left
       width: 30% !important
       min-width: 30% !important
       span
         display: block
     & > :nth-child(2)
-      margin-left: calc(30% + #{$gutter})
+      float: left
+      margin-left: $gutter
+
   @media #{$not-large}
     width: 100%
 

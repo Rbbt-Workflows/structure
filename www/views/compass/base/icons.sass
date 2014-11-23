@@ -18,23 +18,31 @@ $icon-default-width: 6 * $tile
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
 
-=icon($type: 'bullet', $size: 1em)
+=button-icon
+  margin: auto
+
+=icon_before($type: 'bullet')
   +icon_base
-  $content: icon_content($type)
-  font-size: $size
-  content: $content
-  max-width: 3em
+  +vertical-center(calc(50%))
+  text-align: center
+  content: icon_content($type)
+  width: 6 * $tile
+
+=icon($type: 'bullet', $size: 1em)
   white-space: nowrap
+  //float: left
+
+  padding-left: 0px !important
+  padding-right: 0px !important
+
   overflow: hidden
-  line-height: 3em
-  width: $size * 3
-  padding-left: $size 
-  position: relative
+  $width: 6 * $tile
+  width: $width
+  clip: rect(0px,#{$width},#{$width},0px)
   &:before
-    content: $content
-    margin-right: $size * 4
-    height: 100%
-    width: 100%
+    +icon_before($type)
+    +button_icon
+    margin-right: 48px
 
 =rotate_icon($deg: '90')
   transform: rotate(#{$deg}deg)
@@ -72,5 +80,6 @@ $icon-default-width: 6 * $tile
 =side_icon($size: 1em)
   +icon('ellipsis-h', $size)
   &.show
-    +rotate_icon
+    +icon('ellipsis-v', $size)
+    text-align: center
 

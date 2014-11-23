@@ -1,23 +1,22 @@
 =large_menus
   .rbbt_tabs, .tabs
-    +tab_menu
+    @extend %tab_menu
 
-  .rbbt_vertical_menu
-    +accordion_menu
-
-  .rbbt_accordion
-    +accordion_menu
+  .rbbt_vertical_menu, .rbbt_accordion
+    @extend %accordion_menu
 
   .rbbt_dropdown, .dropdown_menu
-    +dropdown_menu
+    @extend %dropdown_menu
 
-  .column
-    +gallery(1 of 2)
+  .column, .small_column
+    @media #{$only-large}
+      +gallery(1 of 2)
   .small_column
-    +gallery(1 of 3)
+    @media #{$only-very-large}
+      +gallery(1 of 3)
 =small_menus
   .rbbt_tabs, .tabs, .rbbt_menu, .rbbt_vertical_menu, .rbbt_accordion, .rbbt_dropdown
-    +accordion_menu
+    @extend %accordion_menu
     & > dd, & > dt
       width: 100% 
   .column
@@ -39,9 +38,4 @@
   
 
 #content, #modal
-  @media #{$only-large}
-    +large_menus
-  @media #{$not-large}
-    +small_menus
-  @media #{$only-small}
-    +very_small_menus
+  +large_menus

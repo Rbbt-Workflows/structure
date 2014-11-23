@@ -1,0 +1,36 @@
+@import "mixins/all"
+
+%dropdown_menu-layout
+  transform: rotate(360deg)
+  & > dt
+    @media #{$only-small}
+      width: 100%
+  & > dd
+    @media #{$only-small}
+      float: left
+    @media #{$not-small}
+      position: absolute
+      left: 0px
+
+%dropdown_menu-content
+  min-width: 100%
+  +shrinking(up)
+  +ease_height
+  overflow-y: auto
+  background: rgba(255,255,255,0.9)
+
+%dropdown_menu-content-movement
+  +shrinking(up)
+  +ease_height
+  overflow-y: auto
+
+%dropdown_menu
+  @extend %menu
+  @extend %dropdown_menu-layout
+  overflow: visible
+  & > dd
+    min-width: 100%
+    @extend %background-glassy
+    @extend %dropdown_menu-content-movement
+
+

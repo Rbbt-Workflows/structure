@@ -1,5 +1,4 @@
 @import "compass/reset"
-//@import "normalize"
 
 @import "text"
 
@@ -96,8 +95,11 @@ dl > dd
 ul
   +clean_list
 
-a:not(:hover)
+a
   +clean_style
+
+a:hover
+  text-decoration: underline
 
 a[href="#"]
   +main_font_color
@@ -147,3 +149,4 @@ body
 
 article
   +clearfix
+
