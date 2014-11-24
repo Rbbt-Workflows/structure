@@ -1,21 +1,25 @@
-$color-one: #3f51b5
-$color-two: tint($color-one, 30)
-$color-accent: #ff9100
+$color-one:  #E6E2AF
+$color-two: tint($color-one, 20)
+$color-two: #A7A37E
+$color-accent: #046380 
 
-$color-link: shade(#FFC200, 30)
+$color-link: #046380
+
+$background-font-color: rgba(0,0,0,0.70)
 
 a:not([href="#"])
   color: $color-link
 
+
 %background-main
   background: $color-one
-  color: white
+  color: $background-font-color
   & > a[href="#"]
     color: white
 
 %background-subtle
   background: $color-two
-  color: white
+  color: $background-font-color
   & > a[href="#"]
     color: white
 
@@ -24,7 +28,7 @@ a:not([href="#"])
 
 %background-hover
   background: shade($color-two, 20)
-  color: white
+  color: $background-font-color
   & > a[href="#"]
     color: white
 

@@ -27,14 +27,14 @@ $color_table_border: $subtle-border
 
   tbody, thead, tfoot
     & > tr:nth-child(2n)
-      background-color: rgba(0,0,0,0.05)
+      background-color: transparentize($color-two, 0.90)
     & > tr
       & > td, & > th
         margin: 0
         padding: rhythm(0.5)
         text-align: left
       & > th
-        background-color: rgba(0,0,0,0.07)
+        background-color: transparentize($color-two, 0.85)
         +noselect
  
   td, th
