@@ -1,4 +1,5 @@
 
+- position = nil unless defined? position
 = link_css '/stylesheets/protein'
 .protein_tool.fixable(id=id)
   = partial_render('tools/protein_tool/controls', :protein => protein, :id => id)
@@ -17,13 +18,14 @@
 
     .row.flex
 
-      .protein.gallery_item
-        %h3 Protein sequence
-        = tool :secondary_structure, :protein => protein
-
       .jmol.gallery_item
         %h3 JMOL structures
-        = tool :jmol, :protein => protein
+        = tool :jmol, :protein => protein, :position => position
+
+      .protein.gallery_item
+        %h3 Protein sequence
+        = tool :secondary_structure, :protein => protein, :positions => [position]
+
 
 
   :deferjs

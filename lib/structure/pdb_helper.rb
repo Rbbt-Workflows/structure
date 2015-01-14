@@ -4,6 +4,7 @@ module PDBHelper
     begin
       return StringIO.new(pdbfile) if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
       return Open.open(pdb) if pdb and (Open.remote?(pdb) or Open.exists?(pdb))
+      pdb = pdb.sub(/^=/,'')
       return Open.open("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=#{pdb}") unless pdb.nil?
 
     rescue Exception

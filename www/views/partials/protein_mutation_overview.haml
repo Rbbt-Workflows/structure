@@ -22,20 +22,17 @@
   - aas = "NA"
   - global_frequency = "NA"
 
-.row
-  - header "Genomic Mutation", GenomicMutation, :watson => false
-  = table :table_id => "Annotations for #{name}" do
-    - mutation_isoform_info.slice(direct_fields)
+- header "Genomic Mutation", GenomicMutation, :watson => false
+= table :table_id => "Annotations for #{name}", :span => true do
+  - mutation_isoform_info.slice(direct_fields)
 
-.row
-  - header "Genomic Mutation", GenomicMutation, :watson => false
-  = table :table_id => "Neighbour annotations for #{name}" do
-    - mutation_isoform_info.slice(neighbours_fields)
+- header "Genomic Mutation", GenomicMutation, :watson => false
+= table :table_id => "Neighbour annotations for #{name}", :span => true do
+  - mutation_isoform_info.slice(neighbours_fields)
 
-.row
-  - header "Genomic Mutation", GenomicMutation, :watson => false
-  = table :table_id => "Affected interfaces for #{name}" do
-    - mutation_isoform_info.slice(interface_fields)
+- header "Genomic Mutation", GenomicMutation, :watson => false
+= table :table_id => "Affected interfaces for #{name}", :span => true do
+  - mutation_isoform_info.slice(interface_fields)
 
 
 - if feature_counts.any?

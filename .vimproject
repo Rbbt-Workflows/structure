@@ -56,118 +56,42 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
 
  www=www {
   views=views {
+   tasks.haml
    compass=compass{
-    isoform_svg.sass
-    jmol.sass
     protein.sass
-    sequence.sass
-
-    mixins=mixins{
-     _deps.sass
-     _blocks.sass
-     _semantic-ui.sass
-
-     _keyframes.scss
-
-     _all.sass
-    }
-
-    base=base{
-     misc.sass
-
-     font-scale.sass
-     fonts.sass
-     text.sass
-     icon_content.scss
-     icons.sass
-
-     colors.sass
-
-     blocks.sass
-    }
-
-    elements=elements{
-     buttons.sass
-     forms.sass
-     lists.sass
-     table.sass
-
-     tool.sass
-
-     movement.sass
-     materials.sass
-    }
-
-    layout=layout{
-     footer.sass
-     navigation.sass
-     result.sass
-     reveal.sass
-     top_menu.sass
-     top_bar.sass
-    }
-
-    menu=menu{
-     actionable.sass
-     hide.sass
-     tab_menu.sass
-     dropdown_menu.sass
-     vertical_menu.sass
-     accordion_menu.sass
-     menu.sass
-    }
-
-    text.sass
-    menu.sass
-    elements.sass
-    cards.sass
-
-    offcanvas.sass
-    responsive.sass
-    grid.sass
-
-    structure.sass
-    new.sass
-    app.sass
    }
-
    public=public{
     js=js{
+     isoform_svg.js
+     jmol.js
+     protein_tool.js
+     secondary_structure.js
+     sequence.js
      jquery-jmol=jquery-jmol{
       jmol-accent.js
       jmol-accent.save.js
       jquery.jmol.js
      }
-
-     jmol.js
-     isoform_svg.js
-     sequence.js
-     secondary_structure.js
-     protein_tool.js
     }
    }
-
    tools=tools{
-    jmol.haml
     isoform_svg.haml
-    sequence.haml
+    jmol.haml
+    protein_tool.haml
     secondary_structure.haml
+    sequence.haml
     protein_tool=protein_tool{
      controls.haml
     }
-    protein_tool.haml
    }
-
    entity=entity{
     MutatedIsoform.haml
     Protein.haml
-    Gene.haml
     Protein=Protein{
      COSMIC.haml
      COSMIC_neighbours.haml
     }
    }
-
    partials=partials{
     download.haml
     isotope_form.haml
@@ -175,11 +99,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
    layout=layout{
     top_menu.haml
-    footer.haml
    }
-
-   tasks.haml
-   form.haml
    Structure=Structure{
     tasks.haml
     wizard=wizard{

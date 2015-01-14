@@ -9,21 +9,28 @@ module Structure
   Open.repository_dirs << ALIGNMENT_REPO unless Open.repository_dirs.include? ALIGNMENT_REPO
 
   def self.pdb_chain_position_in_sequence(pdb, pdbfile, chain, positions, protein_sequence)
-    protein_sequence.gsub!(/\s/,'')
-    protein_alignment, chain_alignment = Misc.insist do
-      Persist.persist("SW PDB Alignment", :array,
-                      :dir => ALIGNMENT_REPO, :persist => true,
-                      :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) do
-      chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
-      chain_sequence = chains[chain] 
+    begin
+      raise "Protein sequence missing" if protein_sequence.nil? or protein_sequence.empty?
 
-      protein_alignment, chain_alignment =  Persist.persist("SmithWaterman alignment", :marshal, :dir => SSW_ALIGNMENT_REPO, :other => {:source => protein_sequence, :target => chain_sequence}) do 
-        SmithWaterman.align(protein_sequence, chain_sequence)
+      protein_sequence.gsub!(/\s/,'')
+      protein_alignment, chain_alignment = Misc.insist do
+        Persist.persist("SW PDB Alignment", :array,
+                        :dir => ALIGNMENT_REPO, :persist => true,
+                        :other => {:pdb => pdb, :pdbfile => pdbfile, :chain => chain, :protein_sequence => protein_sequence}) do
+          chains = PDBHelper.pdb_chain_sequences(pdb, pdbfile)
+          chain_sequence = chains[chain] 
+
+          protein_alignment, chain_alignment =  Persist.persist("SmithWaterman alignment", :marshal, :dir => SSW_ALIGNMENT_REPO, :other => {:source => protein_sequence, :target => chain_sequence}) do 
+            SmithWaterman.align(protein_sequence, chain_sequence)
+          end
+                        end
       end
-      end
+
+      seq_pos = Structure.match_position(positions, chain_alignment, protein_alignment)
+    rescue Exception
+      Log.exception $!
+      seq_pos = [nil] * positions.length
     end
-
-    seq_pos = Structure.match_position(positions, chain_alignment, protein_alignment)
     res = Hash[*positions.zip(seq_pos).flatten]
     TSV.setup(res, :key_field => "Chain position", :fields => ["Sequence position"], :type => :single, :unnamed => true)
   end

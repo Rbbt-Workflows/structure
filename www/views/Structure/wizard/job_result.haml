@@ -44,6 +44,27 @@
 
 %h3 Isoform overview
 
+:sass
+  .protein_mutation_overview, .damage_overview
+    table
+      width: auto !important
+      li.table_column, li.filter
+        display: none
+      td
+        font-size: 0px
+        line-height: 0px
+        padding: 12px !important
+        span.table_value, span.ellipsis
+          font-size: 14px
+          display: block
+          line-height: 1.32em
+          white-space: nowrap
+          text-overflow: ellipsis
+          max-width: 100%
+          &.strip
+            font-style: italic
+          
+
 %dl.rbbt_tabs
   - first = true
   - proteins.each do |protein,protein_mis|
@@ -56,7 +77,8 @@
 
       %p= protein.link "Examine protein in detail"
 
-      = partial_render('partials/protein_mutation_overview', :protein => protein, :protein_mis => protein_mis, :organism => organism, :result => result)
+      .protein_mutation_overview
+        = partial_render('partials/protein_mutation_overview', :protein => protein, :protein_mis => protein_mis, :organism => organism, :result => result)
     - first = false
 
 %hr
@@ -67,7 +89,10 @@
   %a(href="https://sites.google.com/site/jpopgen/dbNSFP")< dbNSFP
   \)
 
-= table :table_id => "dbNSFP annotation (-999 are missing values)" do
-  - tsv = DbNSFP.job(:annotate, job.clean_name, :mutations => mis.select{|mi| mi.consequence == "MISS-SENSE"}).run
-  - good_fields = tsv.fields.select{|f| f =~  /_score/ }
-  - tsv.slice(good_fields)
+.damage_overview
+  = table :table_id => "dbNSFP annotation (-999 are missing values)", :span => true do
+    - tsv = DbNSFP.job(:annotate, job.clean_name, :mutations => mis.select{|mi| mi.consequence == "MISS-SENSE"}).run
+    - good_fields = tsv.fields.select{|f| f =~  /(_score|CADD_raw|SVM_score)$/ }
+    - tsv = tsv.slice(good_fields)
+    - tsv.rename_field "RadialSVM_score", "SVM_score"
+    - tsv

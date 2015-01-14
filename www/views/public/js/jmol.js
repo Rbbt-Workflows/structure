@@ -25,6 +25,10 @@ $.widget("rbbt.jmol_tool", {
     return this.options.jmol_window.data('jmol');
   },
 
+  background: function(color){
+    this._wrapper().script('background ' + color);
+  },
+
   clear: function(){
     var resetStyleScript = "select all; wireframe off; spacefill off; cartoon off; ribbon off; rocket off; strand off; trace off; halos off;select protein; backbone off; color pink;cartoons on;color structure; ";
     this._wrapper().script(resetStyleScript);
@@ -33,6 +37,7 @@ $.widget("rbbt.jmol_tool", {
   // PDB LOADING
 
   load_pdb: function(pdb) {
+    this._loaded_pdb = pdb.replace(/^=/,'')
     this._wrapper().script("load " + pdb + "; wireframe off; restrict water; select protein; backbone off; color pink;cartoons on;color structure;");
   },
 
@@ -53,25 +58,30 @@ $.widget("rbbt.jmol_tool", {
     return mutated_isoforms;
   },
 
+  _loaded_pdb: function(){
+    //this._wrapper().getProperty("filename").filename
+    this._loaded_pdb
+  },
+
   _sequence_positions_in_pdb: function(positions, complete){
-    return(rbbt_job("Structure", "sequence_position_in_pdb", {sequence: this.options.sequence, pdb: this._wrapper().getProperty("filename").filename, positions: positions.join("|")}, complete))
+    return(rbbt_job("Structure", "sequence_position_in_pdb", {sequence: this.options.sequence, pdb: this._loaded_pdb, positions: positions.join("|")}, complete))
   },
 
   alignment_map: function(complete){
-    return(rbbt_job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._wrapper().getProperty("filename").filename}, complete))
+    return(rbbt_job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._loaded_pdb}, complete))
   },
   
   //{{{ JMOL STUFF
   
   _select: function(position, chain){
     if (position instanceof Array){
-      var tmp = $(position).map(function(){ return (parseInt(this) - 1) }).toArray()
+      var tmp = $(position).map(function(){ return (parseInt(this)) }).toArray()
       position_str = tmp.join(", ");
     }else{
       if (typeof(position) == 'string' || position instanceof String){
         position_str = position
       }else{
-        position_str = position - 1
+        position_str = position 
       }
 
     }

@@ -1,8 +1,12 @@
 module Structure
+  def self.uniprot_sequence_map(uniprot, sequence)
+    uniprot_sequence = UniProt.sequence(uniprot)
+    map = sequence_map(uniprot_sequence, sequence)
+  end
   def self.corrected_uniprot_features(uniprot, sequence)
     uniprot_sequence = UniProt.sequence(uniprot)
 
-    map = sequence_map(uniprot_sequence, sequence)
+    map = uniprot_sequence_map(uniprot, sequence)
 
     features = UniProt.features(uniprot)
     corrected_features = []

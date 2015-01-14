@@ -1,20 +1,2 @@
 .title
-  %a(href='/')= $title
-
-.reload
-  %i.general.fi-refresh
-
-.container
-
-
-- if user
-  .favourites.hide(hide-title="Favs")
-    = partial_render('layout/top_menu/favourites')
-
-.user.hide(hide-title="User")
-  = partial_render('layout/top_menu/user')
-
-- if settings.respond_to?(:finder) and settings.finder and settings.finder.instances.any?
-  .find.hide(hide-title="Find")
-    = partial_render('layout/top_menu/finder')
-
+  %a(href="/") Structure PPi

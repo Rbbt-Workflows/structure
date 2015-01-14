@@ -1,22 +1,21 @@
 - jmol_id = 'Jmol-' << protein
 - select_id = jmol_id + '-select'
 - pdbs = protein.pdbs
+- position = nil unless defined? position
 
-= link_css '/stylesheets/jmol'
-
+- organism = protein.organism
+- uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
 .jmol_tool(id=jmol_id)
 
-  .window
 
-  
   .row
-    %label(for=select_id) Select pdb to load
+    %label(for=select_id) Load a structure PDB
 
     %select.pdb(id=select_id style='width: 200px')
-      %option(selected="selected") Select a pdb
+      %option(selected="selected") Select a PDB
       - (pdbs || []).each do |pdb, info| 
         %option(attr-pdb="=#{pdb}")= "#{pdb}"
-      - uniprot = protein.gene.uniprot
+      - uniprot = uni[protein]
 
       - if uniprot and Structure::I3D_PROTEINS.include? uniprot
         - filepos = Structure::I3D_PROTEINS.identify_field "FILENAME"
@@ -33,26 +32,33 @@
           - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
           -# url =  "http://darthcaedus:28873/" << ["Structure", "get_interaction_pdb"] * "/"  << "?" << Misc.hash2GET_params(:_format => :raw, :filename => filename)
           %option.interaction(attr-pdb=url)= "#{filename}"
-  
 
-    %dl.pdb_info
 
-      %dt Loaded PDB
-      %dd.pdbfile none
+  .window
 
-  :javascript
+  %dl.pdb_info.two_column
 
-    defer(function(){
-      require_js("/js/jmol.js", function(){
-        var tool = $('.jmol_tool').last().jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
+    %dt Loaded PDB file
+    %dd.pdbfile none
 
-        $('select.pdb').change(function(){
-          var option = $(this).find('option:selected');
-          var pdb = option.attr('attr-pdb');
-          if (pdb == "Select a pdb") return false
-          tool.jmol_tool("load_pdb", pdb)
-          tool.find('.pdb_info > dd.pdbfile').html(pdb)
-        })
+  :deferjs
+
+    require_js("/js/jmol.js", function(){
+      var position = #{position ?  position : "undefined"}
+      var tool = $('.jmol_tool').last().jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
+
+      $('select.pdb').change(function(){
+        var option = $(this).find('option:selected');
+        var pdb = option.attr('attr-pdb');
+        if (pdb == "Select a pdb") return false
+        tool.jmol_tool("load_pdb", pdb)
+        clean = pdb.replace(/=/,'')
+        tool.find('.pdb_info > dd.pdbfile').html(clean)
+
+        if (position !== undefined){
+          tool.jmol_tool("clear")
+          tool.jmol_tool("mark_position", position, 'red')
+        }
       })
     })
 

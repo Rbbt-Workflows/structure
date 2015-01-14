@@ -180,7 +180,7 @@
 		var _defaults = {
 			// Jmol initialization properties
 			appletUrl : '', // URL of a directory where applet's jar file resides
-			useSigned : false, // Use self signed version
+			useSigned : true, // Use self signed version
 			memLimit: 512, // Java memory limit in Megabytes
 			width: 400, // Applets width in pixels
 			height: 300, // Applets height in pixels
