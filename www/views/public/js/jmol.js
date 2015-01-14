@@ -1,7 +1,5 @@
 var jmol_tools = [];
 
-require_js("/js/jquery-jmol/jmol-accent.js")
-require_js("/js/jquery-jmol/jquery.jmol.js")
 
 $.widget("rbbt.jmol_tool", {
 
@@ -16,9 +14,12 @@ $.widget("rbbt.jmol_tool", {
   },
 
   _create: function() {
-    this.element.addClass('jmol_tool_init')
-    this.options.jmol_window = this.element.find('.window');
-    this.options.jmol_window.jmol(this.options);
+    var tool = this;
+    require_js(["/js/jquery-jmol/jmol-accent.js", "/js/jquery-jmol/jquery.jmol.js"], function(){
+      tool.element.addClass('jmol_tool_init')
+      tool.options.jmol_window = tool.element.find('.window');
+      tool.options.jmol_window.jmol(tool.options);
+    })
   },
 
   _wrapper: function() {
