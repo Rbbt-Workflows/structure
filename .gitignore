@@ -1,2 +1,5 @@
 www/views/public/js/jmol
 var/
+data
+.crap
+.sass-cache

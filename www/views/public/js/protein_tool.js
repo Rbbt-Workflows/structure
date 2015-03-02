@@ -12,11 +12,11 @@ $.widget("rbbt.protein_tool", {
   _redirect_function: function(name){
     var args = arguments;
 
+    this.options.secondary_structure.secondary_structure_tool(name, args[1], args[2]);
     this.options.secondary_structure.secondary_structure_tool(name, args[1], args[2], args[3], args[4]);
-    if (this.options.jmol !== undefined){ 
 
-      console.log(args);
-      console.log(args[4]);
+    if (this.options.jmol !== undefined && this.options.jmol.jmol_tool('is_pdb_loaded')){ 
+      console.log(this.options.jmol.jmol_tool('loaded_pdb'))
       this.options.jmol.jmol_tool(name, args[1], args[2], args[3], args[4])
     }
   },

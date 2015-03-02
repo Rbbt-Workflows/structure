@@ -19,16 +19,16 @@ $.widget("rbbt.secondary_structure_tool", {
   },
 
   clear: function(){
-    this._redirect_function('clear');
+   this._redirect_function('clear');
   },
 
   mark_position: function(position, color){
-    if (typeof position == 'string') position = parseInt(position)
-    this._redirect_function('mark_position', position, color);
+   if (typeof position == 'string') position = parseInt(position)
+   this._redirect_function('mark_position', position, color);
   },
 
   mark_positions: function(positions, color){
-    this._redirect_function('mark_positions', positions, color);
+   this._redirect_function('mark_positions', positions, color);
   },
 
   mark_region: function(start, end, color){

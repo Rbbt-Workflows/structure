@@ -7,7 +7,7 @@ module Structure
 
     raise ParameterException, "This wizard is limited to a thousand variants. For larger jobs use standard functions please" if mutations.length > 1000
 
-    log :indentifiying
+    log :identifiying
     mutations = mutations.collect{|m| m.sub(/(.*) (.*)/,'\1:\2')}
     type = case mutations.first
            when nil
@@ -85,6 +85,62 @@ module Structure
 
     all_annotations
   end
-
   export_asynchronous :wizard
+
+  helper :score_for do |field, value|
+    case field
+    when "Appris Feature"
+      if value.include? "firestar"
+        2
+      else
+        1
+      end
+    when "Sample ID"
+      case 
+      when value.length > 10
+        3
+      when value.length > 5
+        2
+      when value.length > 1
+        1 
+      else
+        0
+      end
+    when "UniProt Variant ID"
+      value.length > 1 ? 2 : 1
+    when "Type of Variant"
+      if value.include?("Disease")
+        3
+      elsif value.include?("Unclassified")
+        1
+      else
+        0
+      end
+    when "Partner Ensembl Protein ID"
+      2
+    else
+      0
+    end
+  end
+
+  dep :wizard
+  task :scores => :tsv do 
+    wizard = step(:wizard).load
+
+    wizard.add_field "Score" do |mi, values|
+      score = 0
+      values.zip(values.fields).each do |value, field|
+        next if value.empty?
+        if field =~ /Neighbour/
+          score = score + (score_for(field.sub('Neighbour ',''), value).to_f / 2)
+        else
+          score = score + score_for(field, value)
+        end
+      end
+      score
+    end
+
+    wizard.slice("Score")
+  end
+  export_asynchronous :scores
 end

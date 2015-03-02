@@ -92,7 +92,7 @@ module Structure
   def self.neighbour_map_job(pdb, pdbfile, distance)
     Misc.insist do
       begin
-        Persist.persist("Neighbour map", :marshal, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do 
+        Persist.persist("Neighbour map", :marshal, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do  |filename|
           job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance)
           job.run
         end
@@ -142,6 +142,7 @@ module Structure
   end
 
   def self.neighbour_map(distance, pdb = nil, pdbfile = nil)
+    return TSV.setup({}, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat) if pdb == '1cw3'
     close_residues = PDBHelper.pdb_close_residues(distance, pdb, pdbfile)
     tsv = TSV.setup close_residues, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat
     new = {}

@@ -23,7 +23,7 @@ module PDBHelper
         stream = pdb_stream(pdb, pdbfile)
         while line = stream.gets
           break if line =~ /^END/
-            next unless line =~ /^ATOM/
+            next unless line =~ /^ATOM/ and line.length > 21
             chain = line[20..21].strip
           aapos = line[22..25].to_i
           aa    = line[17..19]
@@ -51,12 +51,12 @@ module PDBHelper
     while line = stream.gets
       break if line =~ /^END/
         #next unless line =~ /^ATOM/
-        next unless line =~ /^\w*ATO?M/
+        next unless line =~ /^\w*ATO?M/ and line.length > 53
         code = line[13..26]
-      x = line[30..37].to_f
-      y = line[38..45].to_f
-      z = line[46..53].to_f
-      num = code[9..13].to_i
+        x = line[30..37].to_f
+        y = line[38..45].to_f
+        z = line[46..53].to_f
+        num = code[9..13].to_i
 
       atom_positions[code] = [x,y,z,num]
     end

@@ -24,7 +24,7 @@
 
       .protein.gallery_item
         %h3 Protein sequence
-        = tool :secondary_structure, :protein => protein, :positions => [position]
+        = tool :secondary_structure, :protein => protein, :positions => [position].compact
 
 
 

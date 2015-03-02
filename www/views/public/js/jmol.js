@@ -59,11 +59,6 @@ $.widget("rbbt.jmol_tool", {
     return mutated_isoforms;
   },
 
-  _loaded_pdb: function(){
-    //this._wrapper().getProperty("filename").filename
-    this._loaded_pdb
-  },
-
   _sequence_positions_in_pdb: function(positions, complete){
     return(rbbt_job("Structure", "sequence_position_in_pdb", {sequence: this.options.sequence, pdb: this._loaded_pdb, positions: positions.join("|")}, complete))
   },
@@ -122,7 +117,6 @@ $.widget("rbbt.jmol_tool", {
       this._select((start - 1) + '-' + (end - 1), chain);
     }
 
-    console.log(color)
     this._style("cartoon")
     if (undefined === color){
       this._halos("color");
@@ -154,12 +148,12 @@ $.widget("rbbt.jmol_tool", {
   mark_region: function(start, end, color){
     var tool = this;
     tool._sequence_positions_in_pdb([start, end], function(pdb_positions){
-    for (var chain in pdb_positions){
-      var positions = pdb_positions[chain]
-      if (null != positions[0] && null != positions[1]){
-      tool.mark_chain_region(chain, positions[0], positions[1], color)
+      for (var chain in pdb_positions){
+        var positions = pdb_positions[chain]
+        if (null != positions[0] && null != positions[1]){
+          tool.mark_chain_region(chain, positions[0], positions[1], color)
+        }
       }
-    }
     })
   },
 
@@ -219,12 +213,12 @@ $.widget("rbbt.jmol_tool", {
         var start = -1;
         for (var i = 0; i < positions.length; i++){
           if (positions[i] != last + 1){
-            if (start != -1) { tool.mark_region(chain, start, last, color); }
+            if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
             start = positions[i]
           }
           last = positions[i]
         }
-        if (start != -1) { tool.mark_region(chain, start, last, color); }
+        if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
       }
     });
   },

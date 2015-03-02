@@ -120,7 +120,7 @@ module Structure
       #description = "-" if description.nil? or description.empty?
       overlapping[0] << info[:type]
       overlapping[1] << [info[:start], info[:end]] * ":"
-      overlapping[2] << description
+      overlapping[2] << description.gsub('|','-').gsub(';','-')
     }
 
     next if overlapping.first.empty?
@@ -217,7 +217,7 @@ module Structure
   task :mi_interfaces => :tsv do |mis,organism|
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
-    TSV.traverse mis, :cpus => $cpus, :bar => "Mutated Isoform interfaces", :into => mi_annotations, :type => :array do |mi|
+    TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Mutated Isoform interfaces"), :into => mi_annotations, :type => :array do |mi|
 
       case
       when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
@@ -261,7 +261,7 @@ module Structure
 
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => annotator.fields, :type => :double, :namespace => organism
     mi_annotations.init
-    TSV.traverse mis, :cpus => $cpus, :bar => "Annot. #{ database }", :into => mi_annotations, :type => :array do |mi|
+    TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Annot. #{ database }"), :into => mi_annotations, :type => :array do |mi|
 
       case
       when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
@@ -295,7 +295,7 @@ module Structure
 
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mi_annotations.init
-    TSV.traverse neigh, :cpus => $cpus, :bar => "Annot. neigh. #{database}", :into => mi_annotations  do |mi,v|
+    TSV.traverse neigh, :cpus => $cpus, :bar => self.progress_bar("Annot. neigh. #{database}"), :into => mi_annotations  do |mi,v|
       mi = mi.first if Array === mi
       case
       when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
@@ -344,7 +344,7 @@ module Structure
     mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mutation_annotations.init
 
-    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. #{ database }", :into => mutation_annotations do |mutation,mis|
+    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => self.progress_bar("Annot. #{ database }"), :into => mutation_annotations do |mutation,mis|
       next if mis.nil? or mis.empty?
       all_annots = []
 
@@ -391,7 +391,7 @@ module Structure
     mutation_annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Mutated Isoform", "Residue"].concat(annotator.fields), :type => :double, :namespace => organism
     mutation_annotations.init
 
-    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Annot. neigh. #{ database }", :into => mutation_annotations do |mutation,mis|
+    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => self.progress_bar("Annot. neigh. #{ database }"), :into => mutation_annotations do |mutation,mis|
       begin
         next if mis.nil? or mis.empty?
         all_annots = []
@@ -455,7 +455,7 @@ module Structure
 
     annotations = TSV::Dumper.new :key_field => "Genomic Mutation", :fields => ["Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     annotations.init
-    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => "Genomic mutation interfaces", :into => annotations do |mutation,mis|
+    TSV.traverse mutated_isoforms, :cpus => $cpus, :bar => self.progress_bar("Genomic mutation interfaces"), :into => annotations do |mutation,mis|
       next if mis.nil? or mis.empty?
       all_annots = []
       mis.each do |mi|

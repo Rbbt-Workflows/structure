@@ -131,7 +131,7 @@
 
 
         = table :id => "UniProt mutations for #{ protein }" do
-          - tsv = UniProt.annotated_variants.tsv(:persist => true, :type => :double, :key_field => "UniProt Variant ID", :zipped => true)
+          - tsv = UniProt.annotated_variants.tsv(:persist => true, :type => :double, :key_field => "UniProt Variant ID", :zipped => true, :namespace => protein.organism)
           - tsv = tsv.select("UniProt/SwissProt Accession" => protein.uniprot)
 
           - tsv.add_field "Aligned Change" do |key, values|

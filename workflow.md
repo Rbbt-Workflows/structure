@@ -19,7 +19,7 @@ PDBs are extracted from Interactome3d, which organized thousands of PDBs,
 for both experimental structures and structure models, of individual
 proteins and protein complexes.
 
-Pairwise (Smith-Watterman) alignment is used to fix all inconsistencies between
+Pairwise (Smith-Waterman) alignment is used to fix all inconsistencies between
 protein sequences in PDBs, Uniprot and Ensembl Protein ID.
 
 ### Reference:
