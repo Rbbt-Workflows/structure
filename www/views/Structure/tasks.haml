@@ -29,7 +29,43 @@
       mutations are introduced, they are assumed to be relative to the watson or
       forward strand.
 
-    = action_parameters nil, {}, :action => "/Structure/wizard", :method => "POST" do
+      #### Scores
+
+      While Structure-PPi itself is not intended to be an stand-alone damage
+      predictor, we provide a score, the `Structure-PPi feature score`, that
+      quantifies the protein features that are overlapping or close to each
+      mutation. The score is built by adding individual scores for the
+      different features. The individual score that each feature contributes
+      has been selected based on expert opinion and guided by empirical results on
+      the COSMIC and 1000 Genomes data. The scoring scheme is as follows:
+
+        * Appris features: 2 if at least one ligand binding or catalytic
+        site annotated in firestar is affected; 1 if any other feature is
+        affected
+
+        * COSMIC mutations: 3 if more that ten COSMIC samples have mutations
+        overlapping the residue, 2 if its more that five, and 1 if its more
+        than one sample. We add nothing if just one sample is found
+
+        * UniProt variants: 1 if the position has a variant annotated. If at
+        least one variant is annotated also as `Disease` we add 1 more
+
+        * UniProt features: We add 1 if any of the following features are
+        affected `MUTAGEN, DISULFID, DNA_BIND, METAL, INTRAMEM, CROSSLNK`.
+        These features show a frequency that is more than double in COSMIC with
+        respect to 1000 Genomes. Mutagen entries are only considered if the
+        description field does not include the text 'No effect'
+        
+        * Affected interfaces: We add 2 if any protein-protein interaction
+        surface is affected
+
+      These scores are calculated for the direct hits, and for the neighbour
+      hits (with the exception of affected interfaces, where it doesn't apply).
+      Scores for neighbours are divided by 2.  The final tally is reported
+      under the section `Damage predictions`
+
+
+    = action_parameters nil, {}, :action => "/Structure/scores", :method => "POST" do
       - input :mutations, :array, "Mutations (e.g. 18:6237978:G, ENSP00000382976:L257R, L3MBTL4:L257R)", nil, :no_file => true
 
   .precomputed

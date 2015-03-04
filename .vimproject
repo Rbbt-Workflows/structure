@@ -102,7 +102,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
    Structure=Structure{
     tasks.haml
-    wizard=wizard{
+    scores=scores{
      job_result.haml
     }
    }
