@@ -2,6 +2,9 @@
   .job_control
     = workflow_partial('job_result/job_control', workflow, task, locals)
 
+- scores = result
+- scores.fields = ["Structure PPi feature score"]
+- result = job.step(:wizard).load
 - mis = result.column("Mutated Isoform").values.flatten.compact.uniq
 - MutatedIsoform.setup(mis, result.namespace)
 
@@ -95,4 +98,17 @@
     - good_fields = tsv.fields.select{|f| f =~  /(_score|CADD_raw|SVM_score)$/ }
     - tsv = tsv.slice(good_fields)
     - tsv.rename_field "RadialSVM_score", "SVM_score"
+    - tsv = scores.attach tsv if scores.any?
     - tsv
+
+:sass
+  .damage_overview
+    table th:nth-child(2):after
+      content: "*"
+    
+:deferjs
+  var scores_table = $('table').last()
+  var sppi_header = scores_table.find('th:nth-child(2)')
+  sppi_header.addClass('asterisk')
+  //sppi_header.attr('data-content', 'This score quantifies the protein features affected by the mutation. It is intended to complement damage predictions. See help for more details').popup()
+  scores_table.parent('div').append($('<p>').html("* The Structure-PPi feature score quantifies the protein features affected by the mutation. It is intended to complement damage predictions. Read the documentation for more details"))

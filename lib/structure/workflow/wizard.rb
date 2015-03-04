@@ -87,7 +87,8 @@ module Structure
   end
   export_asynchronous :wizard
 
-  helper :score_for do |field, value|
+  def self.score_for(field, value, all_values = nil)
+    value = value.collect{|v| v.split(";")}.flatten
     case field
     when "Appris Feature"
       if value.include? "firestar"
@@ -95,6 +96,12 @@ module Structure
       else
         1
       end
+    when "UniProt Features"
+      relevant = %w(DISULFID DNA_BIND METAL INTRAMEM CROSSLNK MUTAGEN)
+      value = value.zip(all_values["UniProt Feature Descriptions"].collect{|v| v.split(";")}.flatten).reject{|v,d| v == "MUTAGEN" and d =~ /no effect/i}.collect{|v,d| v}
+      sum = 0
+      sum += 1 if (value & relevant).any?
+      sum
     when "Sample ID"
       case 
       when value.length > 10
@@ -107,11 +114,9 @@ module Structure
         0
       end
     when "UniProt Variant ID"
-      value.length > 1 ? 2 : 1
+      value.any? ? 1 : 0
     when "Type of Variant"
       if value.include?("Disease")
-        3
-      elsif value.include?("Unclassified")
         1
       else
         0
@@ -123,21 +128,25 @@ module Structure
     end
   end
 
+  def self.score_mi(values)
+    score = 0
+    values.zip(values.fields).each do |value, field|
+      next if value.empty?
+      if field =~ /Neighbour/
+        score = score + (score_for(field.sub('Neighbour ',''), value, values).to_f / 2)
+      else
+        score = score + score_for(field, value, values)
+      end
+    end
+    score
+  end
+
   dep :wizard
   task :scores => :tsv do 
     wizard = step(:wizard).load
 
     wizard.add_field "Score" do |mi, values|
-      score = 0
-      values.zip(values.fields).each do |value, field|
-        next if value.empty?
-        if field =~ /Neighbour/
-          score = score + (score_for(field.sub('Neighbour ',''), value).to_f / 2)
-        else
-          score = score + score_for(field, value)
-        end
-      end
-      score
+      Structure.score_mi(values)
     end
 
     wizard.slice("Score")
