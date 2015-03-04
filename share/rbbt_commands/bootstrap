@@ -37,7 +37,7 @@ organisms.each do |organism|
     mutations * "\n"
   end
 
-  stream = CMD.cmd('shuf', :in => stream, :pipe => true)
+  #stream = CMD.cmd('shuf', :in => stream, :pipe => true)
 
   mutation_file = Rbbt.tmp.structure_bootstrap_job3.mutations.find
   Misc.sensiblewrite(mutation_file, stream)

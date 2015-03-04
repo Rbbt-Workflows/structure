@@ -12,7 +12,7 @@ module Structure
                            db.with_unnamed do
                             db.through  do |mutation, mis|
                               protein_residues = {}
-                              mis.each do |mi|
+                              mis.flatten.each do |mi|
                                 next unless mi =~ /(ENSP\d+):([A-Z])(\d+)([A-Z])$/ and $2 != $4
                                 residue = $3.to_i
                                 protein = $1
@@ -43,5 +43,3 @@ module Structure
                                      end
   end
 end
-
-
