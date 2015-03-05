@@ -96,8 +96,9 @@ module Structure
     sequence = iso2sequence[isoform]
     next if sequence.nil?
 
+    _other = {:uniprot => uniprot, :sequence => sequence}
     features = Misc.insist do
-      Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+      Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do 
         Structure.corrected_uniprot_features(uniprot, sequence)
       end
     end

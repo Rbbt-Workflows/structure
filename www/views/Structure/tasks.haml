@@ -54,16 +54,16 @@
       overlapping the residue, 2 if its more that five, and 1 if its more
       than one sample. We add nothing if just one sample is found
 
-      * UniProt variants: 1 if the position has one variant annotated.
-      If at least one variant is annotated also as `Disease` we add 2 more. If none
-      is classified as `Disease` but at least one is annotated as `Unclassified` 
+      * UniProt variants: 1 if the position has at least one variant annotated.
+      If at least one of these variants is also annotated as `Disease` we add 2 more. 
+      If none is classified as `Disease` but at least one is annotated as `Unclassified` 
       we add 1 more. If all are annotated as `Polymorphism` we add nothing more.
 
       * UniProt features: We add 1 if any of the following features are
       affected `MUTAGEN, DISULFID, DNA_BIND, METAL, INTRAMEM, CROSSLNK`.
       These features show a frequency that is more than double in COSMIC with
       respect to 1000 Genomes. MUTAGEN entries are only considered if the
-      description field **does not** include the text `No effect`
+      description field **does not** include the text *'No effect'*
       
       * Affected interfaces: We add 2 if any protein-protein interaction
       surface is affected

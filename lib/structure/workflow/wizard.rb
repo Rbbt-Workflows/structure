@@ -90,11 +90,11 @@ module Structure
   def self.score_for(field, value, all_values = nil)
     value = value.collect{|v| v.split(";")}.flatten
     score = case field
-            when "Appris Feature"
+            when "Appris Features"
               if value.include? "firestar"
                 2
               else
-                1
+                1 
               end
             when "UniProt Features"
               relevant = %w(DISULFID DNA_BIND METAL INTRAMEM CROSSLNK MUTAGEN)
@@ -114,7 +114,12 @@ module Structure
                 0
               end
             when "UniProt Variant ID"
-              value.length > 1 ? 2 : 1
+              case 
+              when value.length > 0
+                1
+              else
+                0
+              end
             when "Type of Variant"
               if value.include?("Disease")
                 2
@@ -136,7 +141,7 @@ module Structure
     values.zip(values.fields).each do |value, field|
       next if value.empty?
       if field =~ /Neighbour/
-        score = score + (score_for(field.sub('Neighbour ',''), value, values).to_f / 2)
+        score = score.to_f + (score_for(field.sub('Neighbour ',''), value, values).to_f / 2)
       else
         score = score + score_for(field, value, values)
       end
@@ -152,7 +157,7 @@ module Structure
       Structure.score_mi(values)
     end
 
-    wizard.slice("Score")
+    wizard.reorder "Mutated Isoform", "Score"
   end
   export_asynchronous :scores
 end
