@@ -46,9 +46,9 @@
       has been selected based on expert opinion and guided by empirical results on
       the `COSMIC` and `1000 Genomes` data. The scoring scheme is as follows:
 
-      * Appris features: 2 if at least one ligand binding or catalytic
-      site annotated in `firestar` is affected; 1 if any other feature is
-      affected
+      * Appris features: we add 2 if at least one ligand binding or catalytic
+      site annotated in `firestar` is affected; if none of the affected features 
+      meets this condition we add only 1
 
       * COSMIC mutations: 3 if more that ten COSMIC samples have mutations
       overlapping the residue, 2 if its more that five, and 1 if its more
@@ -62,16 +62,16 @@
       * UniProt features: We add 1 if any of the following features are
       affected `MUTAGEN, DISULFID, DNA_BIND, METAL, INTRAMEM, CROSSLNK`.
       These features show a frequency that is more than double in COSMIC with
-      respect to 1000 Genomes. Mutagen entries are only considered if the
-      description field does not include the text 'No effect'
+      respect to 1000 Genomes. MUTAGEN entries are only considered if the
+      description field **does not** include the text `No effect`
       
       * Affected interfaces: We add 2 if any protein-protein interaction
       surface is affected
 
-      These scores are calculated for the direct hits, and for the neighbour
+      These scores are calculated for the direct hits and for the neighbour
       hits (with the exception of affected interfaces, where it doesn't apply).
-      Scores for neighbours are divided by 2.  The final tally is reported
-      under the section `Damage predictions`
+      Scores for neighbours are divided by 2. The final tally is reported
+      under the section `Damage predictions` in the wizard report
 
     = action_parameters nil, {}, :action => "/Structure/scores", :method => "POST" do
       - input :mutations, :array, "Mutations (e.g. 18:6237978:G, ENSP00000382976:L257R, L3MBTL4:L257R)", nil, :no_file => true
