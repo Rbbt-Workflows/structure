@@ -89,43 +89,46 @@ module Structure
 
   def self.score_for(field, value, all_values = nil)
     value = value.collect{|v| v.split(";")}.flatten
-    case field
-    when "Appris Feature"
-      if value.include? "firestar"
-        2
-      else
-        1
-      end
-    when "UniProt Features"
-      relevant = %w(DISULFID DNA_BIND METAL INTRAMEM CROSSLNK MUTAGEN)
-      value = value.zip(all_values["UniProt Feature Descriptions"].collect{|v| v.split(";")}.flatten).reject{|v,d| v == "MUTAGEN" and d =~ /no effect/i}.collect{|v,d| v}
-      sum = 0
-      sum += 1 if (value & relevant).any?
-      sum
-    when "Sample ID"
-      case 
-      when value.length > 10
-        3
-      when value.length > 5
-        2
-      when value.length > 1
-        1 
-      else
-        0
-      end
-    when "UniProt Variant ID"
-      value.any? ? 1 : 0
-    when "Type of Variant"
-      if value.include?("Disease")
-        1
-      else
-        0
-      end
-    when "Partner Ensembl Protein ID"
-      2
-    else
-      0
-    end
+    score = case field
+            when "Appris Feature"
+              if value.include? "firestar"
+                2
+              else
+                1
+              end
+            when "UniProt Features"
+              relevant = %w(DISULFID DNA_BIND METAL INTRAMEM CROSSLNK MUTAGEN)
+              value = value.zip(all_values["UniProt Feature Descriptions"].collect{|v| v.split(";")}.flatten).reject{|v,d| v == "MUTAGEN" and d =~ /no effect/i}.collect{|v,d| v}
+              sum = 0
+              sum += 1 if (value & relevant).any?
+              sum
+            when "Sample ID"
+              case 
+              when value.length > 10
+                3
+              when value.length > 5
+                2
+              when value.length > 1
+                1 
+              else
+                0
+              end
+            when "UniProt Variant ID"
+              value.length > 1 ? 2 : 1
+            when "Type of Variant"
+              if value.include?("Disease")
+                2
+              elsif value.include?("Unclassified")
+                1
+              else
+                0
+              end
+            when "Partner Ensembl Protein ID"
+              2
+            else
+              0
+            end
+    score
   end
 
   def self.score_mi(values)
