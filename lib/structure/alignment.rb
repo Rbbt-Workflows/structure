@@ -5,7 +5,7 @@ module Structure
   ALIGNMENTS = cache_dir.alignment_maps.find
   Open.repository_dirs << ALIGNMENTS unless Open.repository_dirs.include? ALIGNMENTS
   def self.alignment_map(alignment_source, alignment_target)
-    Persist.persist("Alignment maps", :marshal, :dir => ALIGNMENTS, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:alignment_source => alignment_source, :alignment_target => alignment_target, :version => "v4"}) do
+    Persist.persist("Alignment maps", :marshal, :dir => ALIGNMENTS, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:alignment_source => alignment_source, :alignment_target => alignment_target}) do
       map = {}
 
       offset_source, alignment_source = alignment_source.match(/^(_*)(.*)/).values_at( 1, 2)

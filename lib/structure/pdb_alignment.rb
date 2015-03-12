@@ -45,8 +45,6 @@ module Structure
         SmithWaterman.align(chain_sequence, protein_sequence)
       end
 
-      ppp chain_alignment
-      ppp protein_alignment
       map = Structure.alignment_map(protein_alignment, chain_alignment)
 
       map.each do |seq_pos, chain_pos|
