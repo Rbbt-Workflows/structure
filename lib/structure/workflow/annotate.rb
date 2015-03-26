@@ -190,8 +190,8 @@ module Structure
         next
       end
 
-      n =  Misc.insist do
-        Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+      n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+        Misc.insist do
           Structure.neighbours_i3d(isoform, [residue], organism)
         end
       end
