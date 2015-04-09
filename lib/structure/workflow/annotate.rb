@@ -190,7 +190,7 @@ module Structure
         next
       end
 
-      n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :update => true, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+      n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
         Misc.insist do
           Structure.neighbours(isoform, [residue], organism)
         end
