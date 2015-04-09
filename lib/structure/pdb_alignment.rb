@@ -79,7 +79,7 @@ module Structure
     alignments = {}
     chains.each do |chain,chain_sequence|
       alignments[chain] = begin
-                           chain_alignment, protein_alignment =  Persist.persist("SmithWaterman alignment", :marshal, :update => true, :dir => SSW_ALIGNMENT_REPO, :other => {:source => chain_sequence, :target => protein_sequence}) do 
+                           chain_alignment, protein_alignment = Persist.persist("SmithWaterman alignment", :marshal, :dir => SSW_ALIGNMENT_REPO, :other => {:source => chain_sequence, :target => protein_sequence}) do 
                              SmithWaterman.align(chain_sequence, protein_sequence)
                            end
                            Structure.match_position(protein_positions, protein_alignment, chain_alignment)
