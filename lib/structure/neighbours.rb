@@ -30,7 +30,7 @@ module Structure
     tsv = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
     return tsv if sequence.nil?
 
-    uni_pdbs = UniProt.pdbs(uniprot)
+    uni_pdbs = UniProt.pdbs(uniprot) unless uniprot.nil?
 
     if uniprot and  uni_pdbs.any?
 
