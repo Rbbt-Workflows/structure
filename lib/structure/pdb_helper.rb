@@ -25,13 +25,14 @@ module PDBHelper
           break if line =~ /^END/
             next unless line =~ /^ATOM/ and line.length > 21
             chain = line[20..21].strip
-          aapos = line[22..25].to_i
-          aa    = line[17..19]
+            aapos = line[22..25].to_i
+            aa    = line[17..19]
 
-          next if aapos <= 0
+            next if aapos <= 0
 
-          chains[chain] ||= Array.new
-          chains[chain][aapos-1] = aa
+            chain = "A" if chain == ""
+            chains[chain] ||= Array.new
+            chains[chain][aapos-1] = aa
         end
         stream.close
 
@@ -104,6 +105,8 @@ module PDBHelper
     atom_distances.each do |atom1, atom2, dist|
       aa1 = atom1.strip.split(/\s+/).values_at(2,3) * ":"
       aa2 = atom2.strip.split(/\s+/).values_at(2,3) * ":"
+      aa1 = "A" + aa1 if aa1 =~ /^\d/
+      aa2 = "A" + aa2 if aa2 =~ /^\d/
       aa1 = aa1[0] + ":" + aa1[1..-2] if aa1[-1] == ":"
       aa2 = aa2[0] + ":" + aa2[1..-2] if aa2[-1] == ":"
       close_residues[aa1] ||= []

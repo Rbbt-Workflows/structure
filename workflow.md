@@ -24,7 +24,7 @@ protein sequences in PDBs, Uniprot and Ensembl Protein ID.
 
 ### Reference:
 
-Vazquez M, Valencia A, Pons T. (2014) Structure-PPi: _a module for the
+Vazquez M, Valencia A, Pons T. (2015) Structure-PPi: _a module for the
 annotation of cancer-related single-nucleotide variants at protein-protein
 interfaces_. *Bioinformatics* (doi: 10.1093/bioinformatics/btv142)
 
