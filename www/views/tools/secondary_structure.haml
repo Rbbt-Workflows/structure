@@ -1,9 +1,0 @@
-- positions = [] unless defined? positions and not positions.nil?
-- color = 'red' unless defined? color and not color.nil?
-
-.secondary_structure_tool(id=id)
-  = tool :isoform_svg, :protein => protein, :sequence => protein.sequence, :height => 200, :positions => positions
-  = tool :sequence, :protein => protein, :sequence => protein.sequence, :svg => '.isoform_svg_tool svg', :height => 200, :positions => positions
-
-:deferjs
-  require_js('/js-find/secondary_structure.js')

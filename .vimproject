@@ -75,11 +75,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     }
    }
    tools=tools{
-    isoform_svg.haml
-    jmol.haml
     protein_tool.haml
-    secondary_structure.haml
-    sequence.haml
     protein_tool=protein_tool{
      controls.haml
     }

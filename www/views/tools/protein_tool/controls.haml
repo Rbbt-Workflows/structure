@@ -1,51 +1,125 @@
 - colors = %w(red blue green yellow black white purple)
 
-%dl.tool_menu.dropdown_menu
+.tool_menu.top.attached.tabular.ui.menu
   - if user
-    %dt.next Controls
-    %dd
-      .controls
-        = action_parameters nil, {:klass => ''}, :action => '#' do
-          - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
-          - input :color, :select, "Color to use", 'green', :select_options => colors
+    .item(data-tab='Controls') Controls
 
-  %dt.next Appris
-  %dd.Appris
-    .controls
-      %ul.controls
-        %li
-          %select(name='color')
-            - colors.each do |c|
-              %option(value=c)= c
-    %dl
-      - (protein.appris_residues || []).each do |type, list|
-        %dt= Misc.humanize type
-        %dd
-          %ul.clean_list
-            - list.each do |range|
-              %li
-                %a.appris_highlight(href="#" attr-start="#{range['start']}" attr-end="#{range['end']}") Highlight
-                == (#{range['start']}..#{range['end']})
+  .item(data-tab='Appris') Appris
 
+  .item(data-tab='COSMIC') COSMIC
+
+
+- if user
+  .controls.bottom.attached.ui.tab.segment(data-tab='Controls')
+    = action_parameters nil, {:klass => ''}, :action => '#' do
+      - input :list, :select, "Genomic Mutation list", nil, :html_options => {:class => 'favourite_lists', :type => 'GenomicMutation'}
+      - input :color, :select, "Color to use", 'green', :select_options => colors
+
+.appris.bottom.attached.ui.tab.segment(data-tab='Appris')
+  .controls.ui.form
+    .ui.field
+      %label Highlight color
+      %select.ui.select(name='color')
+        - colors.each do |c|
+          %option(value=c)= c
+  %dl
+    - (protein.appris_residues || []).each do |type, list|
+      %dt= Misc.humanize type
+      %dd
+        %ul.clean_list
+          - list.each do |range|
+            %li
+              %a.appris_highlight.ui.button(href="#" attr-start="#{range['start']}" attr-end="#{range['end']}") Highlight
+              == (#{range['start']}..#{range['end']})
+
+  :deferjs
+    $('a.appris_highlight, a.feature_highlight').click(function(){
+      var link = $(this)
+      var color = link.parents('dd').find('select').first().val();
+      var start = parseInt(link.attr('attr-start'));
+      var end = parseInt(link.attr('attr-end'));
+
+      var protein_tool = $(this).parents('.protein_tool').first()
+
+      if (start == end){
+        protein_tool.protein_tool('mark_position', start, color)
+      }else{
+        protein_tool.protein_tool('mark_region', start, end, color)
+      }
+      return false
+    })
+
+.COSMIC.bottom.attached.ui.tab.segment(data-tab='COSMIC')
+  = fragment do
+
+    .highlight.ui.form
+      .ui.field
+        %label Highlight color
+        %select.ui.select(name='color')
+          - colors.each do |c|
+            %option(value=c)= c
+      %a.highlight.ui.button(href="#") highlight
+
+    - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
+    - filter "Primary site"
+    = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
+      - association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
+      - associations = association_items.tsv.to_double
+
+      - log :sample_mutations
+      - sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true, :target => "Sample name=~Sample", :source => "Genomic Mutation")
+      - sample_mutations.fields = ["Sample"]
+
+      - associations = associations.attach(sample_mutations)
+
+      - log :sample_info
+      - sample_info = COSMIC.sample_info.find.tsv
+      - sample_info.key_field = "Sample"
+
+      - associations = associations.attach(sample_info)
+
+      - good_fields = associations.fields - ["Ensembl Protein ID"]
+
+      - log :slice_and_show
+      - associations.slice(good_fields)
 
     :deferjs
-      $('a.appris_highlight, a.feature_highlight').click(function(){
-        var link = $(this)
-        var color = link.parents('dd').find('select').first().val();
-        var start = parseInt(link.attr('attr-start'));
-        var end = parseInt(link.attr('attr-end'));
+      $('.COSMIC ul.highlight > li > a.highlight').click(function(){
 
-        var protein_tool = $(this).parents('.protein_tool').first()
+        var table = $(this).parents('dd').first().find('table');
+        var url = table.attr('attr-url');
+        var filter = table.attr('attr-filter');
 
-        if (start == end){
-          protein_tool.protein_tool('mark_position', start, color)
-        }else{
-          protein_tool.protein_tool('mark_region', start, end, color)
-        }
-        return false
+        url = add_parameter(url, '_format', 'json')
+        url = add_parameter(url, '_page', 'all')
+        url = add_parameter(url, '_column', 'Change')
+        if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
+
+        var color = $(this).parents('dd').first().find('select[name=color]').val();
+
+        $.ajax({
+          url: url,
+          success: function(data){
+            data = JSON.parse(data);
+            var change_positions = [];
+            for (mutation in data){
+              var change = data[mutation][0];
+              if (m = change.match(/[A-Z*](\d*)[A-Z*]/)){
+                change_positions.push(parseInt(m[1]));
+              }
+            }
+            var protein_tool = $('.protein_tool#' + '#{id}');
+            protein_tool.protein_tool('mark_positions', change_positions, color);
+          }
+        })
+        return false;
       })
 
-  %dt.next COSMIC mutations
+
+:deferjs
+  $('.tabular.menu > .item').tab()
+-#
+
   %dd.COSMIC
     = fragment do
 

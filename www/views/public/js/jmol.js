@@ -4,25 +4,42 @@ var jmol_tools = [];
 $.widget("rbbt.jmol_tool", {
 
   options: {
-    appletUrl : '/js-find/jmol',
-    applet_url : '/js-find/jmol',
     width: 640,
     height: 480,
-    menuUrl : '/jmol/jmol.mnu',
-    background: '#000',
-    useSigned: true
+    debug: false,
+    color: "0xFFFFFF",
+    addSelectionOptions: true,
+    use: "HTML5",   // JAVA HTML5 WEBGL are all options
+    j2sPath: "/js-find/jsmol/j2s", // this needs to point to where the j2s directory is.
+    jarPath: "/js-find/jsmol/java",// this needs to point to where the java directory is.
+    jarFile: "JmolAppletSigned.jar",
+    isSigned: true,
+    script: null,
+    serverURL: '/get_pdb',
+    readyFunction: null,
+    disableJ2SLoadMonitor: true,
+    disableInitialConsole: true,
+    allowJavaScript: true
   },
 
   _create: function() {
     var tool = this;
-    require_js(["/js/jquery-jmol/jmol-accent.js", "/js/jquery-jmol/jquery.jmol.js"], function(){
+
+    require_js(["/js-find/jsmol/JSmol.min.nojq.js"], function(){
+      Jmol._z=0
+      Jmol._serverUrl='/get_pdb'
       tool.element.addClass('jmol_tool_init')
       tool.options.jmol_window = tool.element.find('.window');
-      tool.options.jmol_window.jmol(tool.options);
+      tool.options.jmol_window.html(Jmol.getAppletHtml("jmolApplet0", tool.options))
+      tool.options.applet = jmolApplet0
+      jmolApplet0 = undefined
     })
+
   },
 
   _wrapper: function() {
+    var tool = this
+    return {script: function(code){Jmol.script(tool.options.applet, code)}, getProperty: function(prop){return JSON.parse(Jmol.getPropertyAsJSON(tool.options.applet, prop))}};
     return this.options.jmol_window.data('jmol');
   },
 
@@ -66,9 +83,9 @@ $.widget("rbbt.jmol_tool", {
   alignment_map: function(complete){
     return(rbbt_job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._loaded_pdb}, complete))
   },
-  
+
   //{{{ JMOL STUFF
-  
+
   _select: function(position, chain){
     if (position instanceof Array){
       var tmp = $(position).map(function(){ return (parseInt(this)) }).toArray()
@@ -195,7 +212,7 @@ $.widget("rbbt.jmol_tool", {
       var chains = {};
       for(seq_pos in map){
         var chain_pos_list = map[seq_pos]
-        for (i in chain_pos_list){
+        for (var i = 0; i < chain_pos_list.length; i++) {
           var chain_pos = chain_pos_list[i];
           var chain = chain_pos.split(":")[0]
           var pos = chain_pos.split(":")[1]

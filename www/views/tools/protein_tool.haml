@@ -1,92 +1,391 @@
-
 - position = nil unless defined? position
-= link_css '/stylesheets/protein'
-.protein_tool.fixable(id=id)
-  = partial_render('tools/protein_tool/controls', :protein => protein, :id => id)
+- sequence = protein.sequence
+- jmol_id = 'Jmol-' << protein
+- select_id = jmol_id + '-select'
+- pdbs = protein.pdbs
+- position = nil unless defined? position
+- colors = %w(red blue green yellow black white purple)
 
-  .tool_window
+- organism = protein.organism
+- uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
+
+:sass
+  .protein_tool 
     .controls
-      %ul.controls
-        %li
-          %a.clear(href="#") clear
-        %li
-          %a.aligned(href="#") mark alignment
-        %li.mark
-          %label Position
-          %input(type="text"  name="position")
-          %a.mark(href="#") mark position
+      float: right
+      margin-bottom: -2px
+      .ui.input, .ui.buttons
+        padding: 0px
+        input
+          width: 100% !important
+    .tabular.menu
+      width: 300px !important
 
-    .row.flex
+.protein_tool.very.basic.ui.segment(id=id)
+  .controls.very.basic.segment
+    .ui.input
+      %input(placeholder='Position' type='text' name='position')
+    .ui.buttons
+      .mark.submit.ui.button Mark
+      .clear.submit.ui.button Clear
+      .align.submit.ui.button Align
+  .ui.tabular.menu.top.attached
+    .item.active(data-tab='Sequence') Sequence
+    .item(data-tab='JMol') JMol
+    .item(data-tab='COSMIC') COSMIC
+  .window.bottom.attached.ui.segment
+    .secondary_structure.active.very.basic.ui.segment.tab(data-tab='Sequence' style='background:white')
+      .svg(data-sequence_length='#{sequence.length}')
+        - log :svg, "Downloading SVG"
+        - begin
+          = protein.marked_svg([])
+        - rescue Exception
+          %p.error.ui.message
+            Could not download protein SVG, try again later. 
+            %pre=$!.message
+      .sequence(style='width: 677px; overflow-x: auto;font-family: monospace;margin-left:123px')
+        %span.sequence(width="100%")= sequence
+        %span.marks(width="100%")
+          - size = sequence.length
+          - marks = size / 10
+          - str = ""
+          - marks.times do |mark|
+            - txt = "|"
+            - str << ("_" * (10 - txt.length)) << txt
+          = str
+        %span.counts(width="100%")
+          - size = sequence.length
+          - marks = size / 10
+          - str = ""
+          - marks.times do |mark|
+            - mark = (mark + 1) * 10
+            - txt = mark.to_s
+            - str << ("_" * (10 - txt.length)) << txt
+          = str
+        %p.scroll.ui.message 
+          Scroll horizontaly across the sequence
 
-      .jmol.gallery_item
-        %h3 JMOL structures
-        = tool :jmol, :protein => protein, :position => position
+    .jmol.very.basic.ui.segment.tab(data-tab='JMol')
 
-      .protein.gallery_item
-        %h3 Protein sequence
-        = tool :secondary_structure, :protein => protein, :positions => [position].compact
+      .ui.field
+        %label(for=select_id) Load a structure PDB
+        %select.pdb(id=select_id style='width: 200px')
+          %option(selected="selected") Select a PDB
+          - (pdbs || []).each do |pdb, info| 
+            %option(attr-pdb="=#{pdb}")= "#{pdb}"
+          - uniprot = uni[protein]
+
+          - if uniprot and Structure::I3D_PROTEINS.include? uniprot
+            - filepos = Structure::I3D_PROTEINS.identify_field "FILENAME"
+            - Structure::I3D_PROTEINS[uniprot][filepos].each do |filename|
+              - type = filename =~ /EXP/ ? :pdb : :model
+              - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
+              -# url =  "http://darthcaedus:28873/" << ["Structure", "get_protein_pdb"] * "/"  << "?" << Misc.hash2GET_params(:_format => :raw, :filename => filename)
+              %option.protein(attr-pdb=url)= "#{filename}"
+        
+          - if uniprot and Structure::I3D_INTERACTIONS.include? uniprot
+            - filepos = Structure::I3D_INTERACTIONS.identify_field "FILENAME"
+            - Structure::I3D_INTERACTIONS[uniprot][filepos].each do |filename|
+              - type = filename =~ /EXP/ ? :pdb : :model
+              - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
+              -# url =  "http://darthcaedus:28873/" << ["Structure", "get_interaction_pdb"] * "/"  << "?" << Misc.hash2GET_params(:_format => :raw, :filename => filename)
+              %option.interaction(attr-pdb=url)= "#{filename}"
+      .window
+
+    .COSMIC.very.basic.ui.segment.tab(data-tab='COSMIC')
+      = fragment do
+        .highlight.submit.ui.button Highlight
+        .ui.message
+          In JMol positions with 1 mutation are white, with 2 are green, with 3 are orange, and with more than 3 are red
+        -#%select(name='color')
+          - colors.each do |c|
+            %option(value=c)= c
 
 
+        - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
+        - filter "Primary site"
+        = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
+          - association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
+          - associations = association_items.tsv.to_double
 
-  :deferjs
-    require_js("/js/protein_tool.js", function(){
-      $('.protein_tool').protein_tool();
+          - log :sample_mutations
+          - sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true, :target => "Sample name=~Sample", :source => "Genomic Mutation")
+          - sample_mutations.fields = ["Sample"]
 
-      $('.controls > ul.controls > li > a.clear').click(function(){
-        var isoform_svg= $('.isoform_svg_tool');
-        var jmol = $('.jmol_tool');
-        var sequence = $('.sequence_tool');
+          - associations = associations.attach(sample_mutations)
 
-        var protein_tool = $('.protein_tool#' + '#{id}');
-        protein_tool.protein_tool('clear')
+          - log :sample_info
+          - sample_info = COSMIC.sample_info.find.tsv
+          - sample_info.key_field = "Sample"
 
-        return false;
-      })
+          - associations = associations.attach(sample_info)
 
-      $('.controls > ul.controls > li > a.mark').click(function(){
-        var protein_tool = $('.protein_tool');
-        position = $('.controls li.mark input').val();
-        protein_tool.protein_tool('mark_position', position, 'red');
+          - good_fields = associations.fields - ["Ensembl Protein ID"]
 
-        return false;
-      })
+          - log :slice_and_show
+          - associations.slice(good_fields)
 
-      $('.controls > ul.controls > li > a.aligned').click(function(){
-        var protein_tool = $('.protein_tool');
-        protein_tool.protein_tool('clear')
+        :deferjs
 
-        var jmol = $('.jmol_tool');
-        var isoform_svg= $('.isoform_svg_tool');
+          $('.highlight.submit').click(function(){
+            var link = $(this);
+            var COSMIC = link.parents('.COSMIC').first();
+            var protein_tool = COSMIC.parents('.protein_tool').first();
+            var svg_element  = protein_tool.find('.svg').first();
+            var jmol_element  = protein_tool.find('.jmol').first();
 
-        if(jmol.jmol_tool('is_pdb_loaded')){ 
-          var map = jmol.jmol_tool('alignment_map');
-          jmol.jmol_tool('mark_aligned_region', 'blue');
-          isoform_svg.isoform_svg_tool('mark_aligned_region', map, 'blue');
+            var table = COSMIC.find('table');
+            var url = table.attr('attr-url');
+            var filter = table.attr('attr-filter');
+
+            url = add_parameter(url, '_format', 'json')
+            url = add_parameter(url, '_page', 'all')
+            url = add_parameter(url, '_column', 'Change')
+            if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
+
+            var color = 'red'
+
+            $.ajax({
+              url: url,
+              success: function(data){
+                data = JSON.parse(data);
+                var change_positions = [];
+                for (mutation in data){
+                  var change = data[mutation][0];
+                  var samples = data[mutation][1];
+                  if (m = change.match(/[A-Z*](\d*)[A-Z*]/)){
+                    change_positions.push(parseInt(m[1]));
+                  }
+                }
+                var change_counts = []
+
+                for (i in change_positions){
+                  var position = change_positions[i]
+                  if (change_counts[position] === undefined){
+                    change_counts[position] = 1
+                  }else{
+                    change_counts[position] = change_counts[position] + 1
+                  }
+                }
+
+                var protein_tool = $('.protein_tool#' + '#{id}');
+                rbbt.svg.mark_positions(svg_element, change_positions, color);
+                for (position in change_counts){
+                  var jcolor = 'white';
+                  if (change_counts[position] > 1) jcolor = 'green'
+                  if (change_counts[position] > 2) jcolor = 'organge'
+                  if (change_counts[position] > 3) jcolor = 'red'
+
+                  rbbt.jmol.mark_position(jmol_element, position, jcolor);
+                }
+
+              }
+            })
+            return false;
+          })
+
+:sass
+  .jmol:not(.active)
+    display: block !important
+    visibility: hidden
+    height: 0px
+    margin: 0px
+    padding: 0px
+
+:deferjs
+  rbbt.sequence = {}
+  $('.tabular.menu .item').tab()
+
+  $('svg').attr('viewport-fill', 'white')
+  rbbt.sequence.clear = function(element){
+    var seq = element.find('span.sequence');
+    var marked_chars = seq.find('.sequence_char_position')
+    marked_chars.each(function(marked_char){ marked_char = $(this); marked_char.replaceWith(marked_char.html()) })
+  }
+
+  rbbt.sequence.mark_position = function(element, position, color){
+    if (undefined === color) color = 'red';
+    var seq = element.find('span.sequence');
+    var str = seq.html();
+    var char_pos = position - 1;
+    str = str.slice(0, char_pos) + $('<span class="sequence_char_position" data-sequence_position=' + position + ' style="color:' +  color + '">' + str[char_pos] + '</span>')[0].outerHTML + str.slice(char_pos+1)
+    seq.html(str)
+  }
+
+  rbbt.svg = {}
+
+  rbbt.svg.clear = function(element){
+    var svg = element.find('svg');
+    var vlines = svg.find('.rbbt-vline')
+    vlines.remove()
+    var vregions = svg.find('.rbbt-region')
+    vregions.remove()
+  }
+
+  rbbt.svg.position_offset = function(element, position){
+    var svg = element.find('svg');
+    var width  = parseInt(svg.attr('width'));
+    var start  = parseInt(svg.find('rect.ac').attr('x'));
+    var seq_len  = parseInt(element.attr('data-sequence_length'));
+    return start + position * (width - start)/seq_len 
+  }
+
+  rbbt.svg.mark_position = function(element, position, color){
+    if (undefined === color) color = 'red';
+    var svg = element.find('svg');
+
+    var width  = parseInt(svg.attr('width'));
+    var height  = parseInt(svg.attr('height'));
+    var offset = rbbt.svg.position_offset(element, position)
+
+    var line =  document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttributeNS(null, "x1", offset);
+    line.setAttributeNS(null, "y1", 5);
+    line.setAttributeNS(null, "x2", offset);
+    line.setAttributeNS(null, "y2", height - 5);
+    line.setAttributeNS(null, "class", 'rbbt-vline');
+    line.setAttributeNS(null, "style", "stroke:" + color + ";opacity:0.5;stroke-width:1;");
+
+    svg.append(line);
+  }
+
+  rbbt.svg.mark_positions = function(element, positions, color){
+    for ( i in positions){
+      var position = positions[i]
+      rbbt.svg.mark_position(element, position, color)
+    }
+  }
+
+  rbbt.svg.mark_region = function(element, first, last, color){
+    var svg = element.find('svg')
+    var width  = parseInt(svg.attr('width'));
+    var height  = parseInt(svg.attr('height'));
+    var start  = parseInt(svg.find('rect.ac').attr('x'));
+    var seq_len  = parseInt(element.attr('data-sequence_length'));
+
+    var offset_start = rbbt.svg.position_offset(element, first)
+    var offset_end = rbbt.svg.position_offset(element, last)
+
+    var rect =  document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+    rect.setAttributeNS(null, "x", offset_start);
+    rect.setAttributeNS(null, "class", 'rbbt-region');
+    rect.setAttributeNS(null, "y", 10);
+    rect.setAttributeNS(null, "width",  offset_end - offset_start);
+    rect.setAttributeNS(null, "height", height - 30);
+    rect.setAttributeNS(null, "style", "stroke:black;stroke-width: 2; opacity:0.3;fill:" + color + ";");
+
+    svg.append(rect);
+  }
+
+  rbbt.svg.mark_aligned_region = function(element, map, color){
+    if (undefined === color) color = 'blue'
+
+      var positions = []
+      for(seq_pos in map){
+        positions.push(parseInt(seq_pos))
+      }
+
+      positions = positions.sort();
+      console.log(positions)
+      var last = -1
+      var start = -1;
+      for (var i = 0; i < positions.length; i++){
+        if (positions[i] != last + 1){
+          if (start != -1) { rbbt.svg.mark_region(element, start, last, color); }
+          start = positions[i]
         }
-        return false;
-      })
+        last = positions[i]
+      }
+      if (start != -1) { rbbt.svg.mark_region(element, start, last, color); }
+  }
 
-      var form = $('.controls > .action_parameters > form');
-      var submit = form.find('input[type=submit]');
-      submit.click(function(){
-        var protein_tool = $('.protein_tool');
 
-        var list = form.find('select[name=list]').val();
-        var color = form.find('select[name=color]').val();
+  rbbt.jmol = {}
+  rbbt.jmol.clear = function(element){
+    element.jmol_tool('clear')
+  }
+  rbbt.jmol.mark_position = function(element, position, color){
+    if (undefined === color) color = 'red'
+      element.jmol_tool('mark_position', position, color)
+  }
 
-        var jmol = $('.jmol_tool');
-        if(jmol.jmol_tool('is_pdb_loaded')){ jmol.jmol_tool('mark_genomic_mutations', list, color); }
+  rbbt.jmol.mark_positions = function(element, positions, color){
+    for (i in positions){
+      var position = positions[i]
+      rbbt.jmol.mark_position(element, position, color)
+    }
+  }
 
-        var isoform_svg= $('.isoform_svg_tool');
-        isoform_svg.isoform_svg_tool('mark_genomic_mutations', list, color);
+  require_js(["/js/jmol.js"], function(){
+    var position = #{position ?  position : "undefined"}
+    var tool = $('.jmol').last().jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
 
-        var sequence= $('.sequence_tool');
-        sequence.sequence_tool('mark_genomic_mutations', list, color);
+    $('select.pdb').change(function(){
+      var option = $(this).find('option:selected');
+      var pdb = option.attr('attr-pdb');
+      if (pdb == "Select a pdb") return false
+        tool.jmol_tool("load_pdb", pdb)
+      clean = pdb.replace(/=/,'')
+      tool.find('.pdb_info > dd.pdbfile').html(clean)
 
-        return false
-      })
+      if (position !== undefined){
+        tool.jmol_tool("clear")
+        tool.jmol_tool("mark_position", position, 'red')
+      }
     })
 
 
+    $('.clear.submit').click(function(){
+      var link = $(this);
+      var controls = link.parents('.controls').first();
+      var protein_tool = controls.parents('.protein_tool').first();
+      var sequence_element  = protein_tool.find('.sequence').first();
+      var svg_element  = protein_tool.find('.svg').first();
+      var jmol_element  = protein_tool.find('.jmol').first();
 
+      rbbt.sequence.clear(sequence_element)
+      rbbt.svg.clear(svg_element)
+      rbbt.jmol.clear(jmol_element)
+    })
+
+    $('.mark.submit').click(function(){
+      var link = $(this);
+      var controls = link.parents('.controls').first();
+      var protein_tool = controls.parents('.protein_tool').first();
+      var sequence_element  = protein_tool.find('.sequence').first();
+      var svg_element  = protein_tool.find('.svg').first();
+      var jmol_element  = protein_tool.find('.jmol').first();
+
+      var position = parseInt(controls.find('input[name=position]').val());
+
+      if (! position > 0) return alert("No position specified")
+
+        rbbt.sequence.clear(sequence_element)
+        rbbt.svg.clear(svg_element)
+
+        rbbt.sequence.mark_position(sequence_element, position)
+        rbbt.svg.mark_position(svg_element, position)
+        rbbt.jmol.mark_position(jmol_element, position)
+    })
+
+
+    $('.align.submit').click(function(){
+      var link = $(this);
+      var controls = link.parents('.controls').first();
+      var protein_tool = controls.parents('.protein_tool').first();
+      var svg_element  = protein_tool.find('.svg').first();
+
+      var jmol = $('.jmol');
+
+      if(jmol.jmol_tool('is_pdb_loaded')){ 
+        var map = jmol.jmol_tool('alignment_map');
+        jmol.jmol_tool('mark_aligned_region', 'blue');
+        rbbt.svg.mark_aligned_region(svg_element, map, 'blue');
+      }else{
+        alert("Select a PDB")
+      }
+      return false;
+    })
+  })
 

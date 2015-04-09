@@ -27,3 +27,8 @@ post '/wizard' do
   template_render('wizard', params, "Wizard", :cache_type => :sync)
 end
 
+get '/get_pdb' do
+  query = consume_parameter :query
+  content_type 'text/plain'
+  send_file Open.open(query)
+end
