@@ -134,6 +134,7 @@ module Structure
       all_neighbours = (neigh || []) + (ineigh || []).uniq
 
       position_in_sequence = Structure.pdb_chain_position_in_sequence(pdb, pdbfile, chain, [position], sequence).values.compact.flatten.first
+      next if position_in_sequence.nil?
       all_neighbours_in_sequence = all_neighbours.collect{|n| c,p = n.split(":"); Structure.pdb_chain_position_in_sequence(pdb, pdbfile, c, [p], sequence).values.compact.flatten }.flatten.uniq
       neighbours_in_pdb[position_in_sequence] = all_neighbours_in_sequence
     end

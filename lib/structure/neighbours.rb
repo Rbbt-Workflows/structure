@@ -23,6 +23,55 @@ module Structure
     @@iso2seq[organism] ||= Organism.protein_sequence(organism).tsv :persist => true, :unnamed => true
   end
 
+  def self.neighbours_uniprot(protein, positions, organism = Organism.default_code("Hsa"), only_pdb = false)
+    uniprot = iso2uni(organism)[protein]
+    sequence = iso2seq(organism)[protein]
+
+    tsv = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Ensembl Protein ID", "Residue", "PDB", "Neighbours"], :type => :list)
+    return tsv if sequence.nil?
+
+    uni_pdbs = UniProt.pdbs(uniprot)
+
+    if uniprot and  uni_pdbs.any?
+
+      uni_pdbs.each do |pdb, info|
+
+        # Be more careful with identifying positions in the wrong chain do to
+        # aberrant alignments
+
+        neighbours_in_pdb = nil
+        begin
+          neighbours_in_pdb = self.neighbours_in_pdb(sequence, positions, pdb, nil, nil, 5) 
+        rescue 
+          Log.warn "Error processing #{ url }: #{$!.message}"
+          next
+        end
+
+        #Try another PDB unless at least one neighbour is found
+        next if neighbours_in_pdb.nil? or neighbours_in_pdb.empty?
+
+        neighbours_in_pdb.each do |seq_pos, seq_neigh|
+          next if seq_pos.nil?
+          tsv[[protein, seq_pos] * ":"] = [protein, seq_pos, pdb, seq_neigh * ";"]
+        end
+
+        return tsv if tsv.any?
+      end
+    else
+      return tsv if only_pdb
+    end
+
+    # TODO Add contiguous also when PDB is present
+    positions.each do |p| 
+      new = []
+      new << p-1 if p > 1
+      new << p+1 if p < sequence.length 
+      tsv[[protein,p]*":"] = [protein, p, nil, new * ";"]
+    end
+
+    tsv
+  end
+
   def self.neighbours_i3d(protein, positions, organism = Organism.default_code("Hsa"), only_pdb = false)
 
     uniprot = iso2uni(organism)[protein]
@@ -62,9 +111,9 @@ module Structure
 
         return tsv if tsv.any?
       end
-    else
-      return tsv if only_pdb
     end
+
+    return tsv if only_pdb
 
     # TODO Add contiguous also when PDB is present
     positions.each do |p| 
@@ -75,6 +124,12 @@ module Structure
     end
 
     tsv
+  end
+
+  def self.neighbours(protein, positions, organism = Organism.default_code("Hsa"), only_pdb = false)
+    tsv = self.neighbours_i3d(protein, positions, organism, true)
+    return tsv unless tsv.empty?
+    self.neighbours_uniprot(protein, positions, organism, only_pdb)
   end
 
   def self.interface_neighbours_i3d(protein, positions, organism = Organism.default_code("Hsa"))
