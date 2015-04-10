@@ -50,5 +50,47 @@
 - entity_card.action_controller = default_action_controller entity
 
 = entity_card_render entity_card  do
-  - if entity =~ /ENSP/
-    = tool :secondary_structure, :protein => entity.protein, :positions => entity.change.scan(/\d+/)
+  - protein = entity.protein
+  - sequence = protein.sequence
+  .secondary_structure.active.very.basic.ui.segment
+    .svg(data-sequence_length='#{sequence.length}')
+      - log :svg, "Downloading SVG"
+      - begin
+        = protein.marked_svg([])
+      - rescue Exception
+        %p.error.ui.message
+          Could not download protein SVG, try again later. 
+          %pre=$!.message
+    .sequence(style='width: 677px; overflow-x: auto;font-family: monospace;margin-left:123px')
+      %span.sequence(width="100%")= sequence
+      %span.marks(width="100%")
+        - size = sequence.length
+        - marks = size / 10
+        - str = ""
+        - marks.times do |mark|
+          - txt = "|"
+          - str << ("_" * (10 - txt.length)) << txt
+        = str
+      %span.counts(width="100%")
+        - size = sequence.length
+        - marks = size / 10
+        - str = ""
+        - marks.times do |mark|
+          - mark = (mark + 1) * 10
+          - txt = mark.to_s
+          - str << ("_" * (10 - txt.length)) << txt
+        = str
+      %p.scroll.ui.message 
+        Scroll horizontaly across the sequence
+
+:deferjs
+  require_js(["/js-find/rbbt.protein_tool.js"], function(){
+    var position = #{entity.position}
+
+    var sequence_elem = $('.secondary_structure > .sequence')
+    var svg_elem = $('.secondary_structure > .svg')
+
+    rbbt.sequence.mark_position(sequence_elem, position, 'red')
+    rbbt.svg.mark_position(svg_elem, position, 'red')
+    
+  })
