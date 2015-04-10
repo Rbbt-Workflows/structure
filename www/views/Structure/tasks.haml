@@ -5,11 +5,36 @@
       #{workflow.documentation[:description]}
 
   :sass
+    @import "compass/css3/columns"
     .wizard 
       ul
         list-style: circle
       textarea
         width: 100%
+
+    article
+      overflow: auto
+      position: relative
+      & > *
+        float: right
+        width: 70%
+      & > navigation:last-child
+        max-width: 20%
+        position: absolute
+        top: 0
+        left: 0
+
+    section.documentation, .documentation > section
+      clear: both
+      margin-bottom: 4em
+      &:not(.short)
+        @include columns(30em 2)
+        @include column-gap(2em)
+        text-align: justify
+      &.short
+        max-width: 65em
+
+
 
   .wizard
     :documentation
