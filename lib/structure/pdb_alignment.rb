@@ -147,11 +147,16 @@ module Structure
     return TSV.setup({}, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat) if pdb == '1cw3'
     close_residues = PDBHelper.pdb_close_residues(distance, pdb, pdbfile)
     tsv = TSV.setup close_residues, :key_field => "Residue", :fields => ["Neighbours"], :type => :flat
+
+    # Add the reverse contacts
     new = {}
-    tsv.each do |p,ns|
-      ns.each{|n| new[n] ||= []; new[n] << p }
+    tsv.with_unnamed do
+      tsv.each do |p,ns|
+        ns.each{|n| new[n] ||= []; new[n] << p }
+      end
     end
     new.each{|p,ns| tsv[p] ||= []; tsv[p].concat ns }
+
     tsv
   end
 

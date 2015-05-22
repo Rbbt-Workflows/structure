@@ -163,7 +163,17 @@ module Structure
         next if chain.strip.empty? or partner_chain.strip.empty?
 
         partner_ensembl =  uni2iso[partner]
+        if partner_ensembl.nil?
+          Log.warn "Could not translate partner to Ensembl: #{ partner }"
+          next
+        end
+
         partner_sequence = iso2seq[partner_ensembl]
+        if partner_sequence.nil?
+          Log.warn "Could get partner sequence: #{ partner } (#{partner_ensembl})"
+          next
+        end
+
 
         type = filename =~ /EXP/ ? :pdb : :model
         url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
