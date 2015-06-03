@@ -113,7 +113,11 @@ module Structure
 
     Log.debug "Position in PDB: #{Misc.fingerprint positions_in_pdb}"
 
-    chain ||=  positions_in_pdb.collect.reject{|c,p| p.nil? }.sort_by{|c,p| p.length}.first.first
+    if chain.nil?
+      possible_positions = positions_in_pdb.collect.reject{|c,p| p.nil? }
+      raise "No matched chain positions" if possible_positions.empty?
+      chain =  possible_positions.sort_by{|c,p| p.length}.first.first
+    end
 
     return neighbours_in_pdb if positions_in_pdb.nil? or positions_in_pdb[chain].nil?
 

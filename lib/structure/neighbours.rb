@@ -43,7 +43,7 @@ module Structure
         begin
           neighbours_in_pdb = self.neighbours_in_pdb(sequence, positions, pdb, nil, nil, 5) 
         rescue 
-          Log.warn "Error processing #{ url }: #{$!.message}"
+          Log.warn "Error processing #{ pdb }: #{$!.message}"
           next
         end
 
