@@ -21,8 +21,6 @@ Workflow.require_workflow "Appris"
 
 require 'rbbt/entity/appris'
 
-$title = "Structure PPI"
-
 post '/wizard' do
   template_render('wizard', params, "Wizard", :cache_type => :sync)
 end

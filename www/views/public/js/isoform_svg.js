@@ -17,8 +17,8 @@ $.widget("rbbt.isoform_svg_tool", {
   //{{{ JOBS
 
   _mutation_positions: function(mutations, organism, watson, complete){
-    var mutated_isoforms = rbbt_job("Sequence", "mutated_isoforms_fast", {organism: organism, watson: watson, mutations: mutations}, complete);
-    return mutated_isoforms;
+    var job = new rbbt.Job("Sequence", "mutated_isoforms_fast", {organism: organism, watson: watson, mutations: mutations});
+    job.run(true).then(complete)
   },
 
   //{{{ SVG STUFF

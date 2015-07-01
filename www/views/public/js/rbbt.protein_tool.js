@@ -89,7 +89,7 @@ rbbt.svg.mark_aligned_region = function(element, map, color){
     }
 
     positions = positions.sort();
-    console.log(positions)
+
     var last = -1
     var start = -1;
     for (var i = 0; i < positions.length; i++){

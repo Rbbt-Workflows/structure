@@ -259,9 +259,10 @@
       var jmol = $('.jmol');
 
       if(jmol.jmol_tool('is_pdb_loaded')){ 
-        var map = jmol.jmol_tool('alignment_map');
-        jmol.jmol_tool('mark_aligned_region', 'blue');
-        rbbt.svg.mark_aligned_region(svg_element, map, 'blue');
+        jmol.jmol_tool('pdb_alignment_map').then(function(map){
+          rbbt.svg.mark_aligned_region(svg_element, map, 'blue');
+          jmol.jmol_tool('mark_region','blue', map)
+        })
       }else{
         alert("Select a PDB")
       }

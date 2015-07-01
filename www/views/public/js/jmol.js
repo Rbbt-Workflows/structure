@@ -4,7 +4,7 @@ var jmol_tools = [];
 $.widget("rbbt.jmol_tool", {
 
   options: {
-    width: 640,
+    width: '100%',
     height: 480,
     debug: false,
     color: "0xFFFFFF",
@@ -81,7 +81,14 @@ $.widget("rbbt.jmol_tool", {
   },
 
   alignment_map: function(complete){
-    return(rbbt_job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._loaded_pdb}, complete))
+    var job = new rbbt.Job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._loaded_pdb})
+    job.run(true).then(complete)
+  },
+
+  pdb_alignment_map: function(){
+    var job = new rbbt.Job("Structure", "pdb_alignment_map", {sequence: this.options.sequence, pdb: this._loaded_pdb})
+    var promise = job.run(true)
+    return promise
   },
 
   //{{{ JMOL STUFF
@@ -206,38 +213,43 @@ $.widget("rbbt.jmol_tool", {
     });
   },
 
+  mark_region: function(color, map){
+    var tool = this
+    var chains = {};
+    for(seq_pos in map){
+      var chain_pos_list = map[seq_pos]
+      for (var i = 0; i < chain_pos_list.length; i++) {
+        var chain_pos = chain_pos_list[i];
+        var chain = chain_pos.split(":")[0]
+        var pos = chain_pos.split(":")[1]
+
+        if (undefined === chains[chain]){
+          chains[chain] = [];
+        }
+        chains[chain].push(parseInt(pos));
+      }
+    }
+    for (chain in chains){
+      var positions = chains[chain];
+      positions = $(positions).map(function(){return parseInt(this);}).toArray().sort(function(a,b){return a-b});
+      var last = -1
+      var start = -1;
+      for (var i = 0; i < positions.length; i++){
+        if (positions[i] != last + 1){
+          if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
+          start = positions[i]
+        }
+        last = positions[i]
+      }
+      if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
+    }
+  },
+
   mark_aligned_region: function(color){
     var tool = this
     this.alignment_map(function(map){
-      var chains = {};
-      for(seq_pos in map){
-        var chain_pos_list = map[seq_pos]
-        for (var i = 0; i < chain_pos_list.length; i++) {
-          var chain_pos = chain_pos_list[i];
-          var chain = chain_pos.split(":")[0]
-          var pos = chain_pos.split(":")[1]
-
-          if (undefined === chains[chain]){
-            chains[chain] = [];
-          }
-          chains[chain].push(parseInt(pos));
-        }
-      }
-      for (chain in chains){
-        var positions = chains[chain];
-        positions = $(positions).map(function(){return parseInt(this);}).toArray().sort(function(a,b){return a-b});
-        var last = -1
-        var start = -1;
-        for (var i = 0; i < positions.length; i++){
-          if (positions[i] != last + 1){
-            if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
-            start = positions[i]
-          }
-          last = positions[i]
-        }
-        if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
-      }
-    });
+      tool.mark_region(color, map)
+    })
   },
 
 });
