@@ -174,7 +174,7 @@ module Structure
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
   task :mi_neighbours => :tsv do |mis,organism|
-    annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB", "Neighbours"], :type => :double
+    annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "PDB", "Neighbours"], :type => :double, :namespace => organism
     annotations.init
     TSV.traverse mis, :cpus => $cpus, :respawn => 1.6, :bar => "Mutated Isoform neighbours", :into => annotations, :type => :array do |mi|
 

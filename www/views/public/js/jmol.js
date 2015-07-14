@@ -77,7 +77,8 @@ $.widget("rbbt.jmol_tool", {
   },
 
   _sequence_positions_in_pdb: function(positions, complete){
-    return(rbbt_job("Structure", "sequence_position_in_pdb", {sequence: this.options.sequence, pdb: this._loaded_pdb, positions: positions.join("|")}, complete))
+    var job = new rbbt.Job("Structure", "sequence_position_in_pdb", {sequence: this.options.sequence, pdb: this._loaded_pdb, positions: positions.join("|")})
+    job.run(true).then(complete)
   },
 
   alignment_map: function(complete){
@@ -154,6 +155,7 @@ $.widget("rbbt.jmol_tool", {
   mark_positions: function(positions, color){
     var tool = this;
     tool._sequence_positions_in_pdb(positions, function(pdb_positions){
+     console.log(pdb_positions)
       for (var chain in pdb_positions){
         var position_list = pdb_positions[chain]
         position_list = $.grep(position_list,function(n){ return(n)});

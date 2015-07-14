@@ -107,15 +107,14 @@ rbbt.jmol = {}
 rbbt.jmol.clear = function(element){
   element.jmol_tool('clear')
 }
+
 rbbt.jmol.mark_position = function(element, position, color){
-  if (undefined === color) color = 'red'
-    element.jmol_tool('mark_position', position, color)
+ if (undefined === color) color = 'red'
+ element.jmol_tool('mark_position', position, color)
 }
 
 rbbt.jmol.mark_positions = function(element, positions, color){
-  for (i in positions){
-    var position = positions[i]
-    rbbt.jmol.mark_position(element, position, color)
-  }
+ if (undefined === color) color = 'red'
+ element.jmol_tool('mark_positions', positions, color)
 }
 

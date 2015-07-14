@@ -150,35 +150,46 @@
               success: function(data){
                 data = JSON.parse(data);
                 var change_positions = [];
-                for (mutation in data){
-                  var change = data[mutation][0];
-                  var samples = data[mutation][1];
-                  if (m = change.match(/[A-Z*](\d*)[A-Z*]/)){
+
+                forHash(data, function(mutation, values){
+                  var change = values[0];
+                  var samples = values[1];
+                  var m;
+                  if (m = change.match(/[A-Z](\d+)[A-Z]/)){
                     change_positions.push(parseInt(m[1]));
                   }
-                }
+                })
                 var change_counts = []
 
-                for (i in change_positions){
-                  var position = change_positions[i]
+                forArray(change_positions, function(position){
                   if (change_counts[position] === undefined){
                     change_counts[position] = 1
                   }else{
                     change_counts[position] = change_counts[position] + 1
                   }
-                }
+                })
 
                 var protein_tool = $('.protein_tool#' + '#{id}');
+
                 rbbt.svg.mark_positions(svg_element, change_positions, color);
-                for (position in change_counts){
-                  var jcolor = 'white';
-                  if (change_counts[position] > 1) jcolor = 'green'
-                  if (change_counts[position] > 2) jcolor = 'organge'
-                  if (change_counts[position] > 3) jcolor = 'red'
+                rbbt.jmol.mark_positions(jmol_element, change_positions, 'red');
 
-                  rbbt.jmol.mark_position(jmol_element, position, jcolor);
-                }
+                //rbbt.do_try(function(){
+                //  rbbt.jmol.mark_positions(jmol_element, change_positions, 'red');
+                //  //forHash(change_counts, function(position, count){
+                //  //  var jcolor = 'white';
 
+                //  //  if ('string' == typeof count) count = parseInt(count)
+                //  //  if ('string' == typeof position) position = parseInt(position)
+
+                //  //  if (count > 1) jcolor = 'green'
+                //  //  if (count > 2) jcolor = 'organge'
+                //  //  if (count > 3) jcolor = 'red'
+
+                //  //  console.log([position, count, jcolor, jmol_element])
+                //  //  rbbt.jmol.mark_position(jmol_element, position, jcolor);
+                //  //})
+                //})
               }
             })
             return false;
