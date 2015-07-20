@@ -95,7 +95,7 @@
     .COSMIC.very.basic.ui.segment.tab(data-tab='COSMIC')
       = fragment do
         .highlight.submit.ui.button Highlight
-        .ui.message
+        -#.ui.message
           In JMol positions with 1 mutation are white, with 2 are green, with 3 are orange, and with more than 3 are red
         -#%select(name='color')
           - colors.each do |c|
