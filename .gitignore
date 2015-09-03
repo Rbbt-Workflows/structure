@@ -3,3 +3,8 @@ var/
 data
 .crap
 .sass-cache
+results
+.save
+.crap
+.source
+bin
