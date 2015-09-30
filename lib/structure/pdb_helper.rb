@@ -1,24 +1,50 @@
 require 'rbbt-util'
 module PDBHelper
+
+  PDB_FILES = Structure.cache_dir.pdb_files.find
+  Open.repository_dirs << PDB_FILES unless Open.repository_dirs.include? PDB_FILES
   def self.pdb_stream(pdb = nil, pdbfile = nil)
-    begin
-      return StringIO.new(pdbfile) if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
-      return Open.open(pdb) if pdb and (Open.remote?(pdb) or Open.exists?(pdb))
-      pdb = pdb.sub(/^=/,'')
-      return Open.open("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=#{pdb}") unless pdb.nil?
-
-    rescue Exception
-      raise "No valid pdb provided: #{ Misc.fingerprint pdb }"
+    return StringIO.new(pdbfile) if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
+    raise "No PDB specified" if pdb.nil? or pdb.empty?
+    if Open.exists?(pdb)
+      Open.open(pdb)
+    else
+      begin
+        content = Persist.persist("PDB file", :marshal, :persist => true, :dir => PDB_FILES, :other => {:pdb => pdb}) do 
+          if pdb.length > 5 and Open.remote?(pdb)
+            Open.read(pdb)
+          else
+            pdb = pdb.sub(/^=/,'')
+            Open.read("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=#{pdb}")
+          end
+        end
+        StringIO.new(content)
+      rescue Exception
+        Log.exception $!
+        raise "No valid pdb provided: #{ Misc.fingerprint pdb }"
+      end
     end
-
-    raise "No valid pdb provided: #{ Misc.fingerprint pdb }"
   end
+
+  #def self.pdb_stream(pdb = nil, pdbfile = nil)
+  #  begin
+  #    return StringIO.new(pdbfile) if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
+  #    return Open.open(pdb) if pdb and (Open.remote?(pdb) or Open.exists?(pdb))
+  #    pdb = pdb.sub(/^=/,'')
+  #    return Open.open("http://www.rcsb.org/pdb/download/downloadFile.do?fileFormat=pdb&compression=NO&structureId=#{pdb}") unless pdb.nil?
+
+  #  rescue Exception
+  #    raise "No valid pdb provided: #{ Misc.fingerprint pdb }"
+  #  end
+
+  #  raise "No valid pdb provided: #{ Misc.fingerprint pdb }"
+  #end
 
   CHAIN_SEQUENCES = Structure.cache_dir.chain_sequences.find
   Open.repository_dirs << CHAIN_SEQUENCES unless Open.repository_dirs.include? CHAIN_SEQUENCES
   def self.pdb_chain_sequences(pdb = nil, pdbfile = nil)
     Misc.insist do
-      Persist.persist("Chain sequences", :marshal, :persist => false, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
+      Persist.persist("Chain sequences", :marshal, :persist => true, :dir => CHAIN_SEQUENCES, :other => {:pdb => pdb, :pdbfile => pdbfile}) do 
         chains = {}
         stream = pdb_stream(pdb, pdbfile)
         while line = stream.gets
