@@ -5,6 +5,7 @@ module Structure
   task :wizard => :tsv do |mutations,organism|
     databases = Structure::ANNOTATORS.keys 
 
+    raise ParameterException, "No mutations given" if mutations.nil? 
     raise ParameterException, "This wizard is limited to a thousand variants. For larger jobs use standard functions please" if mutations.length > 1000
 
     log :identifiying
