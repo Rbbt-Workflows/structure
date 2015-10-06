@@ -153,10 +153,10 @@ module Structure
       seen_pbs = []
       Misc.zip_fields(values_list).each do |values|
         if db_direction == :forward
-          pdb, partner, chain, partner_chain, filename = values.values_at *forward_positions
+          pdb, partner, orig_chain, orig_partner_chain, filename = values.values_at *forward_positions
           chain, partner_chain = "A", "B"
         else
-          pdb, partner, chain, partner_chain, filename = values.values_at *reverse_positions
+          pdb, partner, orig_chain, orig_partner_chain, filename = values.values_at *reverse_positions
           chain, partner_chain = "B", "A"
         end
 
@@ -208,7 +208,7 @@ module Structure
           url = pdb
           Log.debug "Processing: #{ url }"
 
-          positions_in_pdb = sequence_position_in_pdb(sequence, positions, url, nil)[chain]
+          positions_in_pdb = sequence_position_in_pdb(sequence, positions, url, nil)[orig_chain]
           next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
           map = neighbour_map_job url, nil, distance
@@ -217,7 +217,7 @@ module Structure
           next if map.nil? or map.empty?
 
           positions_in_pdb.zip(positions).each do |pdb_position, position|
-            code = [chain,pdb_position]*":"
+            code = [orig_chain,pdb_position]*":"
             begin
               neighbours = map[code]
             rescue
@@ -225,9 +225,9 @@ module Structure
               next
             end
             next if neighbours.nil? or neighbours.empty?
-            partner_neighbours = neighbours.select{|c| c.split(":").first == partner_chain }.collect{|c| c.split(":").last}
+            partner_neighbours = neighbours.select{|c| c.split(":").first == orig_partner_chain }.collect{|c| c.split(":").last}
             next if partner_neighbours.empty?
-            partner_neighbours_in_sequence = pdb_chain_position_in_sequence(url, nil, partner_chain, partner_neighbours, partner_sequence).values.compact.flatten
+            partner_neighbours_in_sequence = pdb_chain_position_in_sequence(url, nil, orig_partner_chain, partner_neighbours, partner_sequence).values.compact.flatten
             next if partner_neighbours_in_sequence.empty?
             tsv.zip_new(protein, [position, partner_ensembl, url, partner_neighbours_in_sequence * ";"])
           end
