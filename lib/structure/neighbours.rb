@@ -132,7 +132,7 @@ module Structure
     self.neighbours_uniprot(protein, positions, organism, only_pdb)
   end
 
-  def self.interface_neighbours_i3d(protein, positions, organism = Organism.default_code("Hsa"))
+  def self.interface_neighbours_i3d(protein, positions, organism = Organism.default_code("Hsa"), distance = 8)
     tsv = TSV.setup({}, :key_field => "Isoform", :fields => ["Position", "Partner Ensembl Protein ID", "PDB", "Partner residues"], :type => :double)
 
     uniprot = iso2uni(organism)[protein]
@@ -182,7 +182,7 @@ module Structure
         positions_in_pdb = sequence_position_in_pdb(sequence, positions, url, nil)[chain]
         next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
-        map = neighbour_map_job url, nil, 8
+        map = neighbour_map_job url, nil, distance
         map.unnamed = true
 
         next if map.nil? or map.empty?
@@ -211,7 +211,7 @@ module Structure
           positions_in_pdb = sequence_position_in_pdb(sequence, positions, url, nil)[chain]
           next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
-          map = neighbour_map_job url, nil, 8
+          map = neighbour_map_job url, nil, distance
           map.unnamed = true
 
           next if map.nil? or map.empty?

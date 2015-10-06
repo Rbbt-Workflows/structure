@@ -215,7 +215,8 @@ module Structure
 
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  task :mi_interfaces => :tsv do |mis,organism|
+  input :distance, :float, "Distance with partner residue", 8
+  task :mi_interfaces => :tsv do |mis,organism,distance|
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
     TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Mutated Isoform interfaces"), :into => mi_annotations, :type => :array do |mi|
@@ -234,7 +235,7 @@ module Structure
 
       n = Misc.insist do
         Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :persist => false, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
-          Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+          Structure.interface_neighbours_i3d(isoform.dup, [residue], organism, distance)
         end
       end
 
