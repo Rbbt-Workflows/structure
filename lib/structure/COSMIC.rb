@@ -3,7 +3,8 @@ Workflow.require_workflow "COSMIC"
 
 module Structure
   def self.COSMIC_residues
-    @COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
+    #@COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
+    @COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => cache_dir.COSMIC.find) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Genomic Mutations"], :type => :flat)
 
                            db = COSMIC.knowledge_base.get_database('mutation_isoforms')
