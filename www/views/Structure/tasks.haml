@@ -5,6 +5,7 @@
       #{workflow.documentation[:description]}
 
   :sass
+    @import "screen_sizes"
     @import "compass/css3/columns"
     .wizard 
       ul
@@ -15,14 +16,6 @@
     article
       overflow: auto
       position: relative
-      & > *
-        float: right
-        width: 70%
-      & > navigation:last-child
-        max-width: 20%
-        position: absolute
-        top: 0
-        left: 0
 
     section.documentation, .documentation > section
       clear: both
@@ -33,6 +26,17 @@
         text-align: justify
       &.short
         max-width: 65em
+
+    @media only screen and (min-width: 1024px)
+      article
+        & > *
+          float: right
+          width: calc(80% - 4em)
+        & > navigation:last-child
+          max-width: 20%
+          position: absolute
+          top: 0
+          left: 0
 
 
 
