@@ -92,9 +92,9 @@ module Structure
   def self.neighbour_map_job(pdb, pdbfile, distance)
     Misc.insist do
       begin
-        Persist.persist("Neighbour map", :marshal, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do  |filename|
+        Persist.persist("Neighbour map", :yaml, :persist => true, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do  |filename|
           job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance)
-          job.run
+          job.run.to_hash
         end
       rescue Exception
         Log.warn "Exception calculating neighbour map: #{$!.message}. Retrying"

@@ -10,12 +10,14 @@ module Structure
 
   def self.uni2iso(organism = Organism.default_code("Hsa"))
     @@uni2iso ||= {}
-    @@uni2iso[organism] ||= Organism.protein_identifiers(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
+    #@@uni2iso[organism] ||= Organism.protein_identifiers(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
+    @@uni2iso[organism] ||= Organism.uniprot2ensembl(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
   end
 
   def self.iso2uni(organism = Organism.default_code("Hsa"))
     @@iso2uni ||= {}
-    @@iso2uni[organism] ||= Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
+    #@@iso2uni[organism] ||= Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
+    @@iso2uni[organism] ||= Organism.ensembl2uniprot(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
   end
 
   def self.iso2seq(organism = Organism.default_code("Hsa"))
@@ -162,7 +164,12 @@ module Structure
 
         next if chain.strip.empty? or partner_chain.strip.empty?
 
-        partner_ensembl =  uni2iso[partner]
+        if uniprot == partner
+          partner_ensembl = protein
+        else
+          partner_ensembl =  uni2iso[partner]
+        end
+
         if partner_ensembl.nil?
           Log.warn "Could not translate partner to Ensembl: #{ partner }"
           next
@@ -183,7 +190,7 @@ module Structure
         next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
         map = neighbour_map_job url, nil, distance
-        map.unnamed = true
+        #map.unnamed = true
 
         next if map.nil? or map.empty?
 
@@ -204,6 +211,7 @@ module Structure
         end
 
         if not seen_pbs.include? pdb
+          next if orig_chain == orig_partner_chain
           seen_pbs << pdb
           url = pdb
           Log.debug "Processing: #{ url }"
@@ -212,7 +220,7 @@ module Structure
           next if positions_in_pdb.nil? or positions_in_pdb.empty?
 
           map = neighbour_map_job url, nil, distance
-          map.unnamed = true
+          #map.unnamed = true
 
           next if map.nil? or map.empty?
 

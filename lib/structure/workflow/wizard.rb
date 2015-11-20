@@ -19,12 +19,41 @@ module Structure
              :protein
            when /.*:\w+\d+\w+/
              index = Organism.identifiers(organism).index :target => "Ensembl Gene ID", :order => true, :persist => true
-             gene2isoform = Organism.transcripts(organism).tsv :key_field => "Ensembl Gene ID", :fields => ["Ensembl Protein ID"], :type => :flat, :persist => true, :merge => true
+             ensg2enst = Organism.transcripts(organism).tsv :key_field => "Ensembl Gene ID", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true, :type => :flat
+             enst2ensp = Organism.transcripts(organism).index :target => "Ensembl Protein ID", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true
+             enst2name = Organism.transcript_name(organism).index :target => "Ensembl Transcript Name", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true
+             uni2ensp = Organism.uniprot2ensembl(organism).index :persist => true, :target => "Ensembl Protein ID"
+             ensp2uni = Organism.ensembl2uniprot(organism).index :persist => true, :target => "UniProt/SwissProt Accession"
              mutations = mutations.collect do |m|
                 orig_gene, _sep, change = m.partition ":"
                 gene = index[orig_gene]
-                gene_proteins = gene2isoform[gene]
-                protein = ( Appris::PRINCIPAL_ISOFORMS & gene_proteins).first
+                gene_transcripts = ensg2enst[gene].sort_by{|t| enst2name[t].split("-").last.to_i}
+
+                gene_isoforms = enst2ensp.values_at *gene_transcripts
+                perfect_isoforms = gene_isoforms.select{|p| 
+                  _uni = ensp2uni[p]
+                  _p = uni2ensp[_uni]
+                  p == _p
+                }
+
+                principal_transcripts = (Appris::PRINCIPAL_TRANSCRIPTS & gene_transcripts)
+                principal_isoforms = enst2ensp.values_at *principal_transcripts
+                uni_pricipal_isoforms = principal_isoforms.select{|p| ensp2uni[p]}
+
+                perfect_principal_isoforms = uni_pricipal_isoforms & perfect_isoforms
+
+                if perfect_principal_isoforms.any?
+                  protein = perfect_principal_isoforms.first
+                elsif uni_pricipal_isoforms.any?
+                  protein = uni_pricipal_isoforms
+                elsif perfect_isoforms.any?
+                  protein = perfect_isoforms.first
+                elsif principal_isoforms.any?
+                  protein = principal_isoforms.first
+                else
+                  protein = gene_isoforms.first
+                end
+
                 [protein, change] * ":"
              end
              :protein
