@@ -6,7 +6,7 @@ module PDBHelper
   def self.pdb_stream(pdb = nil, pdbfile = nil)
     return StringIO.new(pdbfile) if (pdb.nil? or pdb.empty?) and not pdbfile.nil? and not pdbfile.empty?
     raise "No PDB specified" if pdb.nil? or pdb.empty?
-    pdb.strip!
+    pdb = pdb.strip
     if Open.exists?(pdb)
       Open.open(pdb)
     else
