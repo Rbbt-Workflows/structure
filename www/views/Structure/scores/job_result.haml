@@ -66,6 +66,9 @@
 
   %hr
   %dl.column_explanations
+    %dt Score
+    %dd 
+      StructurePPI score, based on how many features are affected by or close to the mutation
     %dt CV
     %dd 
       Marked pathogenic in ClinVar
@@ -89,122 +92,116 @@
       The variant affects a protein-protein interaction interface
     %dt DP
     %dd 
-      Number of other damage predictors that predict the mutation as damaging: SIFT, Polyphen2_HDIV, Polyphen2_HVAR, MutationTaster, MutationAssessor, FATHMM, VEST3, and CADD
+      Number of damage predictors that predict the mutation as damaging: SIFT, Polyphen2_HDIV, Polyphen2_HVAR, MutationTaster, MutationAssessor, FATHMM, VEST3, and CADD
+
+  - fields = %w(Score CV #CS FL MR MUT DT PPI DP)
+
+  - tsv = TSV.setup({}, :key_field => "Mutated Isoform", :fields => fields, :type => :list, :organism => job.load.namespace)
+
+  - job.load.each do |mutation, score|
+    - values = []
+    - ensp, _sep, change = mutation.partition(":") 
+
+    - damage_count = 0
+    - total_preds = 0
+    - dvalues = dbNSFP[mutation]
+    - if dvalues
+      - predictors.each_with_index do |predictor,i|
+        - next if predictor == "LRT"
+        - raw, dscore, converted, rankscore, raw_rankscore, converted_rankscore, p = nil
+        - threshold = thresholds[i]
+        - raw = dvalues[predictor + '_raw'] if dvalues.fields.include? predictor + '_raw'
+        - dscore = dvalues[predictor + '_score'] if dvalues.fields.include? predictor + '_score'
+        - dscore = nil if String === dscore and dscore.empty?
+        - dscore = raw if dscore.nil?
+        - converted = dvalues[predictor + '_converted_score'] if dvalues.fields.include? predictor + '_converted_score'
+        - rankscore = dvalues[predictor + '_rankscore'] if dvalues.fields.include? predictor + '_rankscore'
+        - raw_rankscore = dvalues[predictor + '_raw_rankscore'] if dvalues.fields.include? predictor + '_raw_rankscore'
+        - converted_rankscore = dvalues[predictor + '_converted_rankscore'] if dvalues.fields.include? predictor + '_converted_rankscore'
+        - if score and threshold != '-'
+          - p = case threshold
+            - when /^<(.*)/
+              - ths = $1.split(",")
+              - ths.inject(0){|acc,e| acc += 1 if dscore.to_f < e.to_f; acc}.to_f/ths.length
+            - when /^>(.*)/
+              - ths = $1.split(",")
+              - ths.inject(0){|acc,e| acc += 1 if dscore.to_f > e.to_f; acc}.to_f/ths.length
+            - else
+              - nil
+          - damage_count += 1 if p > 0.5
+          - total_preds +=1
+
+    - values << score.flatten.first
 
 
-  %table.ui.table.sortable
-    %thead
-      %tr
-        %th Mutation
-        %th Score
-        %th CV
-        %th #CS
-        %th FL
-        %th MR
-        %th MUT
-        %th DT
-        %th PPI
-        %th ODP
+    - if clinvar.include? mutation and clinvar[mutation] == "Pathogenic"
+      - values << "Yes"
+    - else
+      - values << "No"
 
-    %tbody
-      - job.load.each do |mutation, score|
-        - ensp, _sep, change = mutation.partition(":") 
 
-        - damage_count = 0
-        - total_preds = 0
-        - dvalues = dbNSFP[mutation]
-        - if dvalues
-          - predictors.each_with_index do |predictor,i|
-            - next if predictor == "LRT"
-            - raw, dscore, converted, rankscore, raw_rankscore, converted_rankscore, p = nil
-            - threshold = thresholds[i]
-            - raw = dvalues[predictor + '_raw'] if dvalues.fields.include? predictor + '_raw'
-            - dscore = dvalues[predictor + '_score'] if dvalues.fields.include? predictor + '_score'
-            - dscore = nil if String === dscore and dscore.empty?
-            - dscore = raw if dscore.nil?
-            - converted = dvalues[predictor + '_converted_score'] if dvalues.fields.include? predictor + '_converted_score'
-            - rankscore = dvalues[predictor + '_rankscore'] if dvalues.fields.include? predictor + '_rankscore'
-            - raw_rankscore = dvalues[predictor + '_raw_rankscore'] if dvalues.fields.include? predictor + '_raw_rankscore'
-            - converted_rankscore = dvalues[predictor + '_converted_rankscore'] if dvalues.fields.include? predictor + '_converted_rankscore'
-            - if score and threshold != '-'
-              - p = case threshold
-                - when /^<(.*)/
-                  - ths = $1.split(",")
-                  - ths.inject(0){|acc,e| acc += 1 if dscore.to_f < e.to_f; acc}.to_f/ths.length
-                - when /^>(.*)/
-                  - ths = $1.split(",")
-                  - ths.inject(0){|acc,e| acc += 1 if dscore.to_f > e.to_f; acc}.to_f/ths.length
-                - else
-                  - nil
-              - damage_count += 1 if p > 0.5
-              - total_preds +=1
+    - if cosmic.include? mutation
+      - count = cosmic[mutation]["Sample ID"].length
+    - else
+      - count = 0
+    - if cosmic_neighbours.include? mutation
+      - ncount = cosmic_neighbours[mutation]["Sample ID"].collect{|l| l.split(";")}.flatten.uniq.length
+    - else
+      - ncount = 0
+    - values << "#{count} (#{ncount})"
 
-        %tr
-          %td= mutation.link
-          %td= score.flatten.first
-          %td
-            - if clinvar.include? mutation and clinvar[mutation] == "Pathogenic"
-              Yes
-            - else
-              No
-          %td
-            - if cosmic.include? mutation
-              - count = cosmic[mutation]["Sample ID"].length
-            - else
-              - count = 0
-            - if cosmic_neighbours.include? mutation
-              - ncount = cosmic_neighbours[mutation]["Sample ID"].collect{|l| l.split(";")}.flatten.uniq.length
-            - else
-              - ncount = 0
-            #{count} (#{ncount})
-          %td
-            - if appris.include? mutation
-              - count = Misc.zip_fields(appris[mutation]).select{|type,lig| type =~ /firestar/}.length
-            - else
-              - count = 0
-            - if appris_neighbours.include? mutation
-              - ncount = Misc.zip_fields(appris_neighbours[mutation]).select{|res,type,lig| type =~ /firestar/}.length
-            - else
-              - ncount = 0
-            #{count == 0 ? "No" : "Yes"} (#{ncount})
-          %td
-            - if uniprot.include? mutation
-              - count = Misc.zip_fields(uniprot[mutation]).select{|feat,loc,desc| feat =~ /MOD_RES/}.length
-            - else
-              - count = 0
-            - if uniprot_neighbours.include? mutation
-              - ncount = Misc.zip_fields(uniprot_neighbours[mutation]).select{|res,feat,loc,desc| feat =~ /MOD_RES/}.length
-            - else
-              - ncount = 0
-            #{count == 0 ? "No" : "Yes"} (#{ncount})
 
-          %td
-            - iii uniprot
-            - if uniprot.include? mutation
-              - count = Misc.zip_fields(uniprot[mutation]).select{|feat,loc,desc| feat =~ /MUTAGEN/}.length
-            - else
-              - count = 0
-            - if uniprot_neighbours.include? mutation
-              - ncount = Misc.zip_fields(uniprot_neighbours[mutation]).select{|res,feat,loc,desc| feat =~ /MUTAGEN/}.length
-            - else
-              - ncount = 0
-            #{count == 0 ? "No" : "Yes"} (#{ncount})
-          %td
-            - name = mutation.protein.gene.name
-            - if Pandrugs.knowledge_base.subset('gene_drugs', :source => [mutation.protein.gene], :target => :all).filter(:target_marker => 'target').filter(:status => "Approved").length > 0
-              Yes
-            - else
-              No
+    - if appris.include? mutation
+      - count = Misc.zip_fields(appris[mutation]).select{|type,lig| type =~ /firestar/}.length
+    - else
+      - count = 0
+    - if appris_neighbours.include? mutation
+      - ncount = Misc.zip_fields(appris_neighbours[mutation]).select{|res,type,lig| type =~ /firestar/}.length
+    - else
+      - ncount = 0
+    - values << "#{count == 0 ? "No" : "Yes"} (#{ncount})"
 
-          %td
-            = interfaces.include?(mutation) ? "Yes" : "No"
 
-          %td
-            - if dbNSFP.include? mutation
-              #{damage_count} of 8
-            - else
-              NA
-%h3 Isoform overview
+
+    - if uniprot.include? mutation
+      - count = Misc.zip_fields(uniprot[mutation]).select{|feat,loc,desc| feat =~ /MOD_RES/}.length
+    - else
+      - count = 0
+    - if uniprot_neighbours.include? mutation
+      - ncount = Misc.zip_fields(uniprot_neighbours[mutation]).select{|res,feat,loc,desc| feat =~ /MOD_RES/}.length
+    - else
+      - ncount = 0
+    - values << "#{count == 0 ? "No" : "Yes"} (#{ncount})"
+
+    - if uniprot.include? mutation
+      - count = Misc.zip_fields(uniprot[mutation]).select{|feat,loc,desc| feat =~ /MUTAGEN/}.length
+    - else
+      - count = 0
+    - if uniprot_neighbours.include? mutation
+      - ncount = Misc.zip_fields(uniprot_neighbours[mutation]).select{|res,feat,loc,desc| feat =~ /MUTAGEN/}.length
+    - else
+      - ncount = 0
+    - values << "#{count == 0 ? "No" : "Yes"} (#{ncount})"
+
+    - if Pandrugs.knowledge_base.subset('gene_drugs', :source => [mutation.protein.gene], :target => :all).filter(:target_marker => 'target').filter(:status => "Approved").length > 0
+      - values << "Yes"
+    - else
+      - values << "No"
+
+    - values << interfaces.include?(mutation) ? "Yes" : "No"
+
+    - if dbNSFP.include? mutation
+      - values << "#{damage_count} of 8"
+    - else
+      - values << "NA"
+    
+    - tsv[mutation] = values
+
+  = table do
+    - tsv
+
+
+%h3 Isoform details
 
 :sass
   .protein_mutation_overview, .damage_overview
