@@ -83,14 +83,16 @@
       %p.scroll.ui.message 
         Scroll horizontaly across the sequence
 
-:deferjs
-  require_js(["/js-find/rbbt.protein_tool.js"], function(){
-    var position = #{entity.position}
 
-    var sequence_elem = $('.secondary_structure > .sequence')
-    var svg_elem = $('.secondary_structure > .svg')
 
-    rbbt.sequence.mark_position(sequence_elem, position, 'red')
-    rbbt.svg.mark_position(svg_elem, position, 'red')
-    
-  })
+  :deferjs
+    require_js(["/js-find/rbbt.protein_tool.js"], function(){
+      var position = #{entity.position}
+
+      var sequence_elem = $('.secondary_structure > .sequence')
+      var svg_elem = $('.secondary_structure > .svg')
+
+      rbbt.sequence.mark_position(sequence_elem, position, 'red')
+      rbbt.svg.mark_position(svg_elem, position, 'red')
+      
+    })

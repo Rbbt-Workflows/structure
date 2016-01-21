@@ -1,0 +1,175 @@
+- mutated_isoform = mutation = entity
+- organism = entity.organism
+
+- domain_names = InterPro.domain_names.tsv :persist =>  true
+- databases = Structure::ANNOTATORS.keys - ['variants']
+- name_index = nil
+- names = Organism.identifiers(organism).index :target => "Associated Gene Name", :persist => true
+
+- database_url = {}
+- database_url["Appris"] = "http://appris.bioinfo.cnio.es/#/help"
+- database_url["COSMIC"] = "http://cancer.sanger.ac.uk/cosmic/help"
+- database_url["InterPro"] = "http://www.ebi.ac.uk/interpro/about.html"
+- database_url["UniProt"] = "http://www.uniprot.org/help/about"
+
+
+- action_card = ActionCard.new 
+= action_card_render action_card do
+
+  = fragment do
+
+    :sass
+      .two_column
+        column-count: 2
+        dt, dd
+          width: 20%
+          margin-right: 16px
+          float: left
+          display: tabular
+          overflow: hidden
+          text-overflow: ellipsis
+      #structureppi
+        tr.center
+          font-weight: 200
+          color: rgba(0,0,0,0.48)
+          td
+            vertical-align: top
+            border-bottom: 0px
+            text-align: center
+            font-weight: bold
+          + tr > td
+            border-top: 0px
+        table td .ui.message
+          padding: 8px
+          margin-left: - 8px
+          margin-right: - 8px
+        td .segment:not(.wrap)
+          margin-bottom: 0.5em
+          white-space: nowrap
+          overflow: hidden
+          text-overflow: ellipsis
+          max-width: 40em
+
+        tr:not(.center)
+          td
+            font-size: 0px
+            padding: 8px
+            .segment, a
+              font-size: 14px
+
+        .nheader
+          display: block
+          font-weight: bold
+        .nvalues
+          margin-bottom: 1em
+          margin-left: -4px
+          margin-right: -4px
+          padding-left: 4px
+          padding-right: 4px
+          &:nth-child(2n+1)
+            background-color: rgba(0,0,200,0.05)
+
+    - scores_job = Structure.job(:scores, nil, :mutations => [mutated_isoform], :organism => mutated_isoform.organism)
+    - scores_job.run
+    - job = scores_job.step(:wizard)
+
+    - interfaces = Structure.job(:mi_interfaces, nil, :mutated_isoforms => [mutation])
+    - interfaces = interfaces.clean if interfaces.error?
+    - interfaces = interfaces.fork.join.load
+    - interfaces = interfaces.slice(interfaces.fields.reject{|f| f=~ /PDB/ or f == "Residue"})
+
+    #structureppi
+      - if interfaces.any?
+        .full_width
+          .content
+            %h5 Affected PPI interfaces
+            .content
+              %table.ui.table
+                %thead
+                  %tr
+                    %th Partner protein
+                    %th Close partner residues
+                %tbody
+                  - _values = interfaces.values.first
+                  - interactor_values = {}
+                  - Misc.zip_fields(_values).each do |interactor, residues|
+                    - interactor_values[interactor] ||= []
+                    - interactor_values[interactor].concat residues.split(";")
+                  - interactor_values.each.each do |interactor,residues|
+                    %tr
+                      %td
+                        .segment= names[interactor]
+                      %td
+                        .segment= residues.uniq.sort * ", "
+
+      - annotation_files = {}
+      - annotation_neighbour_files = {}
+      - databases.each do |database|
+        - annotation_files[database] = job.file(database).tsv
+        - annotation_neighbour_files[database] = job.file(database + ' neighbours').tsv
+      - databases.each do |database|
+        - log database
+
+        - fields = annotation_files[database].fields
+        - values = annotation_files[database][mutation]
+        - neighbour_values = annotation_neighbour_files[database][mutation]
+        - next if values.nil? and neighbour_values.nil?
+
+        .full_width
+          .content
+            %h5
+              = database
+              %a.subtle_link(target="_blank" href='#{database_url[database]}') 
+                %i.ui.external.link.icon
+            .content
+              - first = false
+              %table.ui.table.no_js
+                %thead
+                  %tr
+                    - fields.each do |field,i|
+                      %th= field
+
+                %tbody
+                  %tr
+                    - if values
+                      - fields.each_with_index do |field,i|
+                        %td 
+                          - values[i].each do |v|
+                            - v = name_index[v] if name_index and field == "InterPro ID"
+                            - v = domain_names[v] if domain_names[v]
+                            - v = "-" if v.nil? or v.empty?
+                            .segment= v
+
+                    - else
+                      %tr.nomatches
+                        %td(colspan='#{fields.length}') No direct matches
+
+                  - if neighbour_values
+                    - row_contents = {}
+                    - fields.each_with_index do |field,i|
+                      - new_values = {}
+                      - Misc.zip_fields(neighbour_values).each do |n,*nvalues|
+                        - Misc.zip_fields(nvalues.collect{|v| v.nil? ? [] : v.split(";")}).each do |nsvalues|
+                          - next if Misc.zip_fields(values).select{|v| v == nsvalues}.any?
+                          - new_values[n] ||= []
+                          - new_values[n] << nsvalues unless new_values[n].include? nsvalues
+                      - new_values.each do |neigh, nvalues|
+                        - row_contents[neigh] ||= []
+                        - row_contents[neigh][i] = nvalues.collect{|v| v[i]}
+
+                    - row_contents.each do |neighbour,values|
+                      %tr.center
+                        %td(colspan='#{fields.length}') Neighbour #{neighbour}
+                      %tr
+                        - values.each_with_index do |vs,i|
+                          %td
+                            - vs.each do |v|
+                              - v = name_index[v] if name_index and fields[i] == "InterPro ID"
+                              - v = domain_names[v] if domain_names[v]
+                              - v = "-" if v.nil? or v.empty?
+                              .segment= v
+
+      :javascript
+        $('#structureppi .tabular').tab();
+        $('#structureppi .tabular .item:first-child').click();
+

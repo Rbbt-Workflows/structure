@@ -83,6 +83,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
    entity=entity{
     MutatedIsoform.haml
+    MutatedIsoform=MutatedIsoform{
+     affected_features.haml
+    }
     Protein.haml
     Protein=Protein{
      COSMIC.haml
