@@ -114,6 +114,7 @@ module Structure
     all_annotations.attach(all_annotations_n, :fields => all_annotations_n.fields.reject{|f| f =~ /Mutated Isoform/})
 
     all_annotations.namespace = organism
+
     all_annotations
   end
   export_asynchronous :wizard

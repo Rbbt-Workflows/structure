@@ -96,7 +96,7 @@
 
   - fields = %w(Score CV #CS FL MR MUT DT PPI DP)
 
-  - tsv = TSV.setup({}, :key_field => "Mutated Isoform", :fields => fields, :type => :list, :organism => job.load.namespace)
+  - tsv = TSV.setup({}, :key_field => "Mutated Isoform", :fields => fields, :type => :list, :namespace => job.load.namespace)
 
   - job.load.each do |mutation, score|
     - values = []
