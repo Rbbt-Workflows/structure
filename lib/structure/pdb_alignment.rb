@@ -125,7 +125,8 @@ module Structure
     return neighbours_in_pdb if neighbour_map.nil?
 
     inverse_neighbour_map = {}
-    neighbour_map.each do |k,vs|
+    TSV.traverse neighbour_map do |k,vs|
+      k = k.first if Array === k
       vs.each do |v|
         inverse_neighbour_map[v] ||= []
         inverse_neighbour_map[v] << k
