@@ -2,7 +2,8 @@
 module Structure
   input :mutations, :array, "Mutations (e.g. 18:6237978:G, ENSP00000382976:L257R, L3MBTL4:L257R)"
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
-  task :wizard => :tsv do |mutations,organism|
+  input :watson, :boolean, "Mutations all reported on the watson (forward) strand as opposed to the gene strand", true
+  task :wizard => :tsv do |mutations,organism,watson|
     databases = Structure::ANNOTATORS.keys 
 
     raise ParameterException, "No mutations given" if mutations.nil? 
@@ -61,10 +62,10 @@ module Structure
 
     case type
     when :genomic
-      all_annotations = Sequence.job(:mutated_isoforms_fast, "Wizard", :mutations => mutations, :organism => organism, :principal => true).run.to_double
+      all_annotations = Sequence.job(:mutated_isoforms_fast, "Wizard", :mutations => mutations, :organism => organism, :principal => true, :watson => watson).run.to_double
       databases.each do |database|
         log database
-        annotations = Structure.job(:annotate, "Wizard", :mutations => mutations, :organism => organism, :database => database, :principal => true).run
+        annotations = Structure.job(:annotate, "Wizard", :mutations => mutations, :organism => organism, :database => database, :principal => true, :watson => watson).run
         Open.write(file(database), annotations.to_s)
         all_annotations = all_annotations.attach(annotations)
       end
@@ -75,10 +76,10 @@ module Structure
       Open.write(file('interfaces'), interfaces.to_s)
       all_annotations = all_annotations.attach(interfaces)
 
-      all_annotations_n = Sequence.job(:mutated_isoforms_fast, "Wizard", :mutations => mutations, :organism => organism, :principal => true).run.to_double
+      all_annotations_n = Sequence.job(:mutated_isoforms_fast, "Wizard", :mutations => mutations, :organism => organism, :principal => true, :watson => watson).run.to_double
       databases.each do |database|
         log database + ' neighbours'
-        annotations = Structure.job(:annotate_neighbours, "Wizard", :mutations => mutations, :organism => organism, :database => database, :principal => true).run
+        annotations = Structure.job(:annotate_neighbours, "Wizard", :mutations => mutations, :organism => organism, :database => database, :principal => true, :watson => watson).run
         Open.write(file(database + ' neighbours'), annotations.to_s)
         annotations.rename_field "Residue", database + " residue"
         all_annotations_n = all_annotations_n.attach(annotations)
