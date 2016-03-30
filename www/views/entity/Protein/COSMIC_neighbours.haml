@@ -76,6 +76,7 @@
         - counts = v["Counts"]
         - location = feature_locations[feature]
         - size = location.last - location.first + 1
+        - counts = size * num_samples if counts > size * num_samples
         - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ global_frequency }, 'greater')$p.value")
 
       - tsv = tsv.add_field "Location" do |feature,v|
