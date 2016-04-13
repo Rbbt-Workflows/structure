@@ -70,12 +70,13 @@
 - header "Binomial Significance", NumericValue
 .row
   .column
-    - caption = "* pvalues are only orientative"
+    - caption = "pvalues are only orientative"
     = table :page => "1~Binomial Significance", :table_id => "Most affected neighbouring features (not including mutated residue) in COSMIC for #{ name }", :caption => caption do
       - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
         - counts = v["Counts"]
         - location = feature_locations[feature]
         - size = location.last - location.first + 1
+        - counts = size * num_samples if counts > size * num_samples
         - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ global_frequency }, 'greater')$p.value")
 
       - tsv = tsv.add_field "Location" do |feature,v|
