@@ -47,9 +47,9 @@
 
 = fragment do
   - require 'rbbt/sources/clinvar'
-  - Workflow.require_workflow "Pandrugs"
   - clinvar = ClinVar.mi_summary.tsv :fields => ["ClinicalSignificance"], :type => :single, :persist => true
-  - pandrugs = Pandrugs.gene_drugs.tsv :persist => true, :type => :double
+  -# Workflow.require_workflow "Pandrugs"
+  -# pandrugs = Pandrugs.gene_drugs.tsv :persist => true, :type => :double
   %h3 Mutation Overview
 
 
