@@ -91,6 +91,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      COSMIC.haml
      COSMIC_neighbours.haml
     }
+
+    Study=Study{
+     interfaces.haml
+    }
    }
    partials=partials{
     download.haml

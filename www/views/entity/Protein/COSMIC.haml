@@ -97,6 +97,6 @@
       - TSV.setup(counts, :key_field => "Partner protein", :fields => ["Counts"], :type => :single, :namespace => organism)
 
 - header "Genomic Mutation", GenomicMutation, :watson => false
-= table :page => "1~COSMIC Sample", :table_id => "COSMIC feature annotations for #{name}" do
+= table :page => "1~COSMIC Sample", :table_id => "COSMIC feature annotations for #{name}", :row_ids => :consume, :span => :long do
   - mutation_isoform_info
 
