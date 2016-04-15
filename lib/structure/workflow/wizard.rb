@@ -28,10 +28,10 @@ module Structure
              mutations = mutations.collect do |m|
                 orig_gene, _sep, change = m.partition ":"
                 gene = index[orig_gene]
-                next if gene.nil? or ensg2enst[gene].nil?
+                next if gene.nil? or ensg2enst[gene].nil? 
                 gene_transcripts = ensg2enst[gene].sort_by{|t| enst2name[t].split("-").last.to_i}
 
-                gene_isoforms = enst2ensp.values_at *gene_transcripts
+                gene_isoforms = enst2ensp.values_at(*gene_transcripts).compact.reject{|i| i.empty?}
                 perfect_isoforms = gene_isoforms.select{|p| 
                   _uni = ensp2uni[p]
                   _p = uni2ensp[_uni]
@@ -55,6 +55,8 @@ module Structure
                 else
                   protein = gene_isoforms.first
                 end
+
+                next if protein.nil? or protein.empty?
 
                 [protein, change] * ":"
              end.compact
