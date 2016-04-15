@@ -28,6 +28,7 @@ module Structure
              mutations = mutations.collect do |m|
                 orig_gene, _sep, change = m.partition ":"
                 gene = index[orig_gene]
+                next if gene.nil? or ensg2enst[gene].nil?
                 gene_transcripts = ensg2enst[gene].sort_by{|t| enst2name[t].split("-").last.to_i}
 
                 gene_isoforms = enst2ensp.values_at *gene_transcripts
@@ -56,7 +57,7 @@ module Structure
                 end
 
                 [protein, change] * ":"
-             end
+             end.compact
              :protein
            end
 
