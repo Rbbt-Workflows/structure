@@ -21,7 +21,7 @@ module Structure
     @cosmic_mutation_annotations ||= Structure.COSMIC_mutation_annotations
     isoform_residue = isoform + ":" << residue.to_s
     mutations = @cosmic_residue_mutations[isoform_residue]
-    next if mutations.nil? 
+    next if mutations.nil?
     mutations.uniq!
     next if mutations.empty?
     tmp = {}
@@ -67,7 +67,7 @@ module Structure
     next if sequence.nil?
 
     features =  Misc.insist do
-      Persist.persist("Corrected InterPro features", :marshal, :persist => true, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+      Persist.persist("Corrected InterPro features", :marshal, :persist => true, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do
         Structure.corrected_interpro_features(uniprot, sequence)
       end
     end
@@ -98,7 +98,7 @@ module Structure
 
     _other = {:uniprot => uniprot, :sequence => sequence}
     features = Misc.insist do
-      Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do 
+      Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do
         Structure.corrected_uniprot_features(uniprot, sequence)
       end
     end
@@ -142,7 +142,7 @@ module Structure
     next if sequence.nil?
 
     features =  Misc.insist do
-      Persist.persist("Corrected UniProt features", :marshal, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do 
+      Persist.persist("Corrected UniProt features", :marshal, :dir => CORRECTED_FEATURES, :other => {:uniprot => uniprot, :sequence => sequence}) do
         Structure.corrected_uniprot_features(uniprot, sequence)
       end
     end
@@ -169,8 +169,14 @@ module Structure
     overlapping
   end
 
+  ANNOTATORS["COSMIC_resistance_mutations"] = Annotator.new "Drug", "Sample", "PMID" do |isoform,residue,organism|
+    db = Structure.COSMIC_resistance_mutations
+    isoform_residue = [isoform, residue] * ":"
+    db[isoform_residue]
+  end
+
   #{{{ NEIGHBOURS
-  
+
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
   task :mi_neighbours => :tsv do |mis,organism|
@@ -190,7 +196,7 @@ module Structure
         next
       end
 
-      n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+      n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
         Misc.insist do
           Structure.neighbours(isoform, [residue], organism)
         end
@@ -234,7 +240,7 @@ module Structure
       end
 
       n = Misc.insist do
-        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :persist => false, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :persist => false, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
           Structure.interface_neighbours_i3d(isoform.dup, [residue], organism, distance)
         end
       end
@@ -413,7 +419,7 @@ module Structure
           end
 
           n =  Misc.insist do
-            Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+            Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
               Structure.neighbours_i3d(isoform, [residue], organism)
             end
           end
@@ -475,7 +481,7 @@ module Structure
         end
 
         n = Misc.insist do
-          Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do 
+          Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
             Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
           end
         end
