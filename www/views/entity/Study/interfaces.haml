@@ -1,0 +1,66 @@
+- action_card = ActionCard.new 
+- study = entity
+= action_card_render action_card do
+
+  - organism = study.organism
+  - index = Translation.index(organism, "Associated Gene Name", "Ensembl Protein ID")
+
+  - int = study.sample_mi_interfaces.to_double
+  - int.add_field "Gene Pair" do |mi, values|
+    - sample, partners = values
+    - protein = mi.split(":").first
+    - gene = index[protein]
+    - partner_genes = index.values_at(*partners).uniq
+    - partner_genes.collect{|p| [gene,p] * "<=>" }
+
+  
+  - kb = @step.knowledge_base
+  - kb.register :interfaces, int.reorder("Sample", ["Gene Pair"])
+  - kb.get_index :interfaces
+
+  .ui.segment#plot(style='min-height:800px;')
+    .window#plot_window(style='height:800px;')
+
+  :deferjs
+
+    var samples = #{int.column("Sample").values.flatten.uniq}
+    m.sync([rbbt.plots.graph.children('step:interfaces', samples)]).then(function(res){
+
+      var model = {}
+      model.associations = {}
+
+      model.associations['step:interfaces'] = res[0]
+
+      model.rules = []
+      model.aes_rules = []
+      model.rules.push({entity_type: "Gene", property: 'link', extract:function(x){return $(x).attr('href')} })
+      model.rules.push({name: 'name', info: 'code', extract: function(s){ if (s.length > 30){ return s.slice(0,30) + '...'} else{ return s}} })
+
+      model.aes_rules.push({aes: "label", name: 'name' })
+      model.aes_rules.push({entity_type: "Sample", aes: "url", name: 'link' })
+
+      model.aes_rules.push({aes: "shape", value:'pentagon'})
+      model.aes_rules.push({entity_type: "Sample", aes: "shape", value:'circle'})
+      model.aes_rules.push({entity_type: "Sample", aes: "borderColor", value:'green'})
+      model.aes_rules.push({aes: "size", value:50})
+      model.aes_rules.push({entity_type: "Sample", aes: "size", value:20})
+
+
+
+      model.edge_rules = []
+
+      model.edge_aes_rules = []
+
+      console.log(model)
+      rbbt.plots.graph.view_cytoscape(model, $('#plot')).then(function(cy){
+        console.log(cy)
+      })
+    })
+
+
+
+  - header "Sample", Sample, {:cohort => study}
+  = table do
+    - int
+
+

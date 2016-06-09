@@ -27,7 +27,6 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    COSMIC.rb
    appris.rb
 
-   entity.rb
    sinatra.rb
 
    workflow=workflow{
