@@ -52,9 +52,7 @@ module Structure
                                           else
                                             mi, *rest = line.chomp.split("\t", -1)
                                             re = mi.match(/^(.*):([A-Z*?])(\d+)([A-Z*?]+)$/)
-                                            if re.nil?
-                                              return nil
-                                            end
+                                            raise TSV::Parser::SKIP_LINE if re.nil?
 
                                             isoform = re[1]
                                             residue = re[3]
