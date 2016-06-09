@@ -43,4 +43,28 @@ module Structure
                                        COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true
                                      end
   end
+
+  def self.COSMIC_resistance_mutations
+    @COSMIC_resistance_mutations ||= begin
+                                        fix_change = lambda{|line|
+                                          if line[0] == "#"
+                                            line
+                                          else
+                                            mi, *rest = line.chomp.split("\t", -1)
+                                            re = mi.match(/^(.*):([A-Z*?])(\d+)([A-Z*?]+)$/)
+                                            if re.nil?
+                                              return nil
+                                            end
+
+                                            isoform = re[1]
+                                            residue = re[3]
+                                            key = [isoform, residue] * ":"
+
+                                            rest.unshift key
+                                            rest * "\t"
+                                          end
+                                        }
+                                        COSMIC.mi_drug_resistance.tsv :fix => fix_change, :merge => true, :persist => true, :unnamed => true
+                                      end
+  end
 end
