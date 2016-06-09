@@ -50,7 +50,7 @@ module Structure
                                           if line[0] == "#"
                                             line
                                           else
-                                            mi, *rest = line.split("\t")
+                                            mi, *rest = line.chomp.split("\t", -1)
                                             re = mi.match(/^(.*):([A-Z*?])(\d+)([A-Z*?]+)$/)
                                             if re.nil?
                                               return nil

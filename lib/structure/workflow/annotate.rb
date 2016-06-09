@@ -169,7 +169,7 @@ module Structure
     overlapping
   end
 
-  ANNOTATORS["COSMIC_resistance_mutations"] = Annotator.new "Drug", "Sample", "PMID" do |isoform,residue,organism|
+  ANNOTATORS["COSMIC_resistance_mutations"] = Annotator.new "Drug", "Sample", "PMID", "Zygosity" do |isoform,residue,organism|
     db = Structure.COSMIC_resistance_mutations
     isoform_residue = [isoform, residue] * ":"
     db[isoform_residue]
