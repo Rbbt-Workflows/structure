@@ -35,12 +35,16 @@ module Structure
                                        fields = [
                                          'Sample name',
                                          'Primary site',
-                                         'Site subtype',
+                                         'Site subtype 1',
+                                         'Site subtype 2',
+                                         'Site subtype 3',
                                          'Primary histology',
-                                         'Histology subtype',
+                                         'Histology subtype 1',
+                                         'Histology subtype 2',
+                                         'Histology subtype 3',
                                          'Pubmed_PMID',
                                          ]
-                                       COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true
+                                       COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true, :monitor => true
                                      end
   end
 
