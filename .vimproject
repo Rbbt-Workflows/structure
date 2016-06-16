@@ -108,6 +108,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     scores=scores{
      job_result.haml
     }
+    score_summary=score_summary{
+     job_result.haml
+    }
    }
   }
  }

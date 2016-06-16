@@ -199,6 +199,7 @@ module Structure
   
   dep :scores
   task :score_summary => :tsv do 
+    Step.wait_for_jobs dependencies
     scores = step(:scores)
     wizard = scores.step(:wizard)
     wizard_res = wizard.load
@@ -228,6 +229,7 @@ module Structure
     scores_res.each do |mutation, score|
       values = []
       ensp, _sep, change = mutation.partition(":") 
+      next unless ensp =~ /^ENSP/
 
       damage_count = 0
       total_preds = 0
