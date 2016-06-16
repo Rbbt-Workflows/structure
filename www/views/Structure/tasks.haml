@@ -102,7 +102,7 @@
       Scores for neighbours are divided by 2. The final tally is reported
       under the section `Damage predictions` in the wizard report
 
-    = action_parameters nil, {}, :action => "/Structure/scores", :method => "POST" do
+    = action_parameters nil, {}, :action => "/Structure/score_summary", :method => "POST" do
       - input :mutations, :array, "Mutations (e.g. 18:6237978:G, ENSP00000382976:L257R, L3MBTL4:L257R)", nil, :no_file => true
 
   .precomputed
