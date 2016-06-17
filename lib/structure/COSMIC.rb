@@ -1,3 +1,5 @@
+require 'rbbt-util'
+require 'rbbt/workflow'
 
 Workflow.require_workflow "COSMIC"
 
@@ -39,8 +41,13 @@ module Structure
                                          'Primary histology',
                                          'Histology subtype',
                                          'Pubmed_PMID',
-                                         ]
-                                       COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true
+                                       ]
+                                       Persist.persist_tsv(COSMIC.mutations, nil, { :key_field => "Genomic Mutations", :fields => fields}, {:persist => true} ) do |data|
+                                         #COSMIC.mutations.tsv :key_field => "Genomic Mutation", :fields => fields, :persist => true, :unamed => true, :type => :double, :zipped => true, :monitor => true
+                                         reorder = TSV.reorder_stream_tsv COSMIC.mutations.open, "Genomic Mutation", fields
+                                         collapsed = TSV.collapse_stream reorder
+                                         TSV.open(collapsed.stream, :key_field => "Genomic Mutation", :fields => fields, :persist => true, :persist_data => data, :unamed => true, :type => :double, :monitor => true)
+                                       end
                                      end
   end
 
