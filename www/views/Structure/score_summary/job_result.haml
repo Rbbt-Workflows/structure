@@ -3,7 +3,7 @@
     = workflow_partial('job_result/job_control', workflow, task, locals)
 
 - scores_job = job.step(:scores)
-- scores = job.load
+- scores = scores_job.load
 - scores.fields = ["Structure PPi feature score"]
 - wizard = scores_job.step(:wizard)
 - result = wizard.load
