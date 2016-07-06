@@ -1,12 +1,10 @@
-require 'rbbt-util'
-require 'rbbt/workflow'
 
 Workflow.require_workflow "COSMIC"
 
 module Structure
   def self.COSMIC_residues
     #@COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
-    @COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => cache_dir.COSMIC.find) do |data|
+    @@COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => cache_dir.COSMIC.find) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Genomic Mutations"], :type => :flat)
 
                            db = COSMIC.knowledge_base.get_database('mutation_isoforms')
@@ -33,13 +31,17 @@ module Structure
   end
 
   def self.COSMIC_mutation_annotations
-    @COSMIC_mutation_annotations ||= begin
+    @@COSMIC_mutation_annotations ||= begin
                                        fields = [
                                          'Sample name',
                                          'Primary site',
-                                         'Site subtype',
+                                         'Site subtype 1',
+                                         'Site subtype 2',
+                                         'Site subtype 3',
                                          'Primary histology',
-                                         'Histology subtype',
+                                         'Histology subtype 1',
+                                         'Histology subtype 2',
+                                         'Histology subtype 3',
                                          'Pubmed_PMID',
                                        ]
                                        Persist.persist_tsv(COSMIC.mutations, nil, { :key_field => "Genomic Mutations", :fields => fields}, {:persist => true} ) do |data|
@@ -52,7 +54,7 @@ module Structure
   end
 
   def self.COSMIC_resistance_mutations
-    @COSMIC_resistance_mutations ||= begin
+    @@COSMIC_resistance_mutations ||= begin
                                         fix_change = lambda{|line|
                                           if line[0] == "#"
                                             line
@@ -71,5 +73,46 @@ module Structure
                                         }
                                         COSMIC.mi_drug_resistance.tsv :fix => fix_change, :merge => true, :persist => true, :unnamed => true
                                       end
+  end
+
+
+  def self.COSMIC_complete_cna
+    @@COSMIC_complete_cna ||= begin
+                                Persist.persist_tsv(COSMIC.completeCNA, nil, {:key_field => "Sample name:Ensembl Protein ID", :fields => ["CNA"]}, {:persist => true, :serializer => :single}) do |data|
+                                  organism = "Hsa/feb2014"
+                                  enst2ensp = Organism.transcripts(organism).tsv :key_field => "Ensembl Transcript ID", :fields => ["Ensembl Protein ID"], :merge => true, :type => :flat, :persist => true
+                                  TSV.traverse COSMIC.completeCNA, :bar => true, :type => :double, :into => data do |sample, values|
+                                    transcripts, cnas = values
+                                    proteins = enst2ensp.chunked_values_at transcripts
+                                    res = []
+                                    proteins.zip(cnas).each do |ensp,cna|
+                                      key = [sample, ensp] * ":"
+                                      res << [key, cna]
+                                    end
+                                    res.extend MultipleResult
+                                    res
+                                  end
+                                end
+                              end
+  end
+
+  def self.COSMIC_complete_gene_expression
+    @@COSMIC_complete_gene_expression ||= begin
+                                Persist.persist_tsv(COSMIC.geneExpression, nil, {:key_field => "Sample name:Ensembl Protein ID", :fields => ["Regulation"]}, {:persist => true, :serializer => :single}) do |data|
+                                  organism = "Hsa/feb2014"
+                                  enst2ensp = Organism.transcripts(organism).tsv :key_field => "Ensembl Transcript ID", :fields => ["Ensembl Protein ID"], :merge => true, :type => :flat, :persist => true
+                                  TSV.traverse COSMIC.geneExpression, :bar => true, :type => :double, :into => data do |sample, values|
+                                    transcripts, exprs = values
+                                    proteins = enst2ensp.chunked_values_at transcripts
+                                    res = []
+                                    proteins.zip(exprs).each do |ensp,expr|
+                                      key = [sample, ensp] * ":"
+                                      res << [key, expr]
+                                    end
+                                    res.extend MultipleResult
+                                    res
+                                  end
+                                end
+                              end
   end
 end
