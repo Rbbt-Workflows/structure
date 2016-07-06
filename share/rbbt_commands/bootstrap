@@ -23,6 +23,7 @@ rbbt_usage and exit 0 if options[:help]
 
 $cpus ||= options[:cpus] || 3
 Workflow.require_workflow "Structure"
+Workflow.require_workflow "Appris"
 Structure.workdir = Rbbt.tmp.structure_bootstrap_job3
 FileUtils.mkdir_p Structure.workdir.find
 
@@ -32,9 +33,10 @@ organisms.each do |organism|
 
   stream = TSV.traverse Organism.identifiers(organism), :keys => "Ensembl Protein ID", :into => :stream, :bar => true do |proteins|
     mutations = proteins.split("|").collect do |protein|
+      next unless Appris::PRINCIPAL_ISOFORMS.include? protein
       mutation = protein + ":A10V"
     end
-    mutations * "\n"
+    mutations.compact * "\n"
   end
 
   #stream = CMD.cmd('shuf', :in => stream, :pipe => true)
@@ -60,7 +62,7 @@ organisms.each do |organism|
     jobs << job
 
     Misc.bootstrap(jobs) do |job|
-        job.run(true).join
+        job.produce
     end
   rescue
     jobs.each do |job|
