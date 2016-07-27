@@ -9,7 +9,7 @@
 - sample_mutations.fields = ["COSMIC Sample"]
 
 - mutation_isoform_info = mutation_isoform_info.attach(sample_mutations)
-- mutation_isoform_info = mutation_isoform_info.attach(Structure.COSMIC_mutation_annotations, :fields => ["Primary site", "Site subtype", "Primary histology", "Histology subtype"])
+- mutation_isoform_info = mutation_isoform_info.attach(Structure.COSMIC_mutation_annotations, :fields => ["Primary site", "Site subtype 1", "Primary histology", "Histology subtype 1"])
 
 - positions = mutation_isoform_info.column("Change").values.flatten.uniq.collect{|c| c.match(/(\d+)/)[0] }.compact.uniq
 - map = Structure.neighbours_i3d(entity, positions, organism, true)

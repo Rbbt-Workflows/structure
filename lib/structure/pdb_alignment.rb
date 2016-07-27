@@ -92,7 +92,7 @@ module Structure
   def self.neighbour_map_job(pdb, pdbfile, distance)
     Misc.insist do
       begin
-        Persist.persist("Neighbour map", :yaml, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do  |filename|
+        Persist.persist("Neighbour map", :marshal, :dir => NEIGHBOUR_MAP, :other => {:pdb => pdb, :pdbfile => pdbfile, :distance => distance}) do  |filename|
           job = Structure.job(:neighbour_map, "PDB Neighbours", :pdb => pdb, :pdbfile => pdbfile, :distance => distance)
           job.run.to_hash
         end
@@ -125,12 +125,17 @@ module Structure
     return neighbours_in_pdb if neighbour_map.nil?
 
     inverse_neighbour_map = {}
-    TSV.traverse neighbour_map do |k,vs|
-      k = k.first if Array === k
-      vs.each do |v|
-        inverse_neighbour_map[v] ||= []
-        inverse_neighbour_map[v] << k
+    begin
+      TSV.traverse neighbour_map do |k,vs|
+        k = k.first if Array === k
+        vs.each do |v|
+          inverse_neighbour_map[v] ||= []
+          inverse_neighbour_map[v] << k
+        end
       end
+    rescue
+      Log.exception $!
+      raise $!
     end
 
     positions_in_pdb[chain].each do |position|

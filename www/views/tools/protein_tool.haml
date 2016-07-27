@@ -107,6 +107,7 @@
         = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
           - association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
           - associations = association_items.tsv.to_double
+          - Log.tsv associations
 
           - log :sample_mutations
           - sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true, :target => "Sample name=~Sample", :source => "Genomic Mutation")
@@ -115,7 +116,7 @@
           - associations = associations.attach(sample_mutations)
 
           - log :sample_info
-          - sample_info = COSMIC.sample_info.find.tsv
+          - sample_info = COSMIC.sample_info.produce.find.tsv
           - sample_info.key_field = "Sample"
 
           - associations = associations.attach(sample_info)
