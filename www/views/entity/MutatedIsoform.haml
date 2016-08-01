@@ -56,12 +56,15 @@
     .svg(data-sequence_length='#{sequence.length}')
       - log :svg, "Downloading SVG"
       - begin
+        :sass
+          .secondary_structure .svg svg
+            border: solid 1px #EEE
         = protein.marked_svg([])
       - rescue Exception
         %p.error.ui.message
           Could not download protein SVG, try again later. 
           %pre=$!.message
-    .sequence(style='width: 677px; overflow-x: auto;font-family: monospace;margin-left:123px')
+    .sequence(style='width: 687px; padding: 10px; overflow-x: auto;font-family: monospace;margin-left:113px;margin-top:-10px;background-color:white; border: solid 1px #EEE')
       %span.sequence(width="100%")= sequence
       %span.marks(width="100%")
         - size = sequence.length
