@@ -1,4 +1,5 @@
 require 'structure/annotator'
+require 'structure/workflow/util'
 module Structure
 
   CORRECTED_FEATURES = cache_dir.corrected_features.find
@@ -49,6 +50,7 @@ module Structure
 
   ANNOTATORS["Appris"] = Annotator.new "Appris Features", "Appris Feature locations", "Appris Feature Descriptions" do |isoform, residue,organism|
     features = Structure.appris_features(isoform)
+    next if features.empty?
 
     overlapping = [[],[],[]]
     features.select{|info|
@@ -204,6 +206,11 @@ module Structure
         next
       end
 
+      if isoform[0..3] != "ENSP"
+        isoform = Structure.name2pi(mi, organism).split(":").first
+        mi = [isoform, residue] * ":"
+      end
+
       n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
         Misc.insist do
           Structure.neighbours(isoform, [residue], organism)
@@ -245,6 +252,11 @@ module Structure
         residue = m[2].to_i
       else
         next
+      end
+
+      if isoform[0..3] != "ENSP"
+        isoform = Structure.name2pi(mi, organism).split(":").first
+        mi = [isoform, residue] * ":"
       end
 
       n = Misc.insist do
@@ -291,6 +303,11 @@ module Structure
         residue = m[2].to_i
       else
         next
+      end
+
+      if isoform[0..3] != "ENSP"
+        isoform = Structure.name2pi(mi, organism).split(":").first
+        mi = [isoform, residue] * ":"
       end
 
       annotations = annotator.annotate isoform, residue, organism
