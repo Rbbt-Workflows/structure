@@ -65,24 +65,24 @@ module Structure
 
     case type
     when :genomic
-      all_annotations = Sequence.job(:mutated_isoforms_fast, "Wizard", :mutations => mutations, :organism => organism, :principal => true, :watson => watson).run.to_double
+      all_annotations = Sequence.job(:mutated_isoforms_fast, clean_name, :mutations => mutations, :organism => organism, :principal => true, :watson => watson).run.to_double
       databases.each do |database|
         log database
-        annotations = Structure.job(:annotate, "Wizard", :mutations => mutations, :organism => organism, :database => database, :principal => true, :watson => watson).run
+        annotations = Structure.job(:annotate, clean_name, :mutations => mutations, :organism => organism, :database => database, :principal => true, :watson => watson).run
         Open.write(file(database), annotations.to_s)
         all_annotations = all_annotations.attach(annotations)
       end
 
       log :interfaces
-      interfaces = Structure.job(:interfaces, "Wizard", :mutations => mutations, :organism => organism).run
+      interfaces = Structure.job(:interfaces, clean_name, :mutations => mutations, :organism => organism).run
       interfaces.rename_field "Ensembl Protein ID", "Partner Ensembl Protein ID"
       Open.write(file('interfaces'), interfaces.to_s)
       all_annotations = all_annotations.attach(interfaces)
 
-      all_annotations_n = Sequence.job(:mutated_isoforms_fast, "Wizard", :mutations => mutations, :organism => organism, :principal => true, :watson => watson).run.to_double
+      all_annotations_n = Sequence.job(:mutated_isoforms_fast, clean_name, :mutations => mutations, :organism => organism, :principal => true, :watson => watson).run.to_double
       databases.each do |database|
         log database + ' neighbours'
-        annotations = Structure.job(:annotate_neighbours, "Wizard", :mutations => mutations, :organism => organism, :database => database, :principal => true, :watson => watson).run
+        annotations = Structure.job(:annotate_neighbours, clean_name, :mutations => mutations, :organism => organism, :database => database, :principal => true, :watson => watson).run
         Open.write(file(database + ' neighbours'), annotations.to_s)
         annotations.rename_field "Residue", database + " residue"
         all_annotations_n = all_annotations_n.attach(annotations)
@@ -93,13 +93,13 @@ module Structure
       all_annotations = TSV.setup(mutations, :key_field => "Mutated Isoform", :fields => [], :type => :double, :namespace => organism)
       databases.each do |database|
         log database
-        annotations = Structure.job(:annotate_mi, "Wizard", :mutated_isoforms => mutations, :organism => organism, :database => database).run
+        annotations = Structure.job(:annotate_mi, clean_name, :mutated_isoforms => mutations, :organism => organism, :database => database).run
         Open.write(file(database), annotations.to_s)
         all_annotations = all_annotations.attach(annotations)
       end
 
       log :interfaces
-      interfaces = Structure.job(:mi_interfaces, "Wizard", :mutated_isoforms => mutations, :organism => organism).run
+      interfaces = Structure.job(:mi_interfaces, clean_name, :mutated_isoforms => mutations, :organism => organism).run
       interfaces.rename_field "Ensembl Protein ID", "Partner Ensembl Protein ID"
       Open.write(file('interfaces'), interfaces.to_s)
       all_annotations = all_annotations.attach(interfaces)
@@ -107,7 +107,7 @@ module Structure
       all_annotations_n = TSV.setup(mutations, :key_field => "Mutated Isoform", :fields => [], :type => :double, :namespace => organism)
       databases.each do |database|
         log database + ' neighbours'
-        annotations = Structure.job(:annotate_mi_neighbours, "Wizard", :mutated_isoforms => mutations, :organism => organism, :database => database).run
+        annotations = Structure.job(:annotate_mi_neighbours, clean_name, :mutated_isoforms => mutations, :organism => organism, :database => database).run
         Open.write(file(database + ' neighbours'), annotations.to_s)
         annotations.rename_field "Residue", database + " residue"
         all_annotations_n = all_annotations_n.attach(annotations)
@@ -138,7 +138,7 @@ module Structure
               sum = 0
               sum += 1 if (value & relevant).any?
               sum
-            when "Sample ID"
+            when "Sample"
               case 
               when value.length > 10
                 3
@@ -276,13 +276,17 @@ module Structure
       end
 
       if cosmic.include? mutation
-        count = cosmic[mutation]["Sample ID"].length
+        count = cosmic[mutation]["Sample name"].length
       else
         count = 0
       end
 
       if cosmic_neighbours.include? mutation
-        ncount = cosmic_neighbours[mutation]["Sample ID"].collect{|l| l.split(";")}.flatten.uniq.length
+        begin
+          ncount = cosmic_neighbours[mutation]["Sample name"].collect{|l| l.split(";")}.flatten.uniq.length
+        rescue Exception
+          raise $!
+        end
       else
         ncount = 0
       end

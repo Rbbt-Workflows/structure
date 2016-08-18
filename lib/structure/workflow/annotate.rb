@@ -390,6 +390,7 @@ module Structure
       end
 
       next if all_annots.empty?
+      mutation = mutation.first if Array === mutation
       [mutation, Misc.zip_fields(all_annots)]
     end
   end
@@ -457,6 +458,7 @@ module Structure
         end
 
         next if all_annots.empty?
+        mutation = mutation.first if Array === mutation
         [mutation, [used_mi] + Misc.zip_fields(all_annots)]
       rescue Exception
         Log.exception $!
@@ -507,6 +509,7 @@ module Structure
 
       next if all_annots.empty?
 
+      mutation = mutation.first if Array === mutation
       [mutation, Misc.zip_fields(all_annots.uniq)]
     end
   end
