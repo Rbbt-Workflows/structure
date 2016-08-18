@@ -10,7 +10,7 @@
 - sample_mutations.fields = ["COSMIC Sample"]
 
 - mutation_isoform_info = mutation_isoform_info.attach(sample_mutations)
-- mutation_isoform_info = mutation_isoform_info.attach(Structure.COSMIC_mutation_annotations, :fields => ["Primary site", "Site subtype 1", "Primary histology", "Histology subtype 1"])
+- mutation_isoform_info = mutation_isoform_info.attach(Structure.COSMIC_mutation_annotations, :fields => ["Primary site", "Site subtype 1", "Site subtype 2", "Site subtype 3", "Primary histology", "Histology subtype 1", "Histology subtype 2", "Histology subtype 3"])
 
 - databases = Structure::ANNOTATORS.keys
 - database_feature_counts = {}
@@ -97,6 +97,6 @@
       - TSV.setup(counts, :key_field => "Partner protein", :fields => ["Counts"], :type => :single, :namespace => organism)
 
 - header "Genomic Mutation", GenomicMutation, :watson => false
-= table :page => "1~COSMIC Sample", :table_id => "COSMIC feature annotations for #{name}" do
+= table :page => "1~COSMIC Sample", :table_id => "COSMIC feature annotations for #{name}", :row_ids => :consume, :span => :long do
   - mutation_isoform_info
 

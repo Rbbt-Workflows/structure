@@ -1,0 +1,123 @@
+- if job 
+  .job_control
+    = workflow_partial('job_result/job_control', workflow, task, locals)
+
+- scores_job = job.step(:scores)
+- scores = scores_job.load
+- scores.fields = ["Structure PPi feature score"]
+- wizard = scores_job.step(:wizard)
+- result = wizard.load
+- mis = result.column("Mutated Isoform").values.flatten.compact.uniq
+- MutatedIsoform.setup(mis, result.namespace)
+
+- organism = result.namespace
+- proteins = {}
+- mis.collect{|mi| protein = mi.partition(":").first; proteins[protein] ||= []; proteins[protein] << mi}
+
+%h2 Wizard results
+
+:documentation 
+
+  The result of the analysis are a series of tables, available above as `job
+  files`. These tables are combined into a bit unique table, available when
+  you select to see the `raw` result. For simplicity, the results are also
+  shown below grouped by isoform. Additionally, damage predictions for several
+  predictors are also made available (extracted from
+  [dbNSFP](https://sites.google.com/site/jpopgen/dbNSFP)).   
+
+  To assist computational analyses downstream, there is a one-to-one
+  correspondence between values in related fields. This helps track where the
+  annotations actually come from. For instance, if the field `Appris Features`
+  lists three results separated by comas (vertical bars, i.e. '|', in the raw TSV files), then the field `Appris Feature
+  Descriptions` will also have three entries separated by commas
+  (incomplete/missing information fields will show as empty strings between
+  commas). Note that in the combined tables, this correspondence is only held
+  between *related* fields. 
+  
+  Tables for neighbours and interfaces require one more level of separation,
+  since a single residue may have several neighbours, or interface information
+  may be found in different PDBs. The same principle of one-to-one
+  correspondence holds for each comma-separated value, and for each
+  semicolon-separated value inside it. We favour this convention for
+  computational reasons, but beware of repeated results.
+
+  Although the links in this page may show human-friendly names (such as for
+  InterPro domains; or for mutated isoforms, which have the gene name
+  prepended), the original tables contain just plain IDs. The excel versions of
+  the tables below also include human-friendly names.
+
+= fragment do
+
+  %h3 Mutation Overview
+
+  = table do
+    - job.load
+
+
+%h3 Isoform details
+
+:sass
+  .protein_mutation_overview, .damage_overview
+    table
+      width: auto !important
+      li.table_column, li.filter
+        display: none
+      td
+        font-size: 0px
+        line-height: 0px
+        padding: 12px !important
+        span.table_value, span.ellipsis
+          font-size: 14px
+          display: block
+          line-height: 1.32em
+          white-space: nowrap
+          text-overflow: ellipsis
+          max-width: 100%
+          &.strip
+            font-style: italic
+          
+
+%dl.rbbt_tabs
+  - first = true
+  - proteins.each do |protein,protein_mis|
+    - protein = Protein.setup(protein.dup, "Ensembl Protein ID", organism)
+    - name = protein.name
+
+
+    %dt.next(class="#{first ? 'show' : ''}")=name
+    %dd(class="#{first ? 'show' : ''}")
+
+      %p= protein.link "Examine protein in detail"
+
+      .protein_mutation_overview
+        = partial_render('partials/protein_mutation_overview', :protein => protein, :protein_mis => protein_mis, :organism => organism, :result => result)
+    - first = false
+
+%hr
+
+%h3 
+  Damage predictions 
+  (from 
+  %a(href="https://sites.google.com/site/jpopgen/dbNSFP")< dbNSFP
+  \)
+
+.damage_overview
+  = table :table_id => "dbNSFP annotation (-999 are missing values)", :span => true do
+    - tsv = DbNSFP.job(:annotate, job.clean_name, :mutations => mis.select{|mi| mi.consequence == "MISS-SENSE"}).run
+    - good_fields = tsv.fields.select{|f| f =~  /(_score|CADD_raw|SVM_score)$/ }
+    - tsv = tsv.slice(good_fields)
+    - tsv.rename_field "RadialSVM_score", "SVM_score"
+    - tsv = scores.attach tsv if scores.any?
+    - tsv
+
+:sass
+  .damage_overview
+    table th:nth-child(2):after
+      content: "*"
+    
+:deferjs
+  var scores_table = $('table').last()
+  var sppi_header = scores_table.find('th:nth-child(2)')
+  sppi_header.addClass('asterisk')
+  //sppi_header.attr('data-content', 'This score quantifies the protein features affected by the mutation. It is intended to complement damage predictions. See help for more details').popup()
+  scores_table.parent('div').append($('<p>').html("* The Structure-PPi feature score quantifies the protein features affected by the mutation. It is intended to complement damage predictions. Read the documentation for more details"))

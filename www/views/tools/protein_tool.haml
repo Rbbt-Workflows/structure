@@ -116,7 +116,9 @@
           - associations = associations.attach(sample_mutations)
 
           - log :sample_info
-          - sample_info = COSMIC.sample_info.produce.find.tsv
+
+          - sample_info = COSMIC.sample_info.tsv
+
           - sample_info.key_field = "Sample"
 
           - associations = associations.attach(sample_info)

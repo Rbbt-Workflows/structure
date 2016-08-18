@@ -5,7 +5,7 @@ module Structure
   ALIGNMENTS = cache_dir.alignment_maps.find
   Open.repository_dirs << ALIGNMENTS unless Open.repository_dirs.include? ALIGNMENTS
   def self.alignment_map(alignment_source, alignment_target)
-    Persist.persist("Alignment maps", :marshal, :dir => ALIGNMENTS, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:alignment_source => alignment_source, :alignment_target => alignment_target}) do
+    Persist.persist("Alignment maps", :marshal, :dir => ALIGNMENTS, :__lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:alignment_source => alignment_source, :alignment_target => alignment_target}) do
       map = {}
 
       offset_source, alignment_source = alignment_source.match(/^(_*)(.*)/).values_at( 1, 2)
@@ -39,7 +39,7 @@ module Structure
   Open.repository_dirs << SEQUENCE_MAP unless Open.repository_dirs.include? SEQUENCE_MAP
   def self.sequence_map(source_sequence, target_sequence)
     Misc.insist do
-      Persist.persist("Sequence map", :marshal, :dir => SEQUENCE_MAP, :lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:source => source_sequence, :target => target_sequence}) do
+      Persist.persist("Sequence map", :marshal, :dir => SEQUENCE_MAP, :__lock => {:max_age => 0, :suspend => 0, :refresh => 0}, :other => {:source => source_sequence, :target => target_sequence}) do
         source_alignment, target_alignment = SmithWaterman.align(source_sequence, target_sequence)
         Structure.alignment_map(source_alignment, target_alignment)
       end

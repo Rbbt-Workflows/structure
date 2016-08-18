@@ -27,7 +27,6 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    COSMIC.rb
    appris.rb
 
-   entity.rb
    sinatra.rb
 
    workflow=workflow{
@@ -91,6 +90,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
      COSMIC.haml
      COSMIC_neighbours.haml
     }
+
+    Study=Study{
+     interfaces.haml
+    }
    }
    partials=partials{
     download.haml
@@ -103,6 +106,9 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    Structure=Structure{
     tasks.haml
     scores=scores{
+     job_result.haml
+    }
+    score_summary=score_summary{
      job_result.haml
     }
    }

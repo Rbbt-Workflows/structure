@@ -46,13 +46,14 @@
   the tables below also include human-friendly names.
 
 = fragment do
-  - require 'rbbt/sources/clinvar'
+
+  - Workflow.require_workflow "DbNSFP"
   - Workflow.require_workflow "Pandrugs"
-  - clinvar = ClinVar.mi_summary.tsv :fields => ["ClinicalSignificance"], :type => :single, :persist => true
-  - pandrugs = Pandrugs.gene_drugs.tsv :persist => true, :type => :double
+
   %h3 Mutation Overview
 
-
+  - require 'rbbt/sources/clinvar'
+  - clinvar = ClinVar.mi_summary.tsv :fields => ["ClinicalSignificance"], :type => :single, :persist => true
   - interfaces = wizard.file('interfaces').tsv
   - dbNSFP = DbNSFP.job(:annotate, nil, :mutations => result.keys).run
   - cosmic = wizard.file('COSMIC').tsv
