@@ -75,7 +75,8 @@
         %select.pdb(id=select_id style='width: 200px')
           %option(selected="selected") Select a PDB
           - (pdbs || []).each do |pdb, info| 
-            %option(attr-pdb="=#{pdb}")= "#{pdb}"
+            - url = "http://files.rcsb.org/view/#{pdb}.pdb"
+            %option(attr-pdb="#{url}")= "#{pdb}"
           - uniprot = uni[protein]
 
           - if uniprot and Structure::I3D_PROTEINS.include? uniprot
