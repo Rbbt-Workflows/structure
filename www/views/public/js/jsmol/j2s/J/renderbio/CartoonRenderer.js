@@ -7,7 +7,7 @@ Clazz.instantialize (this, arguments);
 Clazz.overrideMethod (c$, "renderBioShape", 
 function (bioShape) {
 if (!this.setupRR (bioShape, false)) return;
-if (this.isNucleic) {
+if (this.isNucleic || this.isPhosphorusOnly) {
 if (this.nucleicRenderer == null) this.nucleicRenderer = J.api.Interface.getInterface ("J.renderbio.NucleicRenderer", this.vwr, "render");
 this.calcScreenControlPoints ();
 this.nucleicRenderer.renderNucleic (this);
@@ -21,8 +21,8 @@ this.ribbonBottomScreens = this.calcScreens (-0.5, this.mads);
 this.calcRopeMidPoints ();
 this.renderProtein ();
 this.vwr.freeTempPoints (this.cordMidPoints);
-this.vwr.freeTempScreens (this.ribbonTopScreens);
-this.vwr.freeTempScreens (this.ribbonBottomScreens);
+this.vwr.freeTempPoints (this.ribbonTopScreens);
+this.vwr.freeTempPoints (this.ribbonBottomScreens);
 }, "J.shapebio.BioShape");
 Clazz.defineMethod (c$, "renderProtein", 
  function () {

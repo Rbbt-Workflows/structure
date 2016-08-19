@@ -1,6 +1,11 @@
 // JmolApplet.js -- Jmol._Applet and Jmol._Image
 
-// BY 10/19/2014 8:08:51 PM moved applet._cover and applet._displayCoverImage to 
+// BH 2/14/2016 12:31:02 PM fixed local reader not disappearing after script call
+// BH 2/14/2016 12:30:41 PM Info.appletLoadingImage: "j2s/img/JSmol_spinner.gif", // can be set to "none" or some other image
+// BH 2/14/2016 12:27:09 PM Jmol._setCursor, proto._getSpinner 
+// BH 1/15/2016 4:23:14 PM adding Info.makeLiveImage
+// BH 4/17/2015 2:33:32 PM update for SwingJS 
+// BH 10/19/2014 8:08:51 PM moved applet._cover and applet._displayCoverImage to 
 // BH 5/8/2014 11:20:21 AM trying to fix AH nd JG problem with multiple applets
 // BH 1/27/2014 8:36:43 AM adding Info.viewSet
 // BH 12/13/2013 9:04:53 AM _evaluate DEPRECATED (see JSmolApi.js Jmol.evaulateVar
@@ -92,12 +97,14 @@
 			isSigned: false,
 			j2sPath: "j2s",
 			coverImage: null,     // URL for image to display
+      makeLiveImage: null,  // URL for small image to click to make live (defaults to j2s/img/play_make_live.jpg)
 			coverTitle: "",       // tip that is displayed before model starts to load
 			coverCommand: "",     // Jmol command executed upon clicking image
 			deferApplet: false,   // true == the model should not be loaded until the image is clicked
 			deferUncover: false,  // true == the image should remain until command execution is complete 
 			disableJ2SLoadMonitor: false,
-			disableInitialConsole: false,
+			disableInitialConsole: true, // new default since now we have the spinner 2/14/2016 12:26:28 PM
+      //appletLoadingImage: "j2s/img/JSmol_spinner.gif", // can be set to "none" or some other image
 			debug: false
 		};	 
 		Jmol._addDefaultInfo(Info, DefaultInfo);
@@ -125,9 +132,9 @@
           List.push("JAVA");
         }
 				break;
-			case "IMAGE":
-				applet = new Jmol._Image(id, Info, checkOnly);
-				break;
+//			case "IMAGE":
+//				applet = new Jmol._Image(id, Info, checkOnly);
+//				break;
 			}
 			if (applet != null)
 				break;		  
@@ -144,6 +151,8 @@
 	}
 
 	Applet._getCanvas = function(id, Info, checkOnly, webGL) {
+    Info._isLayered = false;
+    Info._platform = "J.awtjs2d.Platform";
 		if (webGL && Jmol.featureDetection.supportsWebGL()) {
 			Jmol._Canvas3D.prototype = Jmol.GLmol.extendApplet(Jmol._jsSetPrototype(new Applet(id, Info, true)));
 			return new Jmol._Canvas3D(id, Info, "Jmol", checkOnly);
@@ -233,10 +242,22 @@
 	}
 
 	proto._newApplet = function(viewerOptions) {
+		if (!this._is2D)  
+			viewerOptions.put("script", (viewerOptions.get("script") || "") + ";set multipleBondSpacing 0.35;");
 		this._viewerOptions = viewerOptions;
 		return new J.appletjs.Jmol(viewerOptions);
 	}
 	
+	proto._addCoreFiles = function() {
+		Jmol._addCoreFile("jmol", this._j2sPath, this.__Info.preloadCore);
+		if (!this._is2D) {
+	 		Jmol._addExec([this, null, "J.export.JSExporter","load JSExporter"])
+	//		Jmol._addExec([this, this.__addExportHook, null, "addExportHook"])
+		}
+		if (Jmol._debugCode)
+			Jmol._addExec([this, null, "J.appletjs.Jmol", "load Jmol"]);
+  }
+  
 	proto._create = function(id, Info){
 		Jmol._setObject(this, id, Info);
 		var params = {
@@ -268,13 +289,51 @@
 		Applet._createApplet(this, Info, params);
 	}
 
-	proto._readyCallback = function(id, fullid, isReady, applet) {
+	proto._restoreState = function(clazzName, state) {
+		System.out.println("\n\nasynchronous restore state for " + clazzName + " " + state)
+		var applet = this;
+		var vwr = applet._applet && applet._applet.viewer;
+		switch (state) {
+		case "setOptions":
+			return function(_setOptions) {applet.__startAppletJS(applet)};
+		case "render":
+			return function() {setTimeout(function(){vwr.refresh(2)},10)};
+		default:
+			switch (clazzName) {
+			// debug mode only, when core.z.js has not been loaded and prior to start
+			case "J.shape.Balls":
+			case "J.shape.Sticks":
+			case "J.shape.Frank":
+				return null;
+			}
+			
+			//if (vwr.rm.repaintPending)
+				//return function() {setTimeout(function(){vwr.refresh(2)},10)};
+			if (vwr && vwr.isScriptExecuting && vwr.isScriptExecuting()) {
+				if (Jmol._asyncCallbacks[clazzName]) {
+					System.out.println("...ignored");
+					return 1;
+				}
+				var sc = vwr.getEvalContextAndHoldQueue(vwr.eval);
+				var pc = sc.pc - 1;
+				sc.asyncID = clazzName;
+				Jmol._asyncCallbacks[clazzName] = function(pc) {sc.pc=pc; System.out.println("sc.asyncID="+sc.asyncID+" sc.pc = " + sc.pc);vwr.eval.resumeEval(sc)};
+				vwr.eval.pc = vwr.eval.pcEnd;
+				System.out.println("setting resume for pc=" + sc.pc + " " + clazzName + " to " + Jmol._asyncCallbacks[clazzName] + "//" )
+				return function() {System.out.println("resuming " + clazzName + " " + Jmol._asyncCallbacks[clazzName]);Jmol._asyncCallbacks[clazzName](pc)};					
+			}
+			System.out.println(clazzName + "?????????????????????" + state)
+			return function() {setTimeout(function(){vwr.refresh(2)},10)};
+			//return null;
+		}
+	}
+
+	proto._readyCallback = function(id, fullid, isReady) {
 		if (!isReady)
 			return; // ignore -- page is closing
 		Jmol._setDestroy(this);
 		this._ready = true;
 		var script = this._readyScript;
-		this._applet = applet;
 		if (this._defaultModel)
 			Jmol._search(this, this._defaultModel, (script ? ";" + script : ""));
 		else if (script)
@@ -287,8 +346,12 @@
 		this._readyFunction && this._readyFunction(this);
 		Jmol._setReady(this);
 		var app = this._2dapplet;
-		if (app && app._isEmbedded && app._ready && app.__Info.visible)
-			this._show2d(true);
+		if (app && app._isEmbedded && app._ready && app.__Info.visible) {
+      var me = this;
+      // for some reason, JSME doesn't get the width/height correctly the first time
+			me._show2d(true);me._show2d(false);me._show2d(true);
+    }
+    Jmol._hideLoadingSpinner(this);
 	}
 
 	proto._showInfo = function(tf) {
@@ -320,11 +383,15 @@
 		}
 	}
 
+  proto._getSpinner = function() {
+    return (this.__Info.appletLoadingImage || this._j2sPath + "/img/JSmol_spinner.gif");
+  }
+
   proto._getAtomCorrelation = function(molData) {
     // get the first atom mapping available by loading the model structure into model 2, 
     this._loadMolData(molData, "atommap = compare({1.1} {2.1} 'MAP' 'H'); zap 2.1", true);
-    var map = jmol._evaluate("atommap");
-    var n = jmol._evaluate("{*}.count");
+    var map = this._evaluate("atommap");
+    var n = this._evaluate("{*}.count");
     var A = [];
     var B = [];
     // these are Jmol atom indexes. The second number will be >= n, and all must be incremented by 1.
@@ -363,6 +430,7 @@
 		if (!this._ready)
 				return this._addScript(script);
 		Jmol._setConsoleDiv(this._console);
+    Jmol._hideLocalFileReader(this);
 		this._applet.script(script);
 	}
 
@@ -720,7 +788,7 @@
   }
 
   proto._getMol2D = function() {
-		return jmol._evaluate("script('select visible;show chemical sdf')"); // 2D equivalent
+		return this._evaluate("script('select visible;show chemical sdf')"); // 2D equivalent no longer!
   }
   
   

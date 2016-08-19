@@ -1,5 +1,5 @@
 Clazz.declarePackage ("JU");
-Clazz.load (["java.io.OutputStream"], "JU.OC", ["java.io.BufferedWriter", "$.ByteArrayOutputStream", "$.OutputStreamWriter", "JU.Base64", "$.SB"], function () {
+Clazz.load (["java.io.OutputStream", "javajs.api.GenericOutputChannel"], "JU.OC", ["java.io.BufferedWriter", "$.ByteArrayOutputStream", "$.OutputStreamWriter", "JU.Base64", "$.SB"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.bytePoster = null;
 this.fileName = null;
@@ -14,8 +14,17 @@ this.type = null;
 this.$isBase64 = false;
 this.os0 = null;
 this.bytes = null;
+this.bigEndian = true;
 Clazz.instantialize (this, arguments);
-}, JU, "OC", java.io.OutputStream);
+}, JU, "OC", java.io.OutputStream, javajs.api.GenericOutputChannel);
+Clazz.overrideMethod (c$, "isBigEndian", 
+function () {
+return this.bigEndian;
+});
+Clazz.defineMethod (c$, "setBigEndian", 
+function (TF) {
+this.bigEndian = TF;
+}, "~B");
 Clazz.defineMethod (c$, "setParams", 
 function (bytePoster, fileName, asWriter, os) {
 this.bytePoster = bytePoster;
@@ -77,7 +86,7 @@ throw e;
 this.byteCount += s.length;
 return this;
 }, "~S");
-Clazz.defineMethod (c$, "reset", 
+Clazz.overrideMethod (c$, "reset", 
 function () {
 this.sb = null;
 this.initOS ();
@@ -130,7 +139,7 @@ function () {
 this.isCanceled = true;
 this.closeChannel ();
 });
-Clazz.defineMethod (c$, "closeChannel", 
+Clazz.overrideMethod (c$, "closeChannel", 
 function () {
 if (this.closed) return null;
 try {
@@ -164,11 +173,15 @@ this.$isBase64 = false;
 return this.closeChannel ();
 }return (this.sb == null ? null : this.sb.toString ());
 }this.closed = true;
+var jmol = null;
+var _function = null;
 {
-var data = (this.sb == null ? this.toByteArray() :
-this.sb.toString()); if (typeof this.fileName == "function") {
-this.fileName(data); } else { Jmol._doAjax(this.fileName,
-null, data); }
+jmol = self.J2S || Jmol; _function = (typeof this.fileName == "function" ?
+this.fileName : null);
+}if (jmol != null) {
+var data = (this.sb == null ? this.toByteArray () : this.sb.toString ());
+if (_function == null) jmol._doAjax (this.fileName, null, data);
+ else jmol._apply (this.fileName, data);
 }return null;
 });
 Clazz.defineMethod (c$, "isBase64", 

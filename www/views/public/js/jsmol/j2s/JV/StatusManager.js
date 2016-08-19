@@ -1,5 +1,5 @@
 Clazz.declarePackage ("JV");
-Clazz.load (["java.util.Hashtable"], "JV.StatusManager", ["java.lang.Boolean", "$.Float", "javajs.awt.Dimension", "JU.Lst", "$.PT", "J.api.Interface", "J.c.CBK", "JS.SV", "JU.Logger"], function () {
+Clazz.load (["java.util.Hashtable"], "JV.StatusManager", ["java.lang.Boolean", "$.Float", "JU.Lst", "$.PT", "J.api.Interface", "J.c.CBK", "JS.SV", "JU.Logger"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.vwr = null;
 this.jsl = null;
@@ -44,7 +44,7 @@ msgRecord.addLast (Integer.$valueOf (intInfo));
 msgRecord.addLast (statusInfo);
 var statusRecordSet = (isReplace ? null : this.messageQueue.get (statusName));
 if (statusRecordSet == null) this.messageQueue.put (statusName, statusRecordSet =  new JU.Lst ());
- else if (statusRecordSet.size () == JV.StatusManager.MAXIMUM_QUEUE_LENGTH) statusRecordSet.remove (0);
+ else if (statusRecordSet.size () == JV.StatusManager.MAXIMUM_QUEUE_LENGTH) statusRecordSet.removeItemAt (0);
 statusRecordSet.addLast (msgRecord);
 }, "~S,~N,~O,~B");
 Clazz.defineMethod (c$, "getStatusChanged", 
@@ -296,13 +296,22 @@ this.isSynced = false;
 if (JU.Logger.debugging) {
 JU.Logger.debug (this.vwr.appletName + " sync mode=" + syncMode + "; synced? " + this.isSynced + "; driving? " + this.drivingSync + "; disabled? " + this.syncDisabled);
 }}, "~N");
+Clazz.defineMethod (c$, "playAudio", 
+function (fileNameOrDataURI) {
+this.syncSend (fileNameOrDataURI, "audio:", -1);
+}, "~S");
 Clazz.defineMethod (c$, "syncSend", 
-function (script, appletName, port) {
-if (port != 0 || this.notifyEnabled (J.c.CBK.SYNC)) this.cbl.notifyCallback (J.c.CBK.SYNC,  Clazz.newArray (-1, [null, script, appletName, Integer.$valueOf (port)]));
-}, "~S,~S,~N");
+function (script, appletNameOrProp, port) {
+if (port != 0 || this.notifyEnabled (J.c.CBK.SYNC)) {
+var o =  Clazz.newArray (-1, [null, script, appletNameOrProp, Integer.$valueOf (port)]);
+if (this.cbl != null) this.cbl.notifyCallback (J.c.CBK.SYNC, o);
+return o[0];
+}return null;
+}, "~S,~O,~N");
 Clazz.defineMethod (c$, "modifySend", 
 function (atomIndex, modelIndex, mode, msg) {
-if (this.notifyEnabled (J.c.CBK.STRUCTUREMODIFIED)) this.cbl.notifyCallback (J.c.CBK.STRUCTUREMODIFIED,  Clazz.newArray (-1, [null, Integer.$valueOf (mode), Integer.$valueOf (atomIndex), Integer.$valueOf (modelIndex), msg]));
+var sJmol = this.jmolScriptCallback (J.c.CBK.STRUCTUREMODIFIED);
+if (this.notifyEnabled (J.c.CBK.STRUCTUREMODIFIED)) this.cbl.notifyCallback (J.c.CBK.STRUCTUREMODIFIED,  Clazz.newArray (-1, [sJmol, Integer.$valueOf (mode), Integer.$valueOf (atomIndex), Integer.$valueOf (modelIndex), msg]));
 }, "~N,~N,~N,~S");
 Clazz.defineMethod (c$, "processService", 
 function (info) {
@@ -375,7 +384,7 @@ return (this.jsl == null ? null : this.jsl.getJSpecViewProperty (myParam == null
 }, "~S");
 Clazz.defineMethod (c$, "resizeInnerPanel", 
 function (width, height) {
-return (this.jsl == null ?  new javajs.awt.Dimension (width, height) : this.jsl.resizeInnerPanel ("preferredWidthHeight " + width + " " + height + ";"));
+return (this.jsl == null || width == this.vwr.getScreenWidth () && height == this.vwr.getScreenHeight () ?  Clazz.newIntArray (-1, [width, height]) : this.jsl.resizeInnerPanel ("preferredWidthHeight " + width + " " + height + ";"));
 }, "~N,~N");
 Clazz.defineStatics (c$,
 "MAXIMUM_QUEUE_LENGTH", 16,
