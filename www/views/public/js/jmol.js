@@ -11,9 +11,6 @@ $.widget("rbbt.jmol_tool", {
     addSelectionOptions: true,
     use: "HTML5",   // JAVA HTML5 WEBGL are all options
     j2sPath: "/js-find/jsmol/j2s", // this needs to point to where the j2s directory is.
-    jarPath: "/js-find/jsmol/java",// this needs to point to where the java directory is.
-    jarFile: "JmolAppletSigned.jar",
-    isSigned: true,
     script: null,
     serverURL: '/get_pdb',
     readyFunction: null,
@@ -32,7 +29,6 @@ $.widget("rbbt.jmol_tool", {
       tool.options.jmol_window = tool.element.find('.window');
       tool.options.jmol_window.html(Jmol.getAppletHtml("jmolApplet0", tool.options))
       tool.options.applet = jmolApplet0
-      jmolApplet0 = undefined
     })
 
   },
@@ -40,7 +36,6 @@ $.widget("rbbt.jmol_tool", {
   _wrapper: function() {
     var tool = this
     return {script: function(code){Jmol.script(tool.options.applet, code)}, getProperty: function(prop){return JSON.parse(Jmol.getPropertyAsJSON(tool.options.applet, prop))}};
-    return this.options.jmol_window.data('jmol');
   },
 
   background: function(color){
@@ -56,7 +51,7 @@ $.widget("rbbt.jmol_tool", {
 
   load_pdb: function(pdb) {
     this._loaded_pdb = pdb.replace(/^=/,'')
-    this._wrapper().script("load " + pdb + "; wireframe off; restrict water; select protein; backbone off; color pink;cartoons on;color structure;");
+    this._wrapper().script("load " + pdb + "; wireframe off; restrict helix and sheet; select protein; backbone off; color pink;cartoons on;color structure;");
   },
 
   is_pdb_loaded: function(){
@@ -99,12 +94,7 @@ $.widget("rbbt.jmol_tool", {
       var tmp = $(position).map(function(){ return (parseInt(this)) }).toArray()
       position_str = tmp.join(", ");
     }else{
-      if (typeof(position) == 'string' || position instanceof String){
         position_str = position
-      }else{
-        position_str = position 
-      }
-
     }
 
     this._wrapper().script("select protein and *.CA and " + position_str + ":" + chain + ";");
@@ -124,7 +114,7 @@ $.widget("rbbt.jmol_tool", {
   },
 
   //{{{ MANIPULATION
-  
+
   mark_chain_position: function(chain, position, color){
     this._select(position, chain);
     this._style("spacefill")
@@ -151,7 +141,7 @@ $.widget("rbbt.jmol_tool", {
   },
 
   //{{{ HIGH LEVEL
-  
+
   mark_positions: function(positions, color){
     var tool = this;
     tool._sequence_positions_in_pdb(positions, function(pdb_positions){
