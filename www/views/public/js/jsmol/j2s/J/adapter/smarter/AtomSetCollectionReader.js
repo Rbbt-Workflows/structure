@@ -1,7 +1,8 @@
 Clazz.declarePackage ("J.adapter.smarter");
-Clazz.load (["javajs.api.GenericLineReader", "JU.SB"], "J.adapter.smarter.AtomSetCollectionReader", ["java.io.BufferedReader", "java.lang.Boolean", "$.Float", "$.NullPointerException", "javajs.api.GenericBinaryDocument", "JU.BS", "$.Lst", "$.M3", "$.P3", "$.PT", "$.Quat", "$.V3", "J.adapter.smarter.Atom", "$.AtomSetCollection", "J.api.Interface", "$.JmolAdapter", "JU.BSUtil", "$.Logger", "$.Parser"], function () {
+Clazz.load (["javajs.api.GenericLineReader", "JU.SB"], "J.adapter.smarter.AtomSetCollectionReader", ["java.io.BufferedReader", "java.lang.Boolean", "$.Float", "$.NullPointerException", "javajs.api.GenericBinaryDocument", "JU.BS", "$.Lst", "$.M3", "$.P3", "$.PT", "$.Quat", "$.V3", "J.adapter.smarter.Atom", "$.AtomSetCollection", "J.api.Interface", "$.JmolAdapter", "JU.BSUtil", "$.Logger"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.isBinary = false;
+this.debugging = false;
 this.asc = null;
 this.reader = null;
 this.binaryDoc = null;
@@ -10,15 +11,19 @@ this.htParams = null;
 this.trajectorySteps = null;
 this.domains = null;
 this.validation = null;
+this.dssr = null;
 this.isConcatenated = false;
 this.addedData = null;
 this.addedDataKey = null;
 this.fixJavaFloat = true;
+this.thisBiomolecule = null;
+this.lstNCS = null;
 this.line = null;
 this.prevline = null;
 this.next = null;
 this.ptLine = 0;
 this.latticeCells = null;
+this.fillRange = null;
 this.doProcessLines = false;
 this.iHaveUnitCell = false;
 this.iHaveSymmetryOperators = false;
@@ -31,11 +36,13 @@ this.applySymmetryToBonds = false;
 this.doCheckUnitCell = false;
 this.getHeader = false;
 this.isSequential = false;
+this.isMolecular = false;
 this.templateAtomCount = 0;
 this.modelNumber = 0;
 this.vibrationNumber = 0;
 this.desiredVibrationNumber = -2147483648;
 this.bsModels = null;
+this.useFileModelNumbers = false;
 this.havePartialChargeFilter = false;
 this.calculationType = "?";
 this.sgName = null;
@@ -60,6 +67,7 @@ this.firstLastStep = null;
 this.lastModelNumber = 2147483647;
 this.desiredSpaceGroupIndex = -1;
 this.fileScaling = null;
+this.latticeScaling = NaN;
 this.fileOffset = null;
 this.fileOffsetFractional = null;
 this.unitCellOffset = null;
@@ -95,6 +103,8 @@ this.doSetOrientation = false;
 this.doCentralize = false;
 this.addVibrations = false;
 this.useAltNames = false;
+this.ignoreStructure = false;
+this.isDSSP1 = false;
 this.allowPDBFilter = false;
 this.doReadMolecularOrbitals = false;
 this.reverseModels = false;
@@ -122,8 +132,9 @@ this.setupASCR (fullPath, htParams, reader);
 Clazz.defineMethod (c$, "setupASCR", 
 function (fullPath, htParams, reader) {
 if (fullPath == null) return;
+this.debugging = JU.Logger.debugging;
 this.htParams = htParams;
-this.filePath = fullPath.$replace ('\\', '/');
+this.filePath = "" + htParams.get ("fullPathName");
 var i = this.filePath.lastIndexOf ('/');
 this.fileName = this.filePath.substring (i + 1);
 if (Clazz.instanceOf (reader, java.io.BufferedReader)) this.reader = reader;
@@ -224,8 +235,10 @@ if (this.asc.atomSetCount == 1) this.asc.setCurrentModelInfo ("dbName", this.htP
 this.applySymmetryAndSetTrajectory ();
 this.asc.finalizeStructures ();
 if (this.doCentralize) this.asc.centralize ();
+if (this.fillRange != null) this.asc.setInfo ("boundbox", this.fillRange);
 var info = this.asc.getAtomSetAuxiliaryInfo (0);
-if (this.domains != null && info != null) {
+if (info != null) {
+if (this.domains != null) {
 this.asc.setGlobalBoolean (5);
 var s = (this.domains).getMapKeys (2, true);
 var pt = s.indexOf ("{ ", 2);
@@ -239,12 +252,18 @@ for (var i = this.asc.atomSetCount; --i >= 0; ) {
 info = this.asc.getAtomSetAuxiliaryInfo (i);
 info.put ("domains", this.domains);
 }
-}if (this.validation != null && info != null) {
+}if (this.validation != null) {
 for (var i = this.asc.atomSetCount; --i >= 0; ) {
 info = this.asc.getAtomSetAuxiliaryInfo (i);
 info.put ("validation", this.validation);
 }
-}}if (!this.fixJavaFloat) this.asc.setInfo ("legacyJavaFloat", Boolean.TRUE);
+}if (this.dssr != null) {
+info.put ("dssrJSON", Boolean.TRUE);
+for (var i = this.asc.atomSetCount; --i >= 0; ) {
+info = this.asc.getAtomSetAuxiliaryInfo (i);
+info.put ("dssr", this.dssr);
+}
+}}}if (!this.fixJavaFloat) this.asc.setInfo ("legacyJavaFloat", Boolean.TRUE);
 this.setLoadNote ();
 });
 Clazz.defineMethod (c$, "setLoadNote", 
@@ -319,6 +338,7 @@ if (this.htParams.containsKey ("vibrationNumber")) this.desiredVibrationNumber =
 this.applySymmetryToBonds = this.htParams.containsKey ("applySymmetryToBonds");
 this.bsFilter = this.htParams.get ("bsFilter");
 this.setFilter (null);
+this.fillRange = this.htParams.get ("fillRange");
 if (this.strSupercell != null) {
 if (!this.checkFilterKey ("NOPACK")) this.forcePacked = true;
 }o = this.htParams.get ("supercell");
@@ -336,7 +356,8 @@ this.firstLastStep = val;
 this.firstLastStep = this.htParams.get ("firstLastStep");
 } else if (this.htParams.containsKey ("bsModels")) {
 this.bsModels = this.htParams.get ("bsModels");
-}if (this.htParams.containsKey ("templateAtomCount")) this.templateAtomCount = (this.htParams.get ("templateAtomCount")).intValue ();
+}this.useFileModelNumbers = this.htParams.containsKey ("useFileModelNumbers") || this.checkFilterKey ("USEFILEMODELNUMBERS");
+if (this.htParams.containsKey ("templateAtomCount")) this.templateAtomCount = (this.htParams.get ("templateAtomCount")).intValue ();
 if (this.bsModels != null || this.firstLastStep != null) this.desiredModelNumber = -2147483648;
 if (this.bsModels == null && this.firstLastStep != null) {
 if (this.firstLastStep[0] < 0) this.firstLastStep[0] = 0;
@@ -372,6 +393,7 @@ this.setUnitCell (fParams[0], fParams[1], fParams[2], fParams[3], fParams[4], fP
 if (this.merging && !this.iHaveUnitCell) this.setFractionalCoordinates (false);
 }this.domains = this.htParams.get ("domains");
 this.validation = this.htParams.get ("validation");
+this.dssr = this.htParams.get ("dssr");
 this.isConcatenated = this.htParams.containsKey ("concatenate");
 });
 Clazz.defineMethod (c$, "initializeSymmetryOptions", 
@@ -397,20 +419,25 @@ Clazz.defineMethod (c$, "doGetModel",
 function (modelNumber, title) {
 if (title != null && this.nameRequired != null && this.nameRequired.length > 0 && title.toUpperCase ().indexOf (this.nameRequired) < 0) return false;
 var isOK = (this.bsModels == null ? this.desiredModelNumber < 1 || modelNumber == this.desiredModelNumber : modelNumber > this.lastModelNumber ? false : modelNumber > 0 && this.bsModels.get (modelNumber - 1) || this.haveModel && this.firstLastStep != null && this.firstLastStep[1] < 0 && (this.firstLastStep[2] < 2 || (modelNumber - 1 - this.firstLastStep[0]) % this.firstLastStep[2] == 0));
-if (isOK && this.desiredModelNumber == 0) this.asc.discardPreviousAtoms ();
+if (isOK && this.desiredModelNumber == 0) this.discardPreviousAtoms ();
 this.haveModel = new Boolean (this.haveModel | isOK).valueOf ();
 if (isOK) this.doProcessLines = true;
 return isOK;
 }, "~N,~S");
+Clazz.defineMethod (c$, "discardPreviousAtoms", 
+function () {
+this.asc.discardPreviousAtoms ();
+});
 Clazz.defineMethod (c$, "initializeSymmetry", 
 function () {
 this.previousSpaceGroup = this.sgName;
 this.previousUnitCell = this.unitCellParams;
 this.iHaveUnitCell = this.ignoreFileUnitCell;
 if (!this.ignoreFileUnitCell) {
-this.unitCellParams =  Clazz.newFloatArray (25, 0);
+this.unitCellParams =  Clazz.newFloatArray (26, 0);
 for (var i = 25; --i >= 0; ) this.unitCellParams[i] = NaN;
 
+this.unitCellParams[25] = this.latticeScaling;
 this.symmetry = null;
 }if (!this.ignoreFileSpaceGroupName) this.sgName = "unspecified!";
 this.doCheckUnitCell = false;
@@ -423,6 +450,7 @@ this.asc.setCollectionName ("<collection of " + (this.asc.iSet + 1) + " models>"
 } else {
 this.asc.setCollectionName (name);
 }this.asc.setModelInfoForSet ("name", name, Math.max (0, this.asc.iSet));
+this.asc.setAtomSetName (name);
 }, "~S");
 Clazz.defineMethod (c$, "cloneLastAtomSet", 
 function (ac, pts) {
@@ -437,9 +465,11 @@ this.unitCellParams = this.previousUnitCell;
 }, "~N,~A");
 Clazz.defineMethod (c$, "setSpaceGroupName", 
 function (name) {
-if (this.ignoreFileSpaceGroupName) return;
-this.sgName = name.trim ();
-JU.Logger.info ("Setting space group name to " + this.sgName);
+if (this.ignoreFileSpaceGroupName || name == null) return;
+var s = name.trim ();
+if (s.equals (this.sgName)) return;
+if (!s.equals ("P1")) JU.Logger.info ("Setting space group name to " + s);
+this.sgName = s;
 }, "~S");
 Clazz.defineMethod (c$, "setSymmetryOperator", 
 function (xyz) {
@@ -470,7 +500,7 @@ if (this.ignoreFileUnitCell) return;
 if (i == 0 && x == 1 || i == 3 && x == 0) return;
 if (!Float.isNaN (x) && i >= 6 && Float.isNaN (this.unitCellParams[6])) this.initializeCartesianToFractional ();
 this.unitCellParams[i] = x;
-if (JU.Logger.debugging) {
+if (this.debugging) {
 JU.Logger.debug ("setunitcellitem " + i + " " + x);
 }if (i < 6 || Float.isNaN (x)) this.iHaveUnitCell = this.checkUnitCell (6);
  else if (++this.nMatrixElements == 12) this.iHaveUnitCell = this.checkUnitCell (22);
@@ -528,6 +558,16 @@ if (this.unitCellOffsetFractional != this.fileCoordinatesAreFractional) {
 if (this.unitCellOffsetFractional) this.symmetry.toCartesian (this.fileOffset, false);
  else this.symmetry.toFractional (this.fileOffset, false);
 }});
+Clazz.defineMethod (c$, "fractionalizeCoordinates", 
+function (toFrac) {
+this.getSymmetry ();
+var a = this.asc.atoms;
+if (toFrac) for (var i = this.asc.ac; --i >= 0; ) this.symmetry.toFractional (a[i], false);
+
+ else for (var i = this.asc.ac; --i >= 0; ) this.symmetry.toCartesian (a[i], false);
+
+this.setFractionalCoordinates (toFrac);
+}, "~B");
 Clazz.defineMethod (c$, "getNewSymmetry", 
 function () {
 return this.symmetry = this.getInterface ("JS.Symmetry");
@@ -553,6 +593,8 @@ this.filter = filter0;
 this.doSetOrientation = !this.checkFilterKey ("NOORIENT");
 this.doCentralize = (!this.checkFilterKey ("NOCENTER") && this.checkFilterKey ("CENTER"));
 this.addVibrations = !this.checkFilterKey ("NOVIB");
+this.ignoreStructure = this.checkFilterKey ("DSSP");
+this.isDSSP1 = this.checkFilterKey ("DSSP1");
 this.doReadMolecularOrbitals = !this.checkFilterKey ("NOMO");
 this.useAltNames = this.checkFilterKey ("ALTNAME");
 this.reverseModels = this.checkFilterKey ("REVERSEMODELS");
@@ -568,7 +610,7 @@ this.nameRequired = JU.PT.getQuotedAttribute (this.filter, "NAME");
 if (this.nameRequired != null) {
 if (this.nameRequired.startsWith ("'")) this.nameRequired = JU.PT.split (this.nameRequired, "'")[1];
  else if (this.nameRequired.startsWith ("\"")) this.nameRequired = JU.PT.split (this.nameRequired, "\"")[1];
-filter0 = this.filter = JU.PT.rep (this.filter, this.nameRequired, "");
+this.filter = JU.PT.rep (this.filter, this.nameRequired, "");
 filter0 = this.filter = JU.PT.rep (this.filter, "NAME=", "");
 }this.filterAtomName = this.checkFilterKey ("*.") || this.checkFilterKey ("!.");
 this.filterElement = this.checkFilterKey ("_");
@@ -584,7 +626,9 @@ if (this.bsFilter == null) {
 this.bsFilter =  new JU.BS ();
 this.htParams.put ("bsFilter", this.bsFilter);
 this.filter = (";" + this.filter + ";").$replace (',', ';');
-var s = this.getFilter ("SYMOP=");
+var s = this.getFilter ("LATTICESCALING=");
+if (s != null && this.unitCellParams.length > 25) this.unitCellParams[25] = this.latticeScaling = this.parseFloatStr (s);
+s = this.getFilter ("SYMOP=");
 if (s != null) this.filterSymop = " " + s + " ";
 JU.Logger.info ("filtering with " + this.filter);
 if (this.haveAtomFilter) {
@@ -723,9 +767,8 @@ if (this.moreUnitCellInfo != null) {
 this.asc.setCurrentModelInfo ("moreUnitCellInfo", this.moreUnitCellInfo);
 this.moreUnitCellInfo = null;
 }this.finalizeSubclassSymmetry (sym != null);
-if (sym != null && this.ptSupercell != null) {
-this.asc.getXSymmetry ().finalizeUnitCell (this.ptSupercell);
-}this.initializeSymmetry ();
+if (sym != null && this.ptSupercell != null) this.asc.getXSymmetry ().finalizeUnitCell (this.ptSupercell);
+this.initializeSymmetry ();
 return sym;
 });
 Clazz.defineMethod (c$, "finalizeSubclassSymmetry", 
@@ -811,7 +854,7 @@ var vz = this.parseFloatStr (isWide ? values[++dataPt] : valuesZ[dataPt]);
 if (ignore[jj]) continue;
 var iAtom = (atomIndexes == null ? atomPt : atomIndexes[atomPt]);
 if (iAtom < 0) continue;
-if (JU.Logger.debugging) JU.Logger.debug ("atom " + iAtom + " vib" + j + ": " + vx + " " + vy + " " + vz);
+if (this.debugging) JU.Logger.debug ("atom " + iAtom + " vib" + j + ": " + vx + " " + vy + " " + vz);
 this.asc.addVibrationVectorWithSymmetry (iAtom0 + modelAtomCount * j++ + iAtom, vx, vy, vz, withSymmetry);
 }
 }
@@ -859,37 +902,7 @@ this.checkCurrentLineForScript ();
 }, "~S");
 Clazz.defineMethod (c$, "checkCurrentLineForScript", 
 function () {
-if (this.line.indexOf ("Jmol") >= 0) {
-if (this.line.indexOf ("Jmol PDB-encoded data") >= 0) {
-this.asc.setInfo ("jmolData", this.line);
-if (!this.line.endsWith ("#noautobond")) this.line += "#noautobond";
-}if (this.line.indexOf ("Jmol data min") >= 0) {
-JU.Logger.info (this.line);
-var data =  Clazz.newFloatArray (15, 0);
-JU.Parser.parseStringInfestedFloatArray (this.line.substring (10).$replace ('=', ' ').$replace ('{', ' ').$replace ('}', ' '), null, data);
-var minXYZ = JU.P3.new3 (data[0], data[1], data[2]);
-var maxXYZ = JU.P3.new3 (data[3], data[4], data[5]);
-this.fileScaling = JU.P3.new3 (data[6], data[7], data[8]);
-this.fileOffset = JU.P3.new3 (data[9], data[10], data[11]);
-var plotScale = JU.P3.new3 (data[12], data[13], data[14]);
-if (plotScale.x <= 0) plotScale.x = 100;
-if (plotScale.y <= 0) plotScale.y = 100;
-if (plotScale.z <= 0) plotScale.z = 100;
-if (this.fileScaling.y == 0) this.fileScaling.y = 1;
-if (this.fileScaling.z == 0) this.fileScaling.z = 1;
-this.setFractionalCoordinates (true);
-this.latticeCells =  Clazz.newIntArray (3, 0);
-this.asc.xtalSymmetry = null;
-this.setUnitCell (plotScale.x * 2 / (maxXYZ.x - minXYZ.x), plotScale.y * 2 / (maxXYZ.y - minXYZ.y), plotScale.z * 2 / (maxXYZ.z == minXYZ.z ? 1 : maxXYZ.z - minXYZ.z), 90, 90, 90);
-this.unitCellOffset = JU.P3.newP (plotScale);
-this.unitCellOffset.scale (-1);
-this.getSymmetry ();
-this.symmetry.toFractional (this.unitCellOffset, false);
-this.unitCellOffset.scaleAdd2 (-1.0, minXYZ, this.unitCellOffset);
-this.symmetry.setOffsetPt (this.unitCellOffset);
-this.asc.setInfo ("jmolDataScaling",  Clazz.newArray (-1, [minXYZ, maxXYZ, plotScale]));
-this.doApplySymmetry = true;
-}}if (this.line.endsWith ("#noautobond")) {
+if (this.line.endsWith ("#noautobond")) {
 this.line = this.line.substring (0, this.line.lastIndexOf ('#')).trim ();
 this.asc.setNoAutoBond ();
 }var pt = this.line.indexOf ("jmolscript:");
@@ -925,7 +938,7 @@ this.prevline = this.line;
 this.line = this.reader.readLine ();
 if (this.out != null && this.line != null) this.out.append (this.line).append ("\n");
 this.ptLine++;
-if (JU.Logger.debugging) JU.Logger.debug (this.line);
+if (this.debugging && this.line != null) JU.Logger.debug (this.line);
 return this.line;
 });
 c$.getStrings = Clazz.defineMethod (c$, "getStrings", 
@@ -1076,11 +1089,6 @@ function () {
 if (this.rd () != null && this.line.indexOf ("#jmolscript:") >= 0) this.checkCurrentLineForScript ();
 return this.line;
 });
-Clazz.defineMethod (c$, "processDSSR", 
-function (reader, htGroup1) {
-var s = this.vwr.getAnnotationParser ().processDSSR (this.asc.getAtomSetAuxiliaryInfo (2147483647), reader, this.line, htGroup1);
-this.appendLoadNote (s);
-}, "javajs.api.GenericLineReader,java.util.Map");
 Clazz.defineMethod (c$, "appendUunitCellInfo", 
 function (info) {
 if (this.moreUnitCellInfo == null) this.moreUnitCellInfo =  new JU.Lst ();

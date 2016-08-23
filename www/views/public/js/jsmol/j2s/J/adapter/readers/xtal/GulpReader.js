@@ -3,7 +3,6 @@ Clazz.load (["J.adapter.smarter.AtomSetCollectionReader"], "J.adapter.readers.xt
 c$ = Clazz.decorateAsClass (function () {
 this.isSlab = false;
 this.isPolymer = false;
-this.isMolecular = false;
 this.isPrimitive = false;
 this.sep = "-------";
 this.coordinatesArePrimitive = false;

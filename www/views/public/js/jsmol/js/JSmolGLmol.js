@@ -45,6 +45,7 @@ Jmol._Canvas3D = function(id, Info, type, checkOnly){
 	this._id = id;
 	this._is2D = false;
 	this._isJava = false;
+  this._rendered = false;
 	this._jmolType = "Jmol._Canvas3D (Jmol/GLmol)";
 	this._platform = "J.awtjs.Platform";
 	if (checkOnly)
@@ -231,7 +232,10 @@ gp.create = function() {
 	this.CAMERA_Z = -150;
 
 	this.applet.aaScale = 2;
-	this.renderer = new THREE.WebGLRenderer({antialias: true});
+	this.renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    preserveDrawingBuffer: true 
+  });
 	var canvas = this.renderer.domElement;
 	canvas.width = this.container.width();
 	canvas.height = this.container.height();
@@ -348,6 +352,10 @@ gp.show = function() {
 	var time = new Date();
 	this.setSlabAndFog();
 	this.renderer.render(this.scene, this.camera);
+  if (!this._rendered) {
+    this._rendered = true;
+    Jmol._hideLoadingSpinner(this.applet);
+  }
 	//console.log("rendered in " + (+new Date() - time) + "ms");
 };
 

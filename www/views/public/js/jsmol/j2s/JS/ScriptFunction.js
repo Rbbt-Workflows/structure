@@ -47,7 +47,10 @@ var $var = (i < this.nParameters && i < nParams ? params.get (i) : null);
 if ($var != null && $var.tok != 7) $var = JS.SV.newT ($var);
 contextVariables.put (name, ($var == null ? JS.SV.newS ("").setName (name) : $var));
 }
-contextVariables.put ("_retval", JS.SV.newI (this.tok == 364558 ? 2147483647 : 0));
+if (this.tok != 364558) {
+contextVariables.put ("_argcount", JS.SV.newI (params == null ? 0 : params.size ()));
+contextVariables.put ("_arguments", (params == null ? JS.SV.getVariableAI ( Clazz.newIntArray (-1, [])) : JS.SV.getVariableList (params)));
+}contextVariables.put ("_retval", JS.SV.newI (this.tok == 364558 ? 2147483647 : 0));
 }, "java.util.Map,JU.Lst");
 Clazz.defineMethod (c$, "unsetVariables", 
 function (contextVariables, params) {
@@ -87,7 +90,7 @@ var tokenCommand = aatoken[i][0];
 if (JS.T.tokAttr (tokenCommand.tok, 102400)) tokenCommand.intValue -= (tokenCommand.intValue < 0 ? -cmdpt0 : cmdpt0);
 }}
 for (var i = pt; --i >= cmdpt0; ) {
-lltoken.remove (i);
+lltoken.removeItemAt (i);
 lineIndices[i][0] = lineIndices[i][1] = 0;
 }
 }, "JS.ScriptFunction,~S,~N,~N,~A,~A,JU.Lst");
@@ -98,14 +101,15 @@ if (this.script != null && this.script !== "" && !this.script.endsWith ("\n")) t
 }, "~S");
 Clazz.overrideMethod (c$, "toString", 
 function () {
-var s =  new JU.SB ().append ("/*\n * ").append (this.name).append ("\n */\n").append (this.getSignature ()).append ("{\n");
+var s =  new JU.SB ().append ("/*\n * ").append (this.name).append ("\n */\n").append (this.getSignature ()).append (" {\n");
 if (this.script != null) s.append (this.script);
 s.append ("}\n");
 return s.toString ();
 });
 Clazz.overrideMethod (c$, "getSignature", 
 function () {
-var s =  new JU.SB ().append (this.typeName).append (" ").append (this.name).append (" (");
+if (this.typeName == null) return JS.T.nameOf (this.tok);
+var s =  new JU.SB ().append (this.typeName).append (" ").append (this.name).append ("(");
 for (var i = 0; i < this.nParameters; i++) {
 if (i > 0) s.append (", ");
 s.append (this.names.get (i));

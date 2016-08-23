@@ -5,7 +5,7 @@ this.isVersion3 = false;
 this.isPrimitive = false;
 this.isPolymer = false;
 this.isSlab = false;
-this.isMolecular = false;
+this.$isMolecular = false;
 this.haveCharges = false;
 this.inputOnly = false;
 this.isLongMode = false;
@@ -84,19 +84,22 @@ this.isPolymer = true;
 this.isSlab = false;
 return true;
 }if (this.line.indexOf ("* CLUSTER CALCULATION") >= 0) {
-this.isMolecular = true;
+this.$isMolecular = true;
 this.isSlab = false;
 this.isPolymer = false;
 return true;
-}if (((this.isPrimitive || this.isMolecular) && this.line.startsWith (" ATOMS IN THE ASYMMETRIC UNIT")) || this.isProperties && this.line.startsWith ("   ATOM N.AT.")) {
+}if (((this.isPrimitive || this.$isMolecular) && this.line.startsWith (" ATOMS IN THE ASYMMETRIC UNIT")) || this.isProperties && this.line.startsWith ("   ATOM N.AT.")) {
 if (!this.doGetModel (++this.modelNumber, null)) return this.checkLastModel ();
 return this.readAtoms ();
 }if (this.line.startsWith (" * SUPERCELL OPTION")) {
 this.discardLinesUntilContains ("GENERATED");
 return true;
 }if (!this.doProcessLines) return true;
-if (this.line.startsWith (" TOTAL ENERGY")) {
-this.readEnergy ();
+if (this.line.startsWith (" TOTAL ENERGY(")) {
+this.line = JU.PT.rep (this.line, "( ", "(");
+var tokens = this.getTokens ();
+this.energy = Double.$valueOf (Double.parseDouble (tokens[2]));
+this.setEnergy ();
 this.rd ();
 if (this.line.startsWith (" ********")) this.discardLinesUntilContains ("SYMMETRY ALLOWED");
  else if (this.line.startsWith (" TTTTTTTT")) this.discardLinesUntilContains2 ("PREDICTED ENERGY CHANGE", "HHHHHHH");
@@ -198,7 +201,7 @@ JU.Logger.error ("Cannot use FILTER \"conventional\" with POLYMER or SLAB");
 this.isPrimitive = true;
 }this.asc.setInfo ("unitCellType", (this.isPrimitive ? "primitive" : "conventional"));
 if (type.indexOf ("MOLECULAR") >= 0) {
-this.isMolecular = this.doProcessLines = true;
+this.$isMolecular = this.doProcessLines = true;
 this.rd ();
 this.asc.setInfo ("molecularCalculationPointGroup", this.line.substring (this.line.indexOf (" OR ") + 4).trim ());
 return false;
@@ -260,7 +263,7 @@ if (indexToPrimitive[iAtom] < 0) {
 indexToPrimitive[iAtom] = nPrim++;
 }}
 }
-if (bsInputAtomsIgnore.nextSetBit (0) >= 0) for (var i = n; --i >= 0; ) if (bsInputAtomsIgnore.get (i)) this.vCoords.remove (i);
+if (bsInputAtomsIgnore.nextSetBit (0) >= 0) for (var i = n; --i >= 0; ) if (bsInputAtomsIgnore.get (i)) this.vCoords.removeItemAt (i);
 
 this.ac = this.vCoords.size ();
 JU.Logger.info (nPrim + " primitive atoms and " + this.ac + " conventionalAtoms");
@@ -276,12 +279,12 @@ return true;
 });
 Clazz.defineMethod (c$, "readAtoms", 
  function () {
-if (this.isMolecular) this.newAtomSet ();
+if (this.$isMolecular) this.newAtomSet ();
 this.vCoords = null;
 while (this.rd () != null && this.line.indexOf ("*") < 0) {
 if (this.line.indexOf ("X(ANGSTROM") >= 0) {
 this.setFractionalCoordinates (false);
-this.isMolecular = true;
+this.$isMolecular = true;
 }}
 var i = this.atomIndexLast;
 var doNormalizePrimitive = false;
@@ -354,13 +357,6 @@ this.applySymmetryAndSetTrajectory ();
 this.asc.newAtomSet ();
 }if (this.spaceGroupName != null) this.setSpaceGroupName (this.spaceGroupName);
 this.ac = 0;
-});
-Clazz.defineMethod (c$, "readEnergy", 
- function () {
-this.line = JU.PT.rep (this.line, "( ", "(");
-var tokens = this.getTokens ();
-this.energy = Double.$valueOf (Double.parseDouble (tokens[2]));
-this.setEnergy ();
 });
 Clazz.defineMethod (c$, "setEnergy", 
  function () {
@@ -451,7 +447,7 @@ var frequencies =  Clazz.newFloatArray (tokens.length, 0);
 var frequencyCount = frequencies.length;
 for (var i = 0; i < frequencyCount; i++) {
 frequencies[i] = this.parseFloatStr (tokens[i]);
-if (JU.Logger.debugging) JU.Logger.debug ((this.vibrationNumber + i) + " frequency=" + frequencies[i]);
+if (this.debugging) JU.Logger.debug ((this.vibrationNumber + i) + " frequency=" + frequencies[i]);
 }
 var ignore =  Clazz.newBooleanArray (frequencyCount, false);
 var iAtom0 = 0;
