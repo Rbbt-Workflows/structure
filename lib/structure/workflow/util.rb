@@ -1,15 +1,15 @@
 module Structure
 
   def self.name2pi (mutation, organism)
-   @@index = Organism.identifiers(organism).index :target => "Ensembl Gene ID", :order => true, :persist => true
-   @@ensg2enst = Organism.transcripts(organism).tsv :key_field => "Ensembl Gene ID", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true, :type => :flat
-   @@enst2ensp = Organism.transcripts(organism).index :target => "Ensembl Protein ID", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true
-   @@enst2name = Organism.transcript_name(organism).index :target => "Ensembl Transcript Name", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true
-   @@uni2ensp = Organism.uniprot2ensembl(organism).index :persist => true, :target => "Ensembl Protein ID"
-   @@ensp2uni = Organism.ensembl2uniprot(organism).index :persist => true, :target => "UniProt/SwissProt Accession"
+   @@name2ensg ||= Organism.identifiers(organism).index :target => "Ensembl Gene ID", :order => true, :persist => true
+   @@ensg2enst ||= Organism.transcripts(organism).tsv :key_field => "Ensembl Gene ID", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true, :type => :flat
+   @@enst2ensp ||= Organism.transcripts(organism).index :target => "Ensembl Protein ID", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true
+   @@enst2name ||= Organism.transcript_name(organism).index :target => "Ensembl Transcript Name", :fields => ["Ensembl Transcript ID"], :persist => true, :merge => true
+   @@uni2ensp ||= Organism.uniprot2ensembl(organism).index :persist => true, :target => "Ensembl Protein ID"
+   @@ensp2uni ||= Organism.ensembl2uniprot(organism).index :persist => true, :target => "UniProt/SwissProt Accession"
 
   orig_gene, _sep, change = mutation.partition ":"
-  gene = @@index[orig_gene]
+  gene = @@name2ensg[orig_gene]
 
   return nil if gene.nil? or @@ensg2enst[gene].nil?
 

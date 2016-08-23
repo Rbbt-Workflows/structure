@@ -30,9 +30,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    sinatra.rb
 
    workflow=workflow{
-    helpers.rb
     alignments.rb
     annotate.rb
+    helpers.rb
+    util.rb
     wizard.rb
    }
   }
