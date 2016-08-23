@@ -207,8 +207,9 @@ module Structure
       end
 
       if isoform[0..3] != "ENSP"
-        isoform = Structure.name2pi(mi, organism).split(":").first
-        mi = [isoform, residue] * ":"
+        mi = Structure.name2pi(mi, organism)
+        next if mi.nil?
+        isoform = mi.split(":").first
       end
 
       n = Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
@@ -255,8 +256,9 @@ module Structure
       end
 
       if isoform[0..3] != "ENSP"
-        isoform = Structure.name2pi(mi, organism).split(":").first
-        mi = [isoform, residue] * ":"
+        mi = Structure.name2pi(mi, organism)
+        next if mi.nil?
+        isoform = mi.split(":").first
       end
 
       n = Misc.insist do
@@ -306,8 +308,9 @@ module Structure
       end
 
       if isoform[0..3] != "ENSP"
-        isoform = Structure.name2pi(mi, organism).split(":").first
-        mi = [isoform, residue] * ":"
+        mi = Structure.name2pi(mi, organism)
+        next if mi.nil?
+        isoform = mi.split(":").first
       end
 
       annotations = annotator.annotate isoform, residue, organism
