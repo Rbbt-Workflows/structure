@@ -259,6 +259,14 @@
 
       if (! position > 0) return alert("No position specified")
 
+        var jmol = $('.jmol');
+        jmol.jmol_tool('pdb_alignment_map').then(function(map){
+          first = Object.keys(map)[0]
+          last = Object.keys(map)[Object.keys(map).length-1]
+          if (position < first || position > last)
+           alert("No position " + position + " in PDB (" + first + "-" + last + ")")
+        })
+
         rbbt.sequence.clear(sequence_element)
         rbbt.svg.clear(svg_element)
 
