@@ -30,3 +30,11 @@ get '/get_pdb' do
   content_type 'text/plain'
   send_file Open.open(query)
 end
+
+get '/appris_features' do
+  isoform = consume_parameter :isoform
+  raise "No isoform provided" if isoform.nil?
+  features = Structure.appris_features(isoform)
+  content_type :json
+  halt 200, features.to_json
+end
