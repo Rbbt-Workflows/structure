@@ -43,7 +43,7 @@ $.widget("rbbt.jmol_tool", {
   },
 
   clear: function(){
-    var resetStyleScript = "select all; wireframe off; spacefill off; cartoon off; ribbon off; rocket off; strand off; trace off; halos off;select protein; backbone off; color pink;cartoons on;color structure; ";
+    var resetStyleScript = "select all; wireframe off; spacefill off; cartoon off; ribbon off; rocket off; strand off; trace off; halos off;select protein; backbone off;cartoons on;color lightgrey; ";
     this._wrapper().script(resetStyleScript);
   },
 
@@ -51,7 +51,7 @@ $.widget("rbbt.jmol_tool", {
 
   load_pdb: function(pdb) {
     this._loaded_pdb = pdb.replace(/^=/,'')
-    this._wrapper().script("load " + pdb + "; wireframe off; restrict helix and sheet; select protein; backbone off; color pink;cartoons on;color structure;");
+    this._wrapper().script("load " + pdb + "; wireframe off; restrict helix and sheet; select protein; backbone off;cartoons on;color lightgrey;");
   },
 
   is_pdb_loaded: function(){
@@ -89,6 +89,10 @@ $.widget("rbbt.jmol_tool", {
 
   //{{{ JMOL STUFF
 
+  run_script: function(script){
+    this._wrapper().script(script);
+  },
+
   _select: function(position, chain){
     if (position instanceof Array){
       var tmp = $(position).map(function(){ return (parseInt(this)) }).toArray()
@@ -97,62 +101,45 @@ $.widget("rbbt.jmol_tool", {
         position_str = position
     }
 
-    this._wrapper().script("select protein and *.CA and " + position_str + ":" + chain + ";");
+    return "select protein and *.CA and " + position_str + ":" + chain + ";"
   },
 
   _color: function(color){
-    this._wrapper().script("color " + color + ";");
+    return "color " + color + ";"
   },
 
   _halos: function(color){
-    this._wrapper().script("color halos " + color + ";");
-    this._wrapper().script("halos on;");
+    return "color halos " + color + ";halos on;"
   },
 
   _style: function(style){
-    this._wrapper().script(style + ";");
+    return style + ";"
   },
 
   //{{{ MANIPULATION
 
   mark_chain_position: function(chain, position, color){
-    this._select(position, chain);
-    this._style("spacefill")
-    if (undefined === color){
-      this._halos("color");
-    }else{
-      this._color(color)
-    }
+     return this._select(position, chain) + this._style("cartoon") + (undefined === color ? this._halos("color") : this._color(color))
   },
 
   mark_chain_region: function(chain, start, end, color){
-    if (start == end){
-      this._select(start - 1, chain);
-    }else{
-      this._select((start - 1) + '-' + (end - 1), chain);
-    }
-
-    this._style("cartoon")
-    if (undefined === color){
-      this._halos("color");
-    }else{
-      this._color(color)
-    }
+    return  (start == end ? this._select(start - 1, chain) : this._select((start - 1) + '-' + (end - 1), chain)) + this._style("cartoon") + (undefined  === color ? this._halos("color") : this._color(color))
   },
 
   //{{{ HIGH LEVEL
 
   mark_positions: function(positions, color){
     var tool = this;
+    var script = "";
     tool._sequence_positions_in_pdb(positions, function(pdb_positions){
-     console.log(pdb_positions)
       for (var chain in pdb_positions){
         var position_list = pdb_positions[chain]
         position_list = $.grep(position_list,function(n){ return(n)});
         if (position_list != null && position_list.length > 0){
-          tool.mark_chain_position(chain, position_list, color);
+          script += tool.mark_chain_position(chain, position_list, color);
         }
       }
+      tool._wrapper().script(script);
     })
   },
 
@@ -161,15 +148,17 @@ $.widget("rbbt.jmol_tool", {
   },
 
 
-  mark_region: function(start, end, color){
+  mark_region_ends: function(start, end, color){
     var tool = this;
+    var script = "";
     tool._sequence_positions_in_pdb([start, end], function(pdb_positions){
       for (var chain in pdb_positions){
         var positions = pdb_positions[chain]
         if (null != positions[0] && null != positions[1]){
-          tool.mark_chain_region(chain, positions[0], positions[1], color)
+          script += tool.mark_chain_region(chain, positions[0], positions[1], color)
         }
       }
+    tool._wrapper().script(script)
     })
   },
 
@@ -221,6 +210,7 @@ $.widget("rbbt.jmol_tool", {
         chains[chain].push(parseInt(pos));
       }
     }
+    var script = ""
     for (chain in chains){
       var positions = chains[chain];
       positions = $(positions).map(function(){return parseInt(this);}).toArray().sort(function(a,b){return a-b});
@@ -228,13 +218,14 @@ $.widget("rbbt.jmol_tool", {
       var start = -1;
       for (var i = 0; i < positions.length; i++){
         if (positions[i] != last + 1){
-          if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
+          if (start != -1) { script += tool.mark_chain_region(chain, start, last, color); }
           start = positions[i]
         }
         last = positions[i]
       }
-      if (start != -1) { tool.mark_chain_region(chain, start, last, color); }
+      if (start != -1) { script += tool.mark_chain_region(chain, start, last, color); }
     }
+    tool._wrapper().script(script);
   },
 
   mark_aligned_region: function(color){
