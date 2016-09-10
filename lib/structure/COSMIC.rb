@@ -3,7 +3,6 @@ Workflow.require_workflow "COSMIC"
 
 module Structure
   def self.COSMIC_residues
-    #@COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => Rbbt.var.persistence.find(:lib)) do |data|
     @@COSMIC_residues ||= Persist.persist_tsv(nil, "COSMIC::residues", {}, :persist => true, :serializer => :list, :dir => cache_dir.COSMIC.find) do |data|
                            isoform_residue_mutations = TSV.setup({}, :key_field => "Isoform:residue", :fields => ["Genomic Mutations"], :type => :flat)
 
@@ -12,7 +11,6 @@ module Structure
                            db.monitor = {:desc => "Processing COSMIC", :step => 10000}
                            db.with_unnamed do
                             db.through  do |mutation, mis|
-                              protein_residues = {}
                               mis.flatten.each do |mi|
                                 next unless mi =~ /(ENSP\d+):([A-Z])(\d+)([A-Z])$/ and $2 != $4
                                 residue = $3.to_i
