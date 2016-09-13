@@ -282,7 +282,7 @@
           values = seq2pdb[key]
           for (num = 0; num < values.length; num++) {
             value = values[num]
-            pdb2seq[seq2pdb[key]] = key
+            pdb2seq[value] = key
           }
         }
       })
@@ -409,19 +409,22 @@
       var angstroms = parseInt(field.find('input[name=angstroms]').val());
       if (! angstroms > 0) angstroms = 5
 
-      rbbt.job("Structure", "neighbour_map", {distance: angstroms, pdb: pdb}, 'true').then(function(neighbours_pdb){
-        position_pdb = seq2pdb[position]
-        neighbours_pos_pdb = neighbours_pdb[position_pdb]
-        neighbours_pos_seq = []
-        for (number = 0; number < neighbours_pos_pdb.length; number++) {
-          neighbour_pos_seq = pdb2seq[neighbours_pos_pdb[number]]
-          neighbours_pos_seq.push(neighbour_pos_seq)
-         }
-        var protein_tool = field.parents('.protein_tool').first();
-        var jmol_element  = protein_tool.find('.jmol').first();
-        //rbbt.jmol.mark_positions(jmol_element, neighbours_pos_seq, 'purple')
-        neighbours_pos_seq.push(position)
-          for (number = 0; number < appris_features.length; number++) {
+      rbbt.job("Structure", "neighbour_map", {distance: angstroms, pdb: pdb}, 'true').then(function(all_neighbours_pdb){
+        positions_pdb = seq2pdb[position]
+        for (var pos = 0; pos < positions_pdb.length; pos++) {
+          position_pdb = positions_pdb[pos]
+          neighbours_position_pdb = all_neighbours_pdb[position_pdb]
+          neighbours_pos_seq = []
+          for (number = 0; number < neighbours_position_pdb.length; number++) {
+            neighbour_pos_seq = pdb2seq[neighbours_position_pdb[number]]
+            if (! neighbour_pos_seq) continue
+            neighbours_pos_seq.push(neighbour_pos_seq)
+          }
+          var protein_tool = field.parents('.protein_tool').first();
+          var jmol_element  = protein_tool.find('.jmol').first();
+          //rbbt.jmol.mark_positions(jmol_element, neighbours_pos_seq, 'purple')
+          neighbours_pos_seq.push(position)
+          for (var number = 0; number < appris_features.length; number++) {
             feature = appris_features[number]
             if (feature['type'] == 'firestar') {
               pos = 0
@@ -436,15 +439,15 @@
               }
             }
           }
-        for (number = 0; number < neighbours_pos_seq.length; number++) {
-          neighbour_pos_seq = neighbours_pos_seq[number]
-          if (cosmic_mutations[neighbour_pos_seq]) {
-             tool.jmol_tool("mark_position", neighbour_pos_seq, 'orange')
-
+          for (number = 0; number < neighbours_pos_seq.length; number++) {
+            neighbour_pos_seq = neighbours_pos_seq[number]
+            if (cosmic_mutations[neighbour_pos_seq]) {
+              //tool.jmol_tool("mark_position", neighbour_pos_seq, 'orange')
+            }
           }
-        }
 
-        tool.jmol_tool("mark_position", position, 'red')
+          tool.jmol_tool("mark_position", position, 'red')
+        }
       })
     })
    })
