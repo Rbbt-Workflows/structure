@@ -95,7 +95,7 @@
           %option(selected="selected") Select a PDB
           - (pdbs || []).each do |pdb, info|
             - url = "http://files.rcsb.org/view/#{pdb}.pdb"
-            %option(attr-pdb="#{url}")= "#{pdb}"
+            %option(attr-pdb="#{url}")= "#{pdb} (#{info[:region]}) (#{info[:resolution]}) (#{info[:method]})"
           - uniprot = uni[protein]
 
           - if uniprot and Structure::I3D_PROTEINS.include? uniprot
@@ -104,7 +104,7 @@
               - type = filename =~ /EXP/ ? :pdb : :model
               - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
               -# url =  "http://darthcaedus:28873/" << ["Structure", "get_protein_pdb"] * "/"  << "?" << Misc.hash2GET_params(:_format => :raw, :filename => filename)
-              %option.protein(attr-pdb=url)= "#{filename}"
+              %option.protein(attr-pdb=url)= "#{filename} (interactome3d)"
 
           - if uniprot and Structure::I3D_INTERACTIONS.include? uniprot
             - filepos = Structure::I3D_INTERACTIONS.identify_field "FILENAME"
@@ -112,7 +112,7 @@
               - type = filename =~ /EXP/ ? :pdb : :model
               - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
               -# url =  "http://darthcaedus:28873/" << ["Structure", "get_interaction_pdb"] * "/"  << "?" << Misc.hash2GET_params(:_format => :raw, :filename => filename)
-              %option.interaction(attr-pdb=url)= "#{filename}"
+              %option.interaction(attr-pdb=url)= "#{filename} (interactome3d)"
 
         .ui.input
           %input(placeholder='neighbours' type='text' name='neighbours')
