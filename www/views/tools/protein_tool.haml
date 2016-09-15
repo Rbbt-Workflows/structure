@@ -298,18 +298,24 @@
 
     body.on('click', '.ui.checkbox.cosmic', function(){
       if ($('.ui.checkbox.cosmic').hasClass('checked')) {
-        keys = Object.keys(cosmic_mutations)
-        keys = keys.map(Number);
-        colors = get_gradient(keys, 'green', 'red')
+        cosmic_frequencies = Object.values(cosmic_mutations)
+        cosmic_frequencies_log10 = []
+        for (var n = 0; n < cosmic_frequencies.length; n++) {
+          frequence_log = Math.log(cosmic_frequencies[n]) / Math.log(10)
+          cosmic_frequencies_log10.push(frequence_log)
+        }
+        colors = get_gradient(cosmic_frequencies_log10, 'green', 'red')
         script = ""
-        for (var position = 0; position < keys.length; position++) {
-          cosmic_mutation = keys[position]
+
+        for (var position = 0; position < Object.keys(cosmic_mutations).length; position++) {
+          mutation = parseInt(Object.keys(cosmic_mutations)[position])
+          frequence = cosmic_frequencies[position]
           color = colors[position]
           color = color.replace('#', '[x')
           color = color.concat(']')
-          if (! seq2pdb[cosmic_mutation]) continue
-          for (var pos = 0; pos < seq2pdb[cosmic_mutation].length; pos++) {
-            chain = seq2pdb[cosmic_mutation]
+          if (! seq2pdb[mutation]) continue
+          for (var pos = 0; pos < seq2pdb[mutation].length; pos++) {
+            chain = seq2pdb[mutation]
             script += "select protein and *.CA and " + chain[pos].slice(2) + ":" + chain[pos][0] + ";cartoon;color " + color + ";"
           }
         }
