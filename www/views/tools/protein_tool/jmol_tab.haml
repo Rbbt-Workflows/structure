@@ -46,6 +46,7 @@
     - (pdbs || []).each do |pdb, info|
       - url = "http://files.rcsb.org/view/#{pdb}.pdb"
       - map = pdb_alignments[pdb]
+      - next if map.empty?
       - pos = map.keys.collect{|p| p.to_i}
       - info[:region] = [pos.min, pos.max] * ".."
       %option(attr-url=url attr-pdb=pdb)= "#{pdb} (#{info[:region]}) #{info[:resolution]} #{info[:method]}"
@@ -55,6 +56,7 @@
         - type = filename =~ /EXP/ ? :experimental : :model
         - info = {}
         - map = pdb_alignments[filename]
+        - next if map.empty?
         - pos = map.keys.collect{|p| p.to_i}
         - info[:region] = [pos.min, pos.max] * ".."
         %option.protein(attr-url=url attr-pdb=filename)= "#{filename} (#{info[:region]}) #{type}"
@@ -64,6 +66,7 @@
         - type = filename =~ /EXP/ ? :experimental : :model
         - info = {}
         - map = pdb_alignments[filename]
+        - next if map.empty?
         - pos = map.keys.collect{|p| p.to_i}
         - uni1, uni2 = filename.split("-").values_at 0,1
         - gene1, gene2 = uni2name.values_at uni1, uni2
