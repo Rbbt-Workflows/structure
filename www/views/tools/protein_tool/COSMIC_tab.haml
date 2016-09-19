@@ -8,6 +8,7 @@
 
 
 - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
+- header "Residue", "NumericValue"
 - filter "Primary site"
 = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
   - log :sample_info
@@ -18,10 +19,13 @@
 
   - associations = associations.attach(sample_info)
 
-  - good_fields = associations.fields - ["Ensembl Protein ID"]
+  - associations.add_field "Residue" do |key,values|
+    - values["Change"].first.match(/(\d+)/)[0].to_i
+
+  - good_fields = ["Genomic Mutation", "Change", "Residue"] + associations.fields - ["Ensembl Protein ID"]
 
   - log :slice_and_show
-  - associations.slice(good_fields)
+  - associations.slice(good_fields.uniq)
 
 :deferjs
 
