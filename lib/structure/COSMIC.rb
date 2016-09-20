@@ -99,16 +99,15 @@ module Structure
                                 Persist.persist_tsv(COSMIC.geneExpression, nil, {:key_field => "Sample name:Ensembl Protein ID", :fields => ["Regulation"]}, {:persist => true, :serializer => :single}) do |data|
                                   organism = "Hsa/feb2014"
                                   enst2ensp = Organism.transcripts(organism).tsv :key_field => "Ensembl Transcript ID", :fields => ["Ensembl Protein ID"], :merge => true, :type => :flat, :persist => true
-                                  TSV.traverse COSMIC.geneExpression, :bar => true, :type => :double, :into => data do |sample, values|
+
+                                  TSV.traverse COSMIC.geneExpression, :bar => true, :type => :double, :cpus => 10 do |sample, values|
                                     transcripts, exprs = values
                                     proteins = enst2ensp.chunked_values_at transcripts
                                     res = []
                                     proteins.zip(exprs).each do |ensp,expr|
                                       key = [sample, ensp] * ":"
-                                      res << [key, expr]
+                                      data[key] = expr
                                     end
-                                    res.extend MultipleResult
-                                    res
                                   end
                                 end
                               end
