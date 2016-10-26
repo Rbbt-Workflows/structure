@@ -16,12 +16,42 @@ module Structure
 
   ANNOTATORS = IndiferentHash.setup({})
 
-  ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample name', 'Primary site', 'Site subtype 1', 'Site subtype 2', 'Site subtype 3', 'Primary histology', 'Histology subtype 1', 'Histology subtype 2', 'Histology subtype 3', "PMID", "CNA", "Regulation" do |isoform, residue,organism|
+  #ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample name', 'Primary site', 'Site subtype 1', 'Site subtype 2', 'Site subtype 3', 'Primary histology', 'Histology subtype 1', 'Histology subtype 2', 'Histology subtype 3', "PMID", "CNA", "Regulation" do |isoform, residue,organism|
+
+  #  @cosmic_residue_mutations ||= Structure.COSMIC_residues
+  #  @cosmic_mutation_annotations ||= Structure.COSMIC_mutation_annotations
+  #  @cosmic_complete_cna ||= Structure.COSMIC_complete_cna
+  #  @cosmic_complete_gene_expression ||= Structure.COSMIC_complete_gene_expression
+
+  #  isoform_residue = isoform + ":" << residue.to_s
+  #  mutations = @cosmic_residue_mutations[isoform_residue]
+
+  #  next if mutations.nil?
+  #  mutations.uniq!
+  #  next if mutations.empty?
+  #  tmp = {}
+  #  mutations.each do |mutation|
+  #    annot = @cosmic_mutation_annotations[mutation]
+  #    Misc.zip_fields(annot).each do |a|
+  #      sample, *rest = a
+  #      sample_isoform = sample + ":" + isoform
+  #      cna = @cosmic_complete_cna[sample_isoform]
+  #      geneExpression = @cosmic_complete_gene_expression[sample_isoform]
+  #      next if tmp.include? sample
+  #      rest << cna << geneExpression
+  #      tmp[sample] = rest
+  #    end
+  #  end
+  #  annot = tmp.collect{|p| p.flatten}
+  #  annot = Misc.zip_fields(annot)
+  #  annot.unshift mutations
+  #  annot
+  #end
+
+  ANNOTATORS["COSMIC"] = Annotator.new "Genomic Mutation", 'Sample name', 'Primary site', 'Site subtype 1', 'Site subtype 2', 'Site subtype 3', 'Primary histology', 'Histology subtype 1', 'Histology subtype 2', 'Histology subtype 3', "PMID" do |isoform, residue,organism|
 
     @cosmic_residue_mutations ||= Structure.COSMIC_residues
     @cosmic_mutation_annotations ||= Structure.COSMIC_mutation_annotations
-    @cosmic_complete_cna ||= Structure.COSMIC_complete_cna
-    @cosmic_complete_gene_expression ||= Structure.COSMIC_complete_gene_expression
 
     isoform_residue = isoform + ":" << residue.to_s
     mutations = @cosmic_residue_mutations[isoform_residue]
@@ -35,10 +65,7 @@ module Structure
       Misc.zip_fields(annot).each do |a|
         sample, *rest = a
         sample_isoform = sample + ":" + isoform
-        cna = @cosmic_complete_cna[sample_isoform]
-        geneExpression = @cosmic_complete_gene_expression[sample_isoform]
         next if tmp.include? sample
-        rest << cna << geneExpression
         tmp[sample] = rest
       end
     end
