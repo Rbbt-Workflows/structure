@@ -36,6 +36,10 @@ $.widget("rbbt.sequence_tool", {
   },
 
   // HIGH LEVEL
+  
+  sequence_length: function(){
+    return this.options.seq_len;
+  }
 
   place: function(left, size){
     this.element.css('margin-left', left).css('width', size)

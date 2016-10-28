@@ -12,22 +12,22 @@
 
 - association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
 - associations = association_items.tsv.to_double
-- Log.tsv associations
 - log :sample_mutations
 - sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true, :target => "Sample name=~Sample", :source => "Genomic Mutation")
 - sample_mutations.fields = ["Sample"]
 - associations = associations.attach(sample_mutations)
-- cosmic_mutations = {}
+
+- cosmic_residue_incidence = {}
 - associations.each do |k,values|
   - genomic_mutation, isoform, mutated_aa, samples = values
   - mutated_aa = mutated_aa.first
-  - mutated_aa =~ /^([A-Z])(\d+)([A-Z])$/
+  - mutated_aa =~ /^([A-Z*])(\d+)([A-Z*]+|Indel|Frameshift)$/
   - next if $1 == $3
   - key = $2.to_i
-  - if cosmic_mutations.key? key
-    - cosmic_mutations[key] += samples.length
+  - if cosmic_residue_incidence.key? key
+    - cosmic_residue_incidence[key] += samples.length
   - else
-    - cosmic_mutations[key] = samples.length
+    - cosmic_residue_incidence[key] = samples.length
 
 :sass
   .protein_tool
@@ -41,6 +41,8 @@
     .tabular.menu
       width: 300px !important
 
+- tabs = find_all('tools/protein_tool/*_tab.haml').uniq.sort
+
 .protein_tool.very.basic.ui.segment(id=id)
   .controls.very.basic.segment
     .ui.input
@@ -49,10 +51,13 @@
       .mark.submit.ui.button Mark
       .clear.submit.ui.button Clear
       .align.submit.ui.button Align
+
   .ui.tabular.menu.top.attached
-    .item.active(data-tab='Sequence') Sequence
-    .item(data-tab='JMol') JMol
-    .item(data-tab='COSMIC') COSMIC
+    .item.active(data-tab=Sequence) Sequence
+    - tabs.each do |tabfile|
+      - name = File.basename(tabfile).sub('_tab.haml','')
+      .item(data-tab=name)= name
+
   .window.bottom.attached.ui.segment
     .secondary_structure.active.very.basic.ui.segment.tab(data-tab='Sequence' style='background:white')
       .svg(data-sequence_length='#{sequence.length}')
@@ -66,6 +71,7 @@
           %p.error.ui.message
             Could not download protein SVG, try again later.
             %pre=$!.message
+
       .sequence(style='width: 687px; padding: 10px; overflow-x: auto;font-family: monospace;margin-left:113px;margin-top:-10px;background-color:white; border: solid 1px #EEE')
         %span.sequence(width="100%")= sequence
         %span.marks(width="100%")
@@ -88,16 +94,22 @@
         %p.scroll.ui.message
           Scroll horizontaly across the sequence
 
-    .jmol.very.basic.ui.segment.tab(data-tab='JMol')
+    - tabs.each do |tabfile|
+      - name = File.basename(tabfile).sub('_tab.haml','')
+      .very.basic.ui.segment.tab(class=name data-tab=name)
+        = partial_render(tabfile, :associations => associations, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
+
+    -#.jmol.very.basic.ui.segment.tab(data-tab='JMol')
       = fragment do
-        = partial_render('tools/protein_tool/jmol_tab', :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_mutations => cosmic_mutations)
+        = partial_render('tools/protein_tool/jmol_tab', :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
 
 
-    .COSMIC.very.basic.ui.segment.tab(data-tab='COSMIC')
+    -#.COSMIC.very.basic.ui.segment.tab(data-tab='COSMIC')
       = fragment do
         = partial_render('tools/protein_tool/COSMIC_tab', :protein => protein, :associations => associations, :id => id)
+
 :sass
-  .jmol:not(.active)
+  .JMol:not(.active)
     display: block !important
     visibility: hidden
     height: 0px

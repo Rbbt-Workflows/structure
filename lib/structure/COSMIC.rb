@@ -12,7 +12,7 @@ module Structure
                            db.with_unnamed do
                             db.through  do |mutation, mis|
                               mis.flatten.each do |mi|
-                                next unless mi =~ /(ENSP\d+):([A-Z])(\d+)([A-Z])$/ and $2 != $4
+                                next unless mi =~ /(ENSP\d+):([A-Z])(\d+)([A-Z]|Indel|Frameshift)$/ and $2 != $4
                                 residue = $3.to_i
                                 protein = $1
                                 isoform_residue_mutations[[protein, residue] * ":"] ||= []

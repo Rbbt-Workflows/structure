@@ -54,6 +54,10 @@ $.widget("rbbt.jmol_tool", {
     this._wrapper().script("load " + pdb + "; wireframe off; restrict helix and sheet; select protein; backbone off;cartoons on;color lightgrey;");
   },
 
+  set_alignment: function(seq2pdb){
+    this.seq2pdb = seq2pdb;
+  },
+
   is_pdb_loaded: function(){
     var wrapper = this._wrapper();
     var filename = wrapper.getProperty("filename").filename;
@@ -234,5 +238,38 @@ $.widget("rbbt.jmol_tool", {
       tool.mark_region(color, map)
     })
   },
+
+  color_mutation_density: function(residue_incidence){
+    var tool = this;
+
+    var log10_counts = [];
+    var residues = Object.keys(residue_incidence);
+
+    for (var i = 0; i < residues.length; i++){
+      var res = residues[i]
+      var count = parseInt(residue_incidence[res]);
+      var log_count = Math.log(count) / Math.log(10);
+      log10_counts.push(log_count)
+    }
+
+    colors = get_gradient(log10_counts, 'green', 'red');
+    script = "";
+
+    var res_colors = [];
+    for (var i = 0; i < residues.length; i++){
+      var res = residues[i]
+      var color = colors[i]
+      color = color.replace('#', '[x')
+      color = color.concat(']')
+
+      if (! this.seq2pdb[res]) continue;
+      chain_positions = this.seq2pdb[res];
+      for (var cpos = 0; cpos < chain_positions.length; cpos++) {
+        script += "select protein and *.CA and " + chain_positions[cpos].slice(2) + ":" + chain_positions[cpos][0] + ";cartoon;color " + color + ";";
+      }
+    };
+
+    this._wrapper().script(script);
+  }
 
 });

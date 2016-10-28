@@ -29,12 +29,12 @@
 
 :deferjs
 
-  $('.highlight.submit').click(function(){
+  $('.COSMIC .highlight.submit').click(function(){
     var link = $(this);
     var COSMIC = link.parents('.COSMIC').first();
     var protein_tool = COSMIC.parents('.protein_tool').first();
     var svg_element  = protein_tool.find('.svg').first();
-    var jmol_element  = protein_tool.find('.jmol').first();
+    var jmol_element  = protein_tool.find('.JMol').first();
 
     var table = COSMIC.find('table');
     var url = table.attr('attr-url');
@@ -42,7 +42,7 @@
 
     url = add_parameter(url, '_format', 'json')
     url = add_parameter(url, '_page', 'all')
-    url = add_parameter(url, '_column', 'Change')
+    //url = add_parameter(url, '_column', 'Change')
     if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
 
     var color = 'red'
@@ -52,46 +52,28 @@
       success: function(data){
         data = JSON.parse(data);
         var change_positions = [];
+        var change_counts = {}
 
         forHash(data, function(mutation, values){
-          var change = values[0];
-          var samples = values[1];
+          var change = values[1][0];
+          var samples = values[3];
           var m;
           if (m = change.match(/[A-Z](\d+)[A-Z]/)){
-            change_positions.push(parseInt(m[1]));
-          }
-        })
-        var change_counts = []
-
-        forArray(change_positions, function(position){
-          if (change_counts[position] === undefined){
-            change_counts[position] = 1
-          }else{
-            change_counts[position] = change_counts[position] + 1
+            var pos = parseInt(m[1])
+            change_positions.push(pos);
+            if (change_counts[pos] === undefined){
+              change_counts[pos] = samples.length
+            }else{
+              change_counts[pos] = change_counts[pos] + samples.length
+            }
           }
         })
 
         var protein_tool = $('.protein_tool#' + '#{id}');
 
+        rbbt.jmol.color_positions(jmol_element, change_counts);
         rbbt.svg.mark_positions(svg_element, change_positions, color);
-        rbbt.jmol.mark_positions(jmol_element, change_positions, 'red');
 
-        //rbbt.do_try(function(){
-        //  rbbt.jmol.mark_positions(jmol_element, change_positions, 'red');
-        //  //forHash(change_counts, function(position, count){
-        //  //  var jcolor = 'white';
-
-        //  //  if ('string' == typeof count) count = parseInt(count)
-        //  //  if ('string' == typeof position) position = parseInt(position)
-
-        //  //  if (count > 1) jcolor = 'green'
-        //  //  if (count > 2) jcolor = 'organge'
-        //  //  if (count > 3) jcolor = 'red'
-
-        //  //  console.log([position, count, jcolor, jmol_element])
-        //  //  rbbt.jmol.mark_position(jmol_element, position, jcolor);
-        //  //})
-        //})
       }
     })
     return false;

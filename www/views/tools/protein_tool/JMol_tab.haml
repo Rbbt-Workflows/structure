@@ -98,9 +98,9 @@
 
     require_js(["/js-find/rbbt.protein_tool.js","/js-find/jmol.js"], function(){
       var position = #{position ?  position : "undefined"}
-      var tool = $('.jmol').last().jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
+      var tool = $('.JMol').last().jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
 
-      var cosmic_mutations = #{cosmic_mutations.to_json}
+      var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json}
       var appris_features = {}
       var pdb2seq = {}
       var seq2pdb = {}
@@ -120,6 +120,7 @@
         }
 
         tool.jmol_tool("load_pdb", url)
+        tool.jmol_tool("set_alignment", pdb_alignments[pdb])
         $('.ui.checkbox.cosmic').removeClass('disabled')
         rbbt.ajax({url:"/appris_features?isoform=#{protein}"}).then(function(features){
           appris_features = features
@@ -155,29 +156,7 @@
 
       body.on('click', '.ui.checkbox.cosmic', function(){
         if ($('.ui.checkbox.cosmic').hasClass('checked')) {
-          cosmic_frequencies = []
-          forHash(cosmic_mutations, function(k,v){cosmic_frequencies.push(v)})
-          cosmic_frequencies_log10 = []
-          for (var n = 0; n < cosmic_frequencies.length; n++) {
-            frequence_log = Math.log(cosmic_frequencies[n]) / Math.log(10)
-            cosmic_frequencies_log10.push(frequence_log)
-          }
-          colors = get_gradient(cosmic_frequencies_log10, 'green', 'red')
-          script = ""
-
-          for (var position = 0; position < Object.keys(cosmic_mutations).length; position++) {
-            mutation = parseInt(Object.keys(cosmic_mutations)[position])
-            frequence = cosmic_frequencies[position]
-            color = colors[position]
-            color = color.replace('#', '[x')
-            color = color.concat(']')
-            if (! seq2pdb[mutation]) continue
-            for (var pos = 0; pos < seq2pdb[mutation].length; pos++) {
-              chain = seq2pdb[mutation]
-              script += "select protein and *.CA and " + chain[pos].slice(2) + ":" + chain[pos][0] + ";cartoon;color " + color + ";"
-            }
-          }
-          tool.jmol_tool("run_script", script)
+          tool.jmol_tool('color_mutation_density', cosmic_residue_incidence)
         }
       })
 
@@ -215,7 +194,7 @@
         var protein_tool = controls.parents('.protein_tool').first();
         var sequence_element  = protein_tool.find('.sequence').first();
         var svg_element  = protein_tool.find('.svg').first();
-        var jmol_element  = protein_tool.find('.jmol').first();
+        var jmol_element  = protein_tool.find('.JMol').first();
 
         rbbt.sequence.clear(sequence_element)
         rbbt.svg.clear(svg_element)
@@ -228,7 +207,7 @@
         var protein_tool = controls.parents('.protein_tool').first();
         var sequence_element  = protein_tool.find('.sequence').first();
         var svg_element  = protein_tool.find('.svg').first();
-        var jmol_element  = protein_tool.find('.jmol').first();
+        var jmol_element  = protein_tool.find('.JMol').first();
 
         var position = parseInt(controls.find('input[name=position]').val());
 
@@ -254,7 +233,7 @@
         var protein_tool = controls.parents('.protein_tool').first();
         var svg_element  = protein_tool.find('.svg').first();
 
-        var jmol = $('.jmol');
+        var jmol = $('.JMol');
 
         if(jmol.jmol_tool('is_pdb_loaded')){
           rbbt.svg.mark_aligned_region(svg_element, seq2pdb, 'blue');
@@ -285,7 +264,7 @@
               neighbours_pos_seq.push(neighbour_pos_seq)
             }
             var protein_tool = field.parents('.protein_tool').first();
-            var jmol_element  = protein_tool.find('.jmol').first();
+            var jmol_element  = protein_tool.find('.JMol').first();
             //rbbt.jmol.mark_positions(jmol_element, neighbours_pos_seq, 'purple')
             neighbours_pos_seq.push(position)
             for (var number = 0; number < appris_features.length; number++) {
@@ -305,7 +284,7 @@
             }
             for (number = 0; number < neighbours_pos_seq.length; number++) {
               neighbour_pos_seq = neighbours_pos_seq[number]
-              if (cosmic_mutations[neighbour_pos_seq]) {
+              if (cosmic_residue_incidence[neighbour_pos_seq]) {
                 //tool.jmol_tool("mark_position", neighbour_pos_seq, 'orange')
               }
             }

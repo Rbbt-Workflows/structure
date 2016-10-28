@@ -62,10 +62,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
    public=public{
     js=js{
-     rbbt.protein_tool.js
-     isoform_svg.js
      jmol.js
+     isoform_svg.js
      protein_tool.js
+     rbbt.protein_tool.js
      secondary_structure.js
      sequence.js
      jquery-jmol=jquery-jmol{
@@ -78,9 +78,10 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    tools=tools{
     protein_tool.haml
     protein_tool=protein_tool{
-     controls.haml
-     jmol_tab.haml
+     Sequence_tab.haml
      COSMIC_tab.haml
+     JMol_tab.haml
+     controls.haml
     }
    }
    entity=entity{

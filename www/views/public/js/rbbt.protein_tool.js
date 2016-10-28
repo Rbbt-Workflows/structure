@@ -52,8 +52,11 @@ rbbt.svg.mark_position = function(element, position, color){
 }
 
 rbbt.svg.mark_positions = function(element, positions, color){
-  for ( i in positions){
+  for (var i = 0; i < positions.length; i++){
     var position = positions[i]
+    var seq_len  = parseInt(element.attr('data-sequence_length'));
+    jitter = Math.ceil(seq_len / 1000) + 2;
+    position = position + Math.floor(Math.random() * 2 * jitter) -jitter + 1
     rbbt.svg.mark_position(element, position, color)
   }
 }
@@ -108,13 +111,22 @@ rbbt.jmol.clear = function(element){
   element.jmol_tool('clear')
 }
 
+rbbt.jmol.loaded = function(element){
+  return(element.jmol_tool('is_pdb_loaded'));
+}
+
 rbbt.jmol.mark_position = function(element, position, color){
- if (undefined === color) color = 'red'
- element.jmol_tool('mark_position', position, color)
+  if (undefined === color) color = 'red';
+  if (rbbt.jmol.loaded(element)){element.jmol_tool('mark_position', position, color)}
 }
 
 rbbt.jmol.mark_positions = function(element, positions, color){
- if (undefined === color) color = 'red'
- element.jmol_tool('mark_positions', positions, color)
+  if (undefined === color) color = 'red';
+  if (rbbt.jmol.loaded(element)){element.jmol_tool('mark_positions', positions, color)}
 }
+
+rbbt.jmol.color_positions = function(element, incidence){
+  if (rbbt.jmol.loaded(element)){element.jmol_tool('color_mutation_density', incidence)}
+}
+
 
