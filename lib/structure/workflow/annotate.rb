@@ -266,7 +266,7 @@ module Structure
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
   input :distance, :float, "Distance with partner residue", 8
   task :mi_interfaces => :tsv do |mis,organism,distance|
-    mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner Ensembl Protein ID", "PDB", "Partner Residues"], :type => :double, :namespace => organism
+    mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner (Ensembl Protein ID)", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
     TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Mutated Isoform interfaces"), :into => mi_annotations, :type => :array do |mi|
 

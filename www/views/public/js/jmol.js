@@ -5,7 +5,7 @@ $.widget("rbbt.jmol_tool", {
 
   options: {
     width: '100%',
-    height: 480,
+    height: 700,
     debug: false,
     color: "0xFFFFFF",
     addSelectionOptions: true,
@@ -22,7 +22,10 @@ $.widget("rbbt.jmol_tool", {
   _create: function() {
     var tool = this;
 
-    require_js(["/js-find/jsmol/JSmol.min.nojq.js"], function(){
+    var old_jQuery = $;
+    require_js(["/js-find/jsmol/JSmol.min.js"], function(){
+      $ = old_jQuery
+
       Jmol._z=0
       Jmol._serverUrl='/get_pdb'
       tool.element.addClass('jmol_tool_init')
