@@ -16,7 +16,7 @@ module Structure
   task :pdb_chain_position_in_sequence => :tsv 
   export_asynchronous :pdb_chain_position_in_sequence
 
-  input :distance, :float, "Distance", 5
+  input :distance, :float, "Distance in angstroms", 5
   input :pdb, :string, "Option 1: Name of pdb to align (from rcsb.org)", nil
   input :pdbfile, :text, "Option 2: Content of pdb to align", nil
   task :neighbour_map => :tsv 
