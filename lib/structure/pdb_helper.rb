@@ -64,7 +64,7 @@ module PDBHelper
         stream.close
 
         chains.each do |chain,chars|
-          chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase]} * ""
+          chains[chain] = chars.collect{|aa| aa.nil? ? '?' : Misc::THREE_TO_ONE_AA_CODE[aa.downcase] || aa.strip} * ""
         end
 
         chains
