@@ -78,7 +78,6 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    tools=tools{
     protein_tool.haml
     protein_tool=protein_tool{
-     Sequence_tab.haml
      COSMIC_tab.haml
      JMol_tab.haml
      controls.haml

@@ -133,6 +133,21 @@ $.widget("rbbt.jmol_tool", {
     return  (start == end ? this._select(start - 1, chain) : this._select((start - 1) + '-' + (end - 1), chain)) + this._style("cartoon") + (undefined  === color ? this._halos("color") : this._color(color))
   },
 
+  color_chains: function(){
+   var tool = this;
+   var script = "";
+   var chain_color = {A: 'grey', B: 'yellow'}
+    forArray(["A", "B"], function(chain){
+     var start = 1;
+     var end = 10000;
+     var color = chain_color[chain]
+     script =  script + tool._select((start - 1) + '-' + (end - 1), chain) + tool._style("cartoon") + tool._color(color) + ";"
+    })
+    console.log(script)
+    tool._wrapper().script(script)
+  },
+
+
   //{{{ HIGH LEVEL
 
   mark_positions: function(positions, color){
@@ -255,7 +270,7 @@ $.widget("rbbt.jmol_tool", {
       log10_counts.push(log_count)
     }
 
-    colors = get_gradient(log10_counts, 'green', 'red');
+    colors = get_gradient(log10_counts, '#FAA', '#F00');
     script = "";
 
     var res_colors = [];

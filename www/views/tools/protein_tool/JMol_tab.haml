@@ -135,7 +135,8 @@
         seq2pdb = pdb_alignments[pdb]
         keys = Object.keys(seq2pdb)
         keys = keys.map(Number);
-        tool.jmol_tool("mark_region", 'darkslategray', seq2pdb)
+        //tool.jmol_tool("mark_region", 'darkslategray', seq2pdb)
+        tool.jmol_tool("color_chains")
         for (number = 0; number < keys.length; number++) {
           key = keys[number]
           values = seq2pdb[key]
