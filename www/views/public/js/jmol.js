@@ -38,7 +38,7 @@ $.widget("rbbt.jmol_tool", {
 
   _wrapper: function() {
     var tool = this
-    return {script: function(code){Jmol.script(tool.options.applet, code)}, getProperty: function(prop){return JSON.parse(Jmol.getPropertyAsJSON(tool.options.applet, prop))}};
+    return {scriptEcho: function(code){return Jmol.scriptEcho(tool.options.applet, code)},script: function(code){return Jmol.script(tool.options.applet, code)}, getProperty: function(prop){return JSON.parse(Jmol.getPropertyAsJSON(tool.options.applet, prop))}};
   },
 
   background: function(color){
@@ -133,11 +133,25 @@ $.widget("rbbt.jmol_tool", {
     return  (start == end ? this._select(start - 1, chain) : this._select((start - 1) + '-' + (end - 1), chain)) + this._style("cartoon") + (undefined  === color ? this._halos("color") : this._color(color))
   },
 
+  pdb_chains: function(){
+   var res = this._wrapper().scriptEcho("select protein; show chain");
+   var elems = res.split("\n");
+   return elems
+  },
+
   color_chains: function(){
    var tool = this;
    var script = "";
-   var chain_color = {A: 'grey', B: 'yellow'}
-    forArray(["A", "B"], function(chain){
+   var colors = ['lightgray', 'yellow', 'purple', 'orange']
+   var chain_color = {};
+   var chains = this.pdb_chains()
+
+   for (i = 0; i < chains.length; i++){
+     var chain = chains[i]
+      chain_color[chain] = colors[i]
+   }
+
+   forArray(chains, function(chain){
      var start = 1;
      var end = 10000;
      var color = chain_color[chain]
@@ -265,12 +279,14 @@ $.widget("rbbt.jmol_tool", {
 
     for (var i = 0; i < residues.length; i++){
       var res = residues[i]
-      var count = parseInt(residue_incidence[res]);
+      var count = parseInt(residue_incidence[res]) + 1;
       var log_count = Math.log(count) / Math.log(10);
       log10_counts.push(log_count)
     }
 
-    colors = get_gradient(log10_counts, '#FAA', '#F00');
+    log10_counts.push(0)
+
+    colors = get_gradient(log10_counts, '#D3D3D3', '#F00');
     script = "";
 
     var res_colors = [];

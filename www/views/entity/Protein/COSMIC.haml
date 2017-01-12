@@ -1,8 +1,9 @@
-
 - organism = COSMIC.organism
-- name = entity.name || entity
+- protein = entity
+- name = protein.name || protein
+- sequence_length = protein.sequence.length.to_f
 
-- association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [entity], :source => :all)
+- association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
 - mutation_isoform_info = association_items.tsv.to_double
 
 - log :sample_mutations
@@ -15,6 +16,7 @@
 - databases = Structure::ANNOTATORS.keys
 - database_feature_counts = {}
 - feature_locations = {}
+- feature_sizes = {}
 - databases.each do |database|
   - next if database == "COSMIC"
   - annotator = Structure::ANNOTATORS[database]
@@ -27,12 +29,22 @@
     - feature_pos ||= i if f =~ /description|ID/i
     - location_pos ||= i if f =~ /location|range/i
 
+  - (1..sequence_length).to_a.each do |residue|
+    - values = annotator.annotate(protein, residue, organism)
+    - next if values.nil?
+    - if location_pos
+      - Misc.zip_fields(values.values_at(feature_pos, location_pos)).each do |entry|
+        - feature, location = entry
+        - feature_sizes[feature] ||= 0
+        - feature_sizes[feature] += 1
+
   - mutation_isoform_info = mutation_isoform_info.add_fields annotator.fields do |k,v|
     - new = [[]] * annotator.fields.length
     - samples = v["COSMIC Sample"].length
     - v["Change"].each do |c|
+      - next if c =~ /([A-Z*])\d+\1/
       - residue = c.match(/(\d+)/)[1].to_i
-      - values = annotator.annotate(entity, residue, organism)
+      - values = annotator.annotate(protein, residue, organism)
       - next if values.nil?
       - seen = []
       - if location_pos
@@ -41,7 +53,8 @@
           - next if feature.nil? or feature.empty? or seen.include? feature
           - seen << feature
           - feature_counts[feature] += samples
-          - feature_locations[feature] ||= location.split(":").collect{|p| p.to_i}
+          - feature_locations[feature] ||= []
+          - feature_locations[feature] << location.split(":").collect{|p| p.to_i}
       - values.each_with_index do |v,i|
         - new[i] += v
     - new.compact!
@@ -54,7 +67,7 @@
   
 - all_sample_hits = mutation_isoform_info.column("COSMIC Sample").values.flatten
 - num_samples = all_sample_hits.uniq.length.to_f
-- aas = entity.sequence.length.to_f * num_samples
+- aas = sequence_length * num_samples
 - global_frequency = all_sample_hits.length.to_f / aas
 - TSV.setup(feature_counts, :key_field => "Feature", :fields => ["Counts"], :type => :single, :namespace => organism)
 - header "Binomial Significance", NumericValue
@@ -63,19 +76,17 @@
   = table :page => "1~Binomial Significance", :table_id => "Most affected features in COSMIC for #{ name }" do
     - tsv = feature_counts.to_list.add_field "Binomial Significance" do |feature,v|
       - counts = v["Counts"]
-      - location = feature_locations[feature]
-      - size = location.last - location.first + 1
+      - size = feature_sizes[feature]
       - R.eval("binom.test(#{counts}, #{size * num_samples}, #{ global_frequency }, 'greater')$p.value")
 
-    - tsv = tsv.add_field "Location" do |feature,v|
-      - feature_locations[feature] * ":"
+    - tsv = tsv.add_field "Locations hit" do |feature,v|
+      - feature_locations[feature].uniq.collect{|p| p * ":"} * ", "
 
-    - tsv = tsv.add_field "Size" do |feature,v|
-      - location = feature_locations[feature]
-      - size = location.last - location.first + 1
+    - tsv = tsv.add_field "Total feature size" do |feature,v|
+      - size = feature_sizes[feature]
       - size.to_s
 
-    - tsv = tsv.add_field "Description" do |feature,v|
+    - tsv = tsv.add_field "Feature description" do |feature,v|
       - case
       - when feature =~ /^IPR\d/
         - feature = InterProDomain.setup(feature.dup, organism) 

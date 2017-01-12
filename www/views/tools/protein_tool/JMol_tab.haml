@@ -22,17 +22,24 @@
   - interactome_interaction_pdbs = []
 
 - pdb_alignments = {}
+- pdbs = [] if pdbs.nil?
 
+- log :traversing, "Traversing PDBs"
 - TSV.traverse pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |pdb,info|
-  - res = Structure.job(:pdb_alignment_map, pdb, :pdb => pdb, :sequence => protein.sequence).run
+  - job = Structure.job(:pdb_alignment_map, pdb, :pdb => pdb, :sequence => protein.sequence)
+  - res = job.produce.load
   - [pdb,res]
 
+- log :traversing, "Traversing interactome protein models"
 - TSV.traverse interactome_protein_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
-  - res = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence).run
+  - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
+  - res = job.produce.load
   - [filename,res]
  
+- log :traversing, "Traversing interactome interaction models"
 - TSV.traverse interactome_interaction_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
-  - res = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence).run
+  - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
+  - res = job.produce.load
   - [filename,res]
  
  

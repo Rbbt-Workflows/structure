@@ -41,7 +41,7 @@
     .tabular.menu
       width: 300px !important
 
-- tabs = find_all('tools/protein_tool/*_tab.haml').uniq.sort
+- tabs = glob_all('tools/protein_tool/*_tab.haml').uniq.sort
 
 .protein_tool.very.basic.ui.segment(id=id)
   .controls.very.basic.segment
