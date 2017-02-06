@@ -81,6 +81,7 @@
         - info[:region] = [pos.min, pos.max] * ".."
         %option.interaction(attr-pdb=filename attr-url=url)= "#{filename} (#{info[:region]}) #{info[:pair]} #{type}"
 
+-#
   .ui.input
     %input(placeholder='neighbours' type='text' name='neighbours')
   .ui.input
@@ -91,6 +92,7 @@
   .ui.toggle.checkbox.disabled.appris
     %input(name="public" type="checkbox")
     %label Features
+
   .ui.toggle.checkbox.disabled.cosmic
     %input(name="public" type="checkbox")
     %label COSMIC mutations
@@ -219,19 +221,19 @@
 
         var position = parseInt(controls.find('input[name=position]').val());
 
-        if (typeof pdb == 'undefined' || pdb == "Select a pdb") return alert("No pdb specified")
         if (! position > 0) return alert("No position specified")
 
         first = Object.keys(seq2pdb)[0]
         last = Object.keys(seq2pdb)[Object.keys(seq2pdb).length-1]
-        if (!seq2pdb[position]) alert("No position " + position + " in PDB (" + first + "-" + last + ")")
 
         rbbt.sequence.clear(sequence_element)
         rbbt.svg.clear(svg_element)
 
         rbbt.sequence.mark_position(sequence_element, position)
         rbbt.svg.mark_position(svg_element, position)
-        rbbt.jmol.mark_position(jmol_element, position)
+
+        if (typeof pdb != 'undefined' && pdb != "Select a pdb" && seq2pdb[position])
+          rbbt.jmol.mark_position(jmol_element, position)
       })
 
 
