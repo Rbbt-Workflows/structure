@@ -96,7 +96,9 @@
   .ui.toggle.checkbox.disabled.cosmic
     %input(name="public" type="checkbox")
     %label COSMIC mutations
-.window
+
+.JMol_viewer
+  .window
 
 
 
@@ -107,7 +109,8 @@
 
     require_js(["/js-find/rbbt.protein_tool.js","/js-find/jmol.js"], function(){
       var position = #{position ?  position : "undefined"}
-      var tool = $('.JMol').last().jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
+      var div_obj = $('.JMol_viewer').last()
+      var tool = div_obj.jmol_tool({protein:"#{ protein }", sequence: "#{protein.sequence}"});
 
       var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json}
       var appris_features = {}
