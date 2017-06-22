@@ -3,7 +3,7 @@
 
 - if uniprot and Structure::I3D_PROTEINS.include? uniprot
   - filepos = Structure::I3D_PROTEINS.identify_field "FILENAME"
-  - interactome_protein_pdbs = {} 
+  - interactome_protein_pdbs = {}
   - Structure::I3D_PROTEINS[uniprot][filepos].each do |filename|
     - type = filename =~ /EXP/ ? :pdb : :model
     - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
@@ -35,7 +35,7 @@
   - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
   - res = job.produce.load
   - [filename,res]
- 
+
 - log :traversing, "Traversing interactome interaction models"
 - TSV.traverse interactome_interaction_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
   - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
@@ -49,39 +49,41 @@
   %label(for=select_id) Load a structure PDB
   %select.pdb(id=select_id style='width: 200px')
     %option(selected="selected") Select a PDB
+    - unless pdbs.nil?
+      %optgroup(label="RSCB")
+        - (pdbs || []).each do |pdb, info|
+          - url = "http://files.rcsb.org/view/#{pdb}.pdb"
+          - map = pdb_alignments[pdb]
+          - next if map.empty?
+          - pos = map.keys.collect{|p| p.to_i}
+          - info[:region] = [pos.min, pos.max] * ".."
+          %option(attr-url=url attr-pdb=pdb)= "#{pdb} (#{info[:region]}) - #{info[:method]} #{info[:method] != "NMR" ? info[:resolution] : ""}"
 
-    - (pdbs || []).each do |pdb, info|
-      - url = "http://files.rcsb.org/view/#{pdb}.pdb"
-      - map = pdb_alignments[pdb]
-      - next if map.empty?
-      - pos = map.keys.collect{|p| p.to_i}
-      - info[:region] = [pos.min, pos.max] * ".."
-      %option(attr-url=url attr-pdb=pdb)= "#{pdb} (#{info[:region]}) #{info[:resolution]} #{info[:method]}"
+      - if interactome_protein_pdbs.any?
+        %optgroup(label="Interactome3D (proteins)")
+          - interactome_protein_pdbs.each do |filename, url|
+            - type = filename =~ /EXP/ ? :experimental : :model
+            - info = {}
+            - map = pdb_alignments[filename]
+            - next if map.empty?
+            - pos = map.keys.collect{|p| p.to_i}
+            - info[:region] = [pos.min, pos.max] * ".."
+            %option.protein(attr-url=url attr-pdb=filename)= "#{filename.match(/-(\w+)\.pdb$/)[1]} (#{info[:region]}) #{type} - #{filename}"
 
-    - if interactome_protein_pdbs.any?
-      - interactome_protein_pdbs.each do |filename, url|
-        - type = filename =~ /EXP/ ? :experimental : :model
-        - info = {}
-        - map = pdb_alignments[filename]
-        - next if map.empty?
-        - pos = map.keys.collect{|p| p.to_i}
-        - info[:region] = [pos.min, pos.max] * ".."
-        %option.protein(attr-url=url attr-pdb=filename)= "#{filename} (#{info[:region]}) #{type}"
+      - if interactome_interaction_pdbs.any?
+        %optgroup(label="Interactome3D (interactions)")
+          - interactome_interaction_pdbs.each do |filename, url|
+            - type = filename =~ /EXP/ ? :experimental : :model
+            - info = {}
+            - map = pdb_alignments[filename]
+            - next if map.empty?
+            - pos = map.keys.collect{|p| p.to_i}
+            - uni1, uni2 = filename.split("-").values_at 0,1
+            - gene1, gene2 = uni2name.values_at uni1, uni2
+            - info[:pair] = [gene1, gene2] * "-"
+            - info[:region] = [pos.min, pos.max] * ".."
+            %option.interaction(attr-pdb=filename attr-url=url)= "#{info[:pair]} (#{info[:region]}) #{type} - #{filename}"
 
-    - if interactome_interaction_pdbs.any?
-      - interactome_interaction_pdbs.each do |filename, url|
-        - type = filename =~ /EXP/ ? :experimental : :model
-        - info = {}
-        - map = pdb_alignments[filename]
-        - next if map.empty?
-        - pos = map.keys.collect{|p| p.to_i}
-        - uni1, uni2 = filename.split("-").values_at 0,1
-        - gene1, gene2 = uni2name.values_at uni1, uni2
-        - info[:pair] = [gene1, gene2] * "-"
-        - info[:region] = [pos.min, pos.max] * ".."
-        %option.interaction(attr-pdb=filename attr-url=url)= "#{filename} (#{info[:region]}) #{info[:pair]} #{type}"
-
--#
   .ui.input
     %input(placeholder='neighbours' type='text' name='neighbours')
   .ui.input
