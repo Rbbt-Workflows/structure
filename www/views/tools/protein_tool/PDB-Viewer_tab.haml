@@ -1,0 +1,459 @@
+
+- uni2name = Organism.identifiers(protein.organism).index :target => "Associated Gene Name", :persist => true, :fields => ["UniProt/SwissProt Accession"]
+
+- if uniprot and Structure::I3D_PROTEINS.include? uniprot
+  - filepos = Structure::I3D_PROTEINS.identify_field "FILENAME"
+  - interactome_protein_pdbs = {}
+  - Structure::I3D_PROTEINS[uniprot][filepos].each do |filename|
+    - type = filename =~ /EXP/ ? :pdb : :model
+    - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
+    - interactome_protein_pdbs[filename] = url
+- else
+  - interactome_protein_pdbs = []
+
+- if uniprot and Structure::I3D_INTERACTIONS.include? uniprot
+  - filepos = Structure::I3D_INTERACTIONS.identify_field "FILENAME"
+  - interactome_interaction_pdbs = {}
+  - Structure::I3D_INTERACTIONS[uniprot][filepos].each do |filename|
+    - type = filename =~ /EXP/ ? :pdb : :model
+    - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
+    - interactome_interaction_pdbs[filename] = url
+- else
+  - interactome_interaction_pdbs = []
+
+- pdb_alignments = {}
+- pdbs = [] if pdbs.nil?
+
+- log :traversing, "Traversing PDBs"
+- TSV.traverse pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |pdb,info|
+  - job = Structure.job(:pdb_alignment_map, pdb, :pdb => pdb, :sequence => protein.sequence)
+  - res = job.produce.load
+  - [pdb,res]
+
+- log :traversing, "Traversing interactome protein models"
+- TSV.traverse interactome_protein_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
+  - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
+  - res = job.produce.load
+  - [filename,res]
+
+- log :traversing, "Traversing interactome interaction models"
+- TSV.traverse interactome_interaction_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
+  - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
+  - res = job.produce.load
+  - [filename,res]
+
+
+- Open.write(@step.file('pdb_alignments'), pdb_alignments.to_json)
+
+
+- iso2uni = Organism.protein_identifiers(protein.organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
+- iso2sequence = Organism.protein_sequence(protein.organism).tsv(:type => :single, :persist => true, :unnamed => true)
+- cache_dir = Rbbt.var.Structure
+- CORRECTED_FEATURES = cache_dir.corrected_features.find
+- uniprot = iso2uni[protein]
+- uniprot_features = {}
+- unless uniprot.nil?
+  - sequence = iso2sequence[protein].chomp("*")
+  - unless sequence.nil?
+    - _other = {:uniprot => uniprot, :sequence => protein.sequence}
+
+    - uniprot_features = Misc.insist do
+      - Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do
+        - Structure.corrected_uniprot_features(uniprot, protein.sequence)
+
+.ui.field
+.NGL_viewer
+  .ui.form
+    .inline.fields
+      .field
+        %H1 NGL viewer
+      .field
+        .ui.floating.dropdown.labeled.icon.button#menu_pdb
+          %i.dropdown.icon
+          %span.text#selected_pdb(selected="selected")
+            Select a PDB
+          .menu
+            .ui.icon.input
+              %input#input_pdb(placeholder="PDB | pos | posN..posN+1" type="text")
+              %i.search.icon
+            .scrolling.menu
+              .divider
+              .header
+                RCSB
+              .divider
+              - (pdbs || []).each do |pdb, info|
+                - url = "http://files.rcsb.org/view/#{pdb}.pdb"
+                - map = pdb_alignments[pdb]
+                - next if map.empty?
+                - pos = map.keys.collect{|p| p.to_i}
+                - info[:region] = [pos.min, pos.max] * ".."
+                .item#pdb(attr-url=url attr-pdb=pdb)= "#{pdb} (#{info[:region]}) - #{info[:method]} #{info[:method] != "NMR" ? info[:resolution] : ""}"
+              .divider
+              .header
+                Interactome3D (proteins)
+              .divider
+              - interactome_protein_pdbs.each do |filename, url|
+                - type = filename =~ /EXP/ ? :experimental : :model
+                - info = {}
+                - map = pdb_alignments[filename]
+                - next if map.empty?
+                - pos = map.keys.collect{|p| p.to_i}
+                - info[:region] = [pos.min, pos.max] * ".."
+                .item.protein#pdb(attr-url=url attr-pdb=filename)= "#{filename.match(/-(\w+)\.pdb$/)[1]} (#{info[:region]}) #{type} - #{filename}"
+              .divider
+              .header
+                Interactome3D (interactions)
+              .divider
+              - interactome_interaction_pdbs.each do |filename, url|
+                - type = filename =~ /EXP/ ? :experimental : :model
+                - info = {}
+
+                - map = pdb_alignments[filename]
+                - next if map.empty?
+                - pos = map.keys.collect{|p| p.to_i}
+                - uni1, uni2 = filename.split("-").values_at 0,1
+                - gene1, gene2 = uni2name.values_at uni1, uni2
+                - info[:pair] = [gene1, gene2] * "-"
+                - info[:region] = [pos.min, pos.max] * ".."
+                .item.interaction#pdb(attr-pdb=filename attr-url=url)= "#{info[:pair]} (#{info[:region]}) #{type} - #{filename}"
+  .window#ngl_viewport{:style => "width:100%; height:800px;"}
+  .ui.hidden.divider
+  .ui.button.screenshot
+    Screenshot
+  .ui.button.resize
+    Resize
+  .ui.button.spin
+    Spin
+  .ui.button.fullscreen
+    Fullscreen
+  .ui.hidden.divider
+  .ui.styled.fluid.accordion
+    .title
+      %i.dropdown.icon
+      %strong.ui.header Mark regions
+    .content
+      .ui.basic.left.aligned.segment
+        .ui.input
+          %input(placeholder='' type='text' name='neighbours')
+        .ui.input
+          %input(placeholder='5 angstroms' type='text' name='angstroms')
+        .ui.button.mark.neighbours
+          Mark neighbours
+        .ui.hidden.divider
+        .ui.input
+          %input(placeholder='3 clusters' type='text' name='clusters')
+        .ui.button.mark.clusters
+          Mark clusters
+  .ui.hidden.divider
+  .ui.styled.fluid.accordion
+    .title
+      %i.dropdown.icon
+      %strong.ui.header Mark features
+    .content
+      .ui.basic.left.aligned.segment
+        .ui.form
+          .inline.fields
+            .field
+              .ui.segment
+                .ui.toggle.checkbox.disabled.appris
+                  %input(name="public" type="checkbox")
+                  %label Appris features
+            .field
+              .ui.segment
+                .ui.toggle.checkbox.disabled.uniprot
+                  %input(name="public" type="checkbox")
+                  %label Uniprot Features
+            .field
+              .ui.segment
+                .ui.toggle.checkbox.disabled.cosmic
+                  %input(name="public" type="checkbox")
+                  %label COSMIC mutations
+            .field
+              .ui.segment
+                .ui.toggle.checkbox.disabled.interfaces
+                  %input(name="public" type="checkbox")
+                  %label Interfaces
+  .ui.hidden.divider
+
+
+:deferjs
+
+  $('#menu_pdb').dropdown()
+
+
+  $('.ui.accordion').accordion();
+
+  var delay = (function(){
+    var timer = 0;
+    return function(callback, ms){
+      clearTimeout (timer);
+      timer = setTimeout(callback, ms);
+    };
+  })();
+
+  $('#input_pdb').keyup(function(){
+    delay(function(){
+    input = $('#input_pdb').val().trim()
+    $('.item#pdb ').each(function(i, e){
+      $(this).show()
+      pdb_description = $(this).text()
+      group_pdb = pdb_description.match(/(\d+)\.\.(\d+)/)
+      start_pdb = Number(group_pdb[1])
+      end_pdb = Number(group_pdb[2])
+      if (input.match(/^\d+$/)) {
+        input_pos = Number(input)
+        if (input_pos < start_pdb || end_pdb < input_pos){
+          $(this).hide()
+        }
+      } else if (input.match(/^(\d+)\.\.(\d+)$/)){
+        group_input = input.match(/(\d+)\.\.(\d+)/)
+        start_input = Number(group_input[1])
+        end_input = Number(group_input[2])
+        if (start_input > end_input || start_input < start_pdb || end_pdb < end_input){
+          $(this).hide()
+        }
+      } else{
+        if (!pdb_description.toLowerCase().match(input.toLowerCase())){
+          $(this).hide()
+        }
+      }
+    })
+    }, 450);
+  })
+
+  var pdb_alignments_url = add_parameter(window.location.href, '_fragment', 'pdb_alignments')
+  rbbt.ajax({url:pdb_alignments_url}).then(function(pdb_alignments){
+
+    require_js(["/js-find/rbbt.protein_tool.js","/js-find/ngl.js"], function(){
+      var position = #{position ?  position : "undefined"}
+      var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json}
+      var appris_features = {}
+      var pdb2seq = {}
+      var seq2pdb = {}
+      var pdb
+      var url
+
+      rbbt.ajax({url:"/appris_features?isoform=#{protein}"}).then(function(features){
+        appris_features = features
+      })
+
+      $('.item#pdb').click(function(){
+        var selected_pdb = $(this)
+        pdb = selected_pdb.attr('attr-pdb');
+        url = selected_pdb.attr('attr-url');
+        seq2pdb = pdb_alignments[pdb]
+        keys = Object.keys(seq2pdb)
+        keys = keys.map(Number);
+        for (number = 0; number < keys.length; number++) {
+          key = keys[number]
+          values = seq2pdb[key]
+          for (num = 0; num < values.length; num++) {
+            value = values[num]
+            pdb2seq[value] = key
+          }
+        }
+
+        $('.ui.checkbox.appris').removeClass('disabled')
+        $('.ui.checkbox.uniprot').removeClass('disabled')
+        $('.ui.checkbox.cosmic').removeClass('disabled')
+        $('.ui.checkbox.interfaces').removeClass('disabled')
+
+        rbbt.ngl = $('.NGL_viewer').ngl_tool({pdb_url: url, pdb: pdb, seq2pdb: seq2pdb, pdb2seq: pdb2seq, appris_features: appris_features})
+      })
+
+      body.on('click', '.ui.checkbox.cosmic', function(){
+        if ($('.ui.checkbox.cosmic').hasClass('checked')) {
+          rbbt.ngl.ngl_tool('color_mutation_density', cosmic_residue_incidence)
+        } else {
+          if(typeof rbbt.ngl == 'undefined') return
+          rbbt.ngl.ngl_tool('clear')
+        }
+      })
+
+      body.on('click', '.ui.checkbox.uniprot', function(){
+        if ($('.ui.checkbox.uniprot').hasClass('checked')) {
+          uniprot_features = #{uniprot_features.to_json}
+          relevant = ["DISULFID", "DNA_BIND", "METAL", "INTRAMEM", "CROSSLNK", "MUTAGEN"]
+          relevant_uniprot_features = uniprot_features.filter((uniprot_feature) => relevant.includes(uniprot_feature["type"]))
+          pos_list = relevant_uniprot_features.filter((uniprot_feature) => Object.keys(seq2pdb).map(Number).includes(uniprot_feature['start'])).map((uniprot_feature) => uniprot_feature['start'])
+          rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_list, 'seq', 'orange')
+        }
+      })
+
+      body.on('click', '.ui.checkbox.interfaces', function(){
+        if ($('.ui.checkbox.interfaces').hasClass('checked')) {
+        positions= []
+          rbbt.job("Structure", "neighbour_map", {distance: 5, pdb: url}, 'true').then(function(all_neighbours_pdb){
+            pos_list = []
+            for (let pos_pdb of Object.keys(all_neighbours_pdb)) {
+              if (pdb2seq[pos_pdb]) {
+                different_chains = new Set(all_neighbours_pdb[pos_pdb].map((p) => p[0]))
+                if (different_chains.size > 1) {
+                  pos_list.push(pdb2seq[pos_pdb])
+                }
+              }
+            }
+            rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_list ,'seq', 'red')
+          })
+        } else {
+          if(typeof rbbt.ngl == 'undefined') return
+          rbbt.ngl.ngl_tool('clear')
+        }
+      })
+
+      body.on('click', '.ui.checkbox.appris', function(){
+        if ($('.ui.checkbox.appris').hasClass('checked')) {
+          rbbt.ngl.ngl_tool('mark_appris_features')
+        } else {
+          var link = $(this);
+          var controls = link.parents('.controls').first();
+          var protein_tool = controls.parents('.protein_tool').first();
+          var sequence_element  = protein_tool.find('.sequence').first();
+          var svg_element  = protein_tool.find('.svg').first();
+
+          rbbt.sequence.clear(sequence_element)
+          rbbt.svg.clear(svg_element)
+
+          if(typeof rbbt.ngl == 'undefined') return
+          rbbt.ngl.ngl_tool('clear')
+        }
+      })
+
+      $('.clear.submit').click(function(){
+        var link = $(this);
+        var controls = link.parents('.controls').first();
+        var protein_tool = controls.parents('.protein_tool').first();
+        var sequence_element  = protein_tool.find('.sequence').first();
+        var svg_element  = protein_tool.find('.svg').first();
+
+        rbbt.sequence.clear(sequence_element)
+        rbbt.svg.clear(svg_element)
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        rbbt.ngl.ngl_tool('clear')
+      })
+
+      $('.mark.submit').click(function(){
+        var link = $(this);
+        var controls = link.parents('.controls').first();
+        var protein_tool = controls.parents('.protein_tool').first();
+        var sequence_element  = protein_tool.find('.sequence').first();
+        var svg_element  = protein_tool.find('.svg').first();
+
+        var position = parseInt(controls.find('input[name=position]').val());
+
+        if (! position > 0) return alert("No position specified")
+
+        first = Object.keys(seq2pdb)[0]
+        last = Object.keys(seq2pdb)[Object.keys(seq2pdb).length-1]
+
+        rbbt.sequence.clear(sequence_element)
+        rbbt.svg.clear(svg_element)
+
+        rbbt.sequence.mark_position(sequence_element, position)
+        rbbt.svg.mark_position(svg_element, position)
+
+        if (typeof rbbt.ngl != 'undefined' && seq2pdb[position]) {
+            rbbt.ngl.ngl_tool('mark_position', position, 'seq')
+        } else {
+          alert("Select a PDB")
+        }
+      })
+
+      $('.align.submit').click(function(){
+        var link = $(this);
+        var controls = link.parents('.controls').first();
+        var protein_tool = controls.parents('.protein_tool').first();
+        var svg_element  = protein_tool.find('.svg').first();
+
+        if(typeof rbbt.ngl != 'undefined'){
+          rbbt.svg.mark_aligned_region(svg_element, seq2pdb, 'blue');
+          rbbt.ngl.ngl_tool('align')
+        } else {
+          alert("Select a PDB")
+        }
+        return false;
+      })
+
+      $('.mark.neighbours').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+
+        var link = $(this);
+        console.log('link')
+        console.log(link)
+        var field = link.parents('.segment').first();
+        var position = parseInt(field.find('input[name=neighbours]').val());
+        if (! position > 0) return alert("No position specified")
+        var angstroms = parseInt(field.find('input[name=angstroms]').val());
+        if (! angstroms > 0) angstroms = 5
+
+
+
+        neighbours_cosmic_residue_incidence = {}
+        rbbt.job("Structure", "neighbour_map", {distance: angstroms, pdb: pdb}, 'true').then(function(all_neighbours_pdb){
+          pos_pdb = seq2pdb[position][0]
+          neighbours_pdb = all_neighbours_pdb[pos_pdb]
+          neighbours_pdb.push(pos_pdb)
+          neighbours_seq = neighbours_pdb.map((neighbour_pdb) => pdb2seq[neighbour_pdb]).filter((neighbour_seq) => neighbour_seq).map(String)
+          pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
+          rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_colors['pos_list'] ,'seq', pos_colors['colors'])
+        })
+      })
+
+      $('.mark.clusters').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+
+        var link = $(this);
+        var field = link.parents('.segment').first();
+        var clusters = parseInt(field.find('input[name=clusters]').val());
+        if (clusters < 1 || clusters > 5) return alert("Bad number of clusters")
+        if (! clusters > 0) clusters = 3;
+        if (url.match(/interactome3d/)) pdb = url
+
+
+        protein = "#{protein}"
+        rbbt.job("SphereClustering", "protein_cluster", {protein: protein, pdbs: [pdb], spheres: clusters, distance: 5}, 'true').then(function(mutated_clusters){
+          keys = Object.keys(mutated_clusters)
+          keys = keys.map(Number);
+          rbbt.job("Structure", "neighbour_map", {distance: 5, pdb: pdb}, 'true').then(function(all_neighbours_pdb){
+            for (let cluster of keys) {
+              pos_pdb = seq2pdb[cluster][0]
+              neighbours_pdb = all_neighbours_pdb[pos_pdb]
+              neighbours_pdb.push(pos_pdb)
+              neighbours_seq = neighbours_pdb.map((neighbour_pdb) => pdb2seq[neighbour_pdb]).filter((neighbour_seq) => neighbour_seq).map(String)
+              pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
+              rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_colors['pos_list'] ,'seq', pos_colors['colors'])
+            }
+          })
+        })
+      })
+
+      $('.screenshot').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        rbbt.ngl.ngl_tool('screenshot')
+      })
+
+      $('.resize').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        rbbt.ngl.ngl_tool('resize')
+      })
+
+      $('.spin').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        spin  = $('.ui.button.spin')
+        if (!spin.hasClass('stop')) {
+          spin.addClass('stop')
+          spin.html('Stop')
+        } else {
+          spin.removeClass('stop')
+          spin.html('Spin')
+        }
+        rbbt.ngl.ngl_tool('spin')
+      })
+
+      $('.fullscreen').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        rbbt.ngl.ngl_tool('fullscreen')
+      })
+    })
+  })
+

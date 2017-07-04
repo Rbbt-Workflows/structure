@@ -34,7 +34,6 @@
     var COSMIC = link.parents('.COSMIC').first();
     var protein_tool = COSMIC.parents('.protein_tool').first();
     var svg_element  = protein_tool.find('.svg').first();
-    var jmol_element  = protein_tool.find('.JMol').first();
 
     var table = COSMIC.find('table');
     var url = table.attr('attr-url');
@@ -71,9 +70,9 @@
 
         var protein_tool = $('.protein_tool#' + '#{id}');
 
-        rbbt.jmol.color_positions(jmol_element, change_counts);
         rbbt.svg.mark_positions(svg_element, change_positions, color);
-
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        rbbt.ngl.ngl_tool('color_mutation_density', change_counts)
       }
     })
     return false;

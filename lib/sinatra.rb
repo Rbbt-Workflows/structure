@@ -38,3 +38,14 @@ get '/appris_features' do
   content_type :json
   halt 200, features.to_json
 end
+
+get '/interactome3d' do
+  puts '/interactome3d'
+  pdb = consume_parameter :pdb
+  type1 = consume_parameter :type1
+  type2 = consume_parameter :type2
+  url ="http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=#{type1}&type2=#{type2}&pdb=#{pdb}"
+  raise "No interactome3d provided" unless [pdb, type1, type2].all?
+   content_type 'text/plain'
+  send_file Open.open(url)
+end
