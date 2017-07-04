@@ -38,6 +38,7 @@ require 'structure/interpro'
 Workflow.require_workflow 'Translation'
 #Workflow.require_workflow 'PdbTools'
 Workflow.require_workflow "Sequence"
+Workflow.require_workflow "SphereClustering"
 
 require 'rbbt/util/simpleopt'
 $cpus ||= SOPT.get("--cpus* CPUs to use in map-reduce (Structure workflow)")[:cpus]
