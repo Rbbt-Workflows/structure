@@ -78,13 +78,18 @@ module PDBHelper
     atom_positions = {}
     while line = stream.gets
       break if line =~ /^END/
-        #next unless line =~ /^ATOM/
-        next unless line =~ /^\w*ATO?M/ and line.length > 53
-        code = line[13..26]
-        x = line[30..37].to_f
-        y = line[38..45].to_f
-        z = line[46..53].to_f
-        num = code[9..13].to_i
+      #next unless line =~ /^ATOM/
+      
+      # THIS LINE FIXES A PROBLEM WITH INTERACTOME 3D PDBs
+      # THAT BREAK THE FIRST LINE AFTER A 'TER'
+      line = line.sub(/^\d+/,'')
+
+      next unless line =~ /^\w*ATO?M/ and line.length > 53
+      code = line[13..26]
+      x = line[30..37].to_f
+      y = line[38..45].to_f
+      z = line[46..53].to_f
+      num = code[9..13].to_i
 
       atom_positions[code] = [x,y,z,num]
     end
