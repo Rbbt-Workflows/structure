@@ -1,0 +1,19 @@
+- tabs = glob_all('tools/protein_tool/mutations&features_tabs/*_tab.haml').uniq.sort
+.ui.button Update selected
+.ui.divider.hidden
+.ui.secundary.menu.compact
+  - tabs.each do |tabfile|
+    - name = File.basename(tabfile).sub('_tab.haml','')
+    .item(id=name data-tab=name)= name
+
+- tabs.each do |tabfile|
+  - name = File.basename(tabfile).sub('_tab.haml','')
+  .very.basic.ui.segment.tab(class=name data-tab=name)
+    = partial_render(tabfile, :associations => associations, :id => id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence, :appris_features => appris_features, :uniprot_features => uniprot_features)
+
+:deferjs
+  $('.item#COSMIC').addClass('active')
+  $('.tab.COSMIC').addClass('active')
+  $('.secundary.menu .item').tab()
+
+

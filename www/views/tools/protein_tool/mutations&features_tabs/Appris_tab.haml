@@ -1,0 +1,33 @@
+%table.ui.celled.table.compact
+  %thead
+    %tr
+      %th
+        .ui.checkbox.fitted.slider#appris
+          %input(type='checkbox')
+          %label
+      %th Type
+      %th Start
+      %th End
+      %th Description
+  %tbody
+    - appris_features.each do |appris_feature|
+      %tr
+        %td
+          .ui.checkbox.fitted.slider.af
+            %input(type='checkbox')
+            %label
+        %td= appris_feature[:type]
+        %td= appris_feature[:start]
+        %td= appris_feature[:end]
+        %td= appris_feature[:description]
+
+:deferjs
+  $('.ui.checkbox.slider#appris').click(function(event){
+    event.stopPropagation()
+    $(this).toggleClass('on')
+    if ($(this).hasClass('on')) {
+      $('.ui.checkbox.slider.af').checkbox('set checked');
+    } else {
+      $('.ui.checkbox.slider.af').checkbox('set unchecked');
+    }
+  });

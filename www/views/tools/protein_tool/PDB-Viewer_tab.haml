@@ -45,38 +45,55 @@
 
 - Open.write(@step.file('pdb_alignments'), pdb_alignments.to_json)
 
-
-- iso2uni = Organism.protein_identifiers(protein.organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
-- iso2sequence = Organism.protein_sequence(protein.organism).tsv(:type => :single, :persist => true, :unnamed => true)
-- cache_dir = Rbbt.var.Structure
-- CORRECTED_FEATURES = cache_dir.corrected_features.find
-- uniprot = iso2uni[protein]
-- uniprot_features = {}
-- unless uniprot.nil?
-  - sequence = iso2sequence[protein].chomp("*")
-  - unless sequence.nil?
-    - _other = {:uniprot => uniprot, :sequence => protein.sequence}
-
-    - uniprot_features = Misc.insist do
-      - Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do
-        - Structure.corrected_uniprot_features(uniprot, protein.sequence)
-
 .ui.field
 .NGL_viewer
   .ui.form
     .inline.fields
       .field
-        %H1 NGL viewer
+        .ui.compact.menu.right
+          .ui.dropdown.item
+            Viewer Control
+            %i.dropdown.icon
+            .menu
+              .item#screenshot Screenshot
+              .item#resize Resize
+              .item#spin Spin
+              .item#fullscreen FullScreen
+          .ui.dropdown.item.compact#marks_pdb
+            Mark PDB
+            %i.dropdown.icon
+            .right.menu#all
+              .item.align
+                .ui.checkbox.align
+                  %input(name="public" type="checkbox")
+                  %label Align
+              .item.interfaces
+                .ui.checkbox.interfaces
+                  %input(name="public" type="checkbox")
+                  %label Interfaces
+              .item#inputs
+                .ui.input
+                  %input(placeholder='Position' type='text' name='neighbours')
+                  %input(placeholder='5 angstroms' type='text' name='angstroms')
+                .ui.button.mark.neighbours
+                  Mark neighbours
+              .item#inputs
+                .ui.input
+                  %input(placeholder='3 clusters' type='text' name='clusters')
+                  .text(contenteditable='true')
+                .ui.button.mark.clusters
+                  Mark clusters
+          -#.ui.item#clear(style='cursor: pointer;') Clear
       .field
         .ui.floating.dropdown.labeled.icon.button#menu_pdb
           %i.dropdown.icon
           %span.text#selected_pdb(selected="selected")
             Select a PDB
-          .menu
+          .menu.right#select_pdb
             .ui.icon.input
               %input#input_pdb(placeholder="PDB | pos | posN..posN+1" type="text")
               %i.search.icon
-            .scrolling.menu
+            .menu.right.scrolling
               .divider
               .header
                 RCSB
@@ -117,69 +134,22 @@
                 - info[:region] = [pos.min, pos.max] * ".."
                 .item.interaction#pdb(attr-pdb=filename attr-url=url)= "#{info[:pair]} (#{info[:region]}) #{type} - #{filename}"
   .window#ngl_viewport{:style => "width:100%; height:800px;"}
-  .ui.hidden.divider
-  .ui.button.screenshot
-    Screenshot
-  .ui.button.resize
-    Resize
-  .ui.button.spin
-    Spin
-  .ui.button.fullscreen
-    Fullscreen
-  .ui.hidden.divider
-  .ui.styled.fluid.accordion
-    .title
-      %i.dropdown.icon
-      %strong.ui.header Mark regions
-    .content
-      .ui.basic.left.aligned.segment
-        .ui.input
-          %input(placeholder='' type='text' name='neighbours')
-        .ui.input
-          %input(placeholder='5 angstroms' type='text' name='angstroms')
-        .ui.button.mark.neighbours
-          Mark neighbours
-        .ui.hidden.divider
-        .ui.input
-          %input(placeholder='3 clusters' type='text' name='clusters')
-        .ui.button.mark.clusters
-          Mark clusters
-  .ui.hidden.divider
-  .ui.styled.fluid.accordion
-    .title
-      %i.dropdown.icon
-      %strong.ui.header Mark features
-    .content
-      .ui.basic.left.aligned.segment
-        .ui.form
-          .inline.fields
-            .field
-              .ui.segment
-                .ui.toggle.checkbox.disabled.appris
-                  %input(name="public" type="checkbox")
-                  %label Appris features
-            .field
-              .ui.segment
-                .ui.toggle.checkbox.disabled.uniprot
-                  %input(name="public" type="checkbox")
-                  %label Uniprot Features
-            .field
-              .ui.segment
-                .ui.toggle.checkbox.disabled.cosmic
-                  %input(name="public" type="checkbox")
-                  %label COSMIC mutations
-            .field
-              .ui.segment
-                .ui.toggle.checkbox.disabled.interfaces
-                  %input(name="public" type="checkbox")
-                  %label Interfaces
-  .ui.hidden.divider
-
 
 :deferjs
 
-  $('#menu_pdb').dropdown()
+  $('.menu#all').hide()
 
+  $('.menu#all, .menu#select_pdb').removeClass('left')
+  $('.item#marks_pdb, .dropdown#menu_pdb').click(function(){$('.menu#all, .menu#select_pdb').removeClass('left');setTimeout(function(){$('.menu#all, .menu#select_pdb').removeClass('left');}, 0)})
+
+  $('i.help.circle.icon#uniprot').click(function(event){
+    event.stopPropagation();
+    $('.ui.modal#uniprot').modal('show')
+  });
+
+  $('.item#inputs').click(function(event){event.stopPropagation()})
+
+  $('.dropdown').dropdown();
 
   $('.ui.accordion').accordion();
 
@@ -191,269 +161,397 @@
     };
   })();
 
-  $('#input_pdb').keyup(function(){
+   $('#input_pdb').keyup(function(){
     delay(function(){
-    input = $('#input_pdb').val().trim()
+    var input = $('#input_pdb').val().trim();
     $('.item#pdb ').each(function(i, e){
-      $(this).show()
-      pdb_description = $(this).text()
-      group_pdb = pdb_description.match(/(\d+)\.\.(\d+)/)
-      start_pdb = Number(group_pdb[1])
-      end_pdb = Number(group_pdb[2])
+      $(this).show();
+      var pdb_description = $(this).text();
+      var group_pdb = pdb_description.match(/(\d+)\.\.(\d+)/);
+      var start_pdb = Number(group_pdb[1]);
+      var end_pdb = Number(group_pdb[2]);
       if (input.match(/^\d+$/)) {
-        input_pos = Number(input)
+        input_pos = Number(input);
         if (input_pos < start_pdb || end_pdb < input_pos){
-          $(this).hide()
+          $(this).hide();
         }
       } else if (input.match(/^(\d+)\.\.(\d+)$/)){
-        group_input = input.match(/(\d+)\.\.(\d+)/)
-        start_input = Number(group_input[1])
-        end_input = Number(group_input[2])
+        group_input = input.match(/(\d+)\.\.(\d+)/);
+        start_input = Number(group_input[1]);
+        end_input = Number(group_input[2]);
         if (start_input > end_input || start_input < start_pdb || end_pdb < end_input){
-          $(this).hide()
+          $(this).hide();
         }
       } else{
         if (!pdb_description.toLowerCase().match(input.toLowerCase())){
-          $(this).hide()
+          $(this).hide();
         }
       }
     })
     }, 450);
   })
 
-  var pdb_alignments_url = add_parameter(window.location.href, '_fragment', 'pdb_alignments')
-  rbbt.ajax({url:pdb_alignments_url}).then(function(pdb_alignments){
-
     require_js(["/js-find/rbbt.protein_tool.js","/js-find/ngl.js"], function(){
-      var position = #{position ?  position : "undefined"}
-      var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json}
-      var appris_features = {}
-      var pdb2seq = {}
-      var seq2pdb = {}
-      var pdb
-      var url
-
-      rbbt.ajax({url:"/appris_features?isoform=#{protein}"}).then(function(features){
-        appris_features = features
-      })
+      var position = #{position ?  position : "undefined"};
+      var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json};
+      var default_colors = {'mark': 'red', 'original_alignment': 'darkslategray', 'align': 'blue', 'feature': 'purple', 'default': 'lightgray'};
+      var svg_element  = $('.svg')
+      var uniprot_features = #{uniprot_features.to_json};
+      var appris_features = #{appris_features.to_json};
+      var pdb2seq = {};
+      var seq2pdb = {};
+      var pdb;
+      var url;
 
       $('.item#pdb').click(function(){
-        var selected_pdb = $(this)
+        var selected_pdb = $(this);
         pdb = selected_pdb.attr('attr-pdb');
         url = selected_pdb.attr('attr-url');
-        seq2pdb = pdb_alignments[pdb]
-        keys = Object.keys(seq2pdb)
-        keys = keys.map(Number);
-        for (number = 0; number < keys.length; number++) {
-          key = keys[number]
-          values = seq2pdb[key]
-          for (num = 0; num < values.length; num++) {
-            value = values[num]
-            pdb2seq[value] = key
+
+
+        var pdb_alignments_url = add_parameter(window.location.href, '_fragment', 'pdb_alignments')
+        rbbt.ajax({url:pdb_alignments_url}).then(function(pdb_alignments){
+          seq2pdb = pdb_alignments[pdb];
+          keys = Object.keys(seq2pdb).map(Number);
+          for (let key of keys) {
+            var values = seq2pdb[key];
+            for (let value of values) {
+              pdb2seq[value] = key;
+            }
           }
-        }
 
-        $('.ui.checkbox.appris').removeClass('disabled')
-        $('.ui.checkbox.uniprot').removeClass('disabled')
-        $('.ui.checkbox.cosmic').removeClass('disabled')
-        $('.ui.checkbox.interfaces').removeClass('disabled')
+          $('.item').removeClass('active selected');
+          $('.ui.checkbox').removeClass('hidden').checkbox('set unchecked');
+          $('.item#appris, .item#uniprot, .item.cosmic, .item.interfaces').show()
 
-        rbbt.ngl = $('.NGL_viewer').ngl_tool({pdb_url: url, pdb: pdb, seq2pdb: seq2pdb, pdb2seq: pdb2seq, appris_features: appris_features})
-      })
-
-      body.on('click', '.ui.checkbox.cosmic', function(){
-        if ($('.ui.checkbox.cosmic').hasClass('checked')) {
-          rbbt.ngl.ngl_tool('color_mutation_density', cosmic_residue_incidence)
-        } else {
-          if(typeof rbbt.ngl == 'undefined') return
-          rbbt.ngl.ngl_tool('clear')
-        }
-      })
-
-      body.on('click', '.ui.checkbox.uniprot', function(){
-        if ($('.ui.checkbox.uniprot').hasClass('checked')) {
-          uniprot_features = #{uniprot_features.to_json}
-          relevant = ["DISULFID", "DNA_BIND", "METAL", "INTRAMEM", "CROSSLNK", "MUTAGEN"]
-          relevant_uniprot_features = uniprot_features.filter((uniprot_feature) => relevant.includes(uniprot_feature["type"]))
-          pos_list = relevant_uniprot_features.filter((uniprot_feature) => Object.keys(seq2pdb).map(Number).includes(uniprot_feature['start'])).map((uniprot_feature) => uniprot_feature['start'])
-          rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_list, 'seq', 'orange')
-        }
-      })
-
-      body.on('click', '.ui.checkbox.interfaces', function(){
-        if ($('.ui.checkbox.interfaces').hasClass('checked')) {
-        positions= []
           rbbt.job("Structure", "neighbour_map", {distance: 5, pdb: url}, 'true').then(function(all_neighbours_pdb){
-            pos_list = []
+            var pos_list = [];
             for (let pos_pdb of Object.keys(all_neighbours_pdb)) {
               if (pdb2seq[pos_pdb]) {
-                different_chains = new Set(all_neighbours_pdb[pos_pdb].map((p) => p[0]))
-                if (different_chains.size > 1) {
-                  pos_list.push(pdb2seq[pos_pdb])
+                var different_chains = new Set(all_neighbours_pdb[pos_pdb].map(p => p.split(':')[0]));
+                var seq_pos = pdb2seq[pos_pdb]
+                if (different_chains.size > 1 && seq_pos) {
+                  pos_list.push(seq_pos);
                 }
               }
             }
-            rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_list ,'seq', 'red')
-          })
+            if (pos_list.length == 0) $('.item.interfaces').hide()
+          });
+
+          //feature_names = ['appris', 'uniprot']
+          //all_features = []
+          //all_features.push(appris_features)
+          //all_features.push(uniprot_features)
+          //all_features.forEach(function(features,index){
+          //  features_by_pdb = features.filter(f => seq2pdb[f['start']] && seq2pdb[f['end']]);
+          //  if (features_by_pdb.length == 0) { $('.item#'+ feature_names[index]).hide(); return}
+          //  $('.item.' + feature_names[index] + '_feature').hide();
+          //  types = Array.from(new Set(features_by_pdb.map(f => f['type']))).sort();
+          //  types.forEach(function(type){
+          //    if (features_by_pdb.filter(f => f['type'] == type).length != 0) {
+          //      $('.item.'+ feature_names[index] + '_feature#' + type).show();
+          //    }
+          //  });
+          //});
+          if (cosmic_residue_incidence.length == 0) $('.item.cosmic').hide()
+
+          rbbt.ngl = $('.NGL_viewer').ngl_viewer({pdb_url: url, pdb: pdb, seq2pdb: seq2pdb, pdb2seq: pdb2seq, default_colors: default_colors})
+        });
+      });
+
+      $('.item.cosmic').click(function(event){
+        event.stopPropagation()
+        var $checkbox = $('.ui.checkbox.cosmic')
+        $(this).toggleClass('on')
+        if ($(this).hasClass('on')) {
+            var pos_list = [];
+            var log10_counts = [];
+            for (let pos of Object.keys(cosmic_residue_incidence)) {
+                var count = parseInt(cosmic_residue_incidence[pos]) + 1;
+                var log_count = Math.log(count) / Math.log(10);
+                log10_counts.push(log_count);
+                pos_list.push(pos);
+            }
+
+            log10_counts.push(0);
+
+            var colors = get_gradient(log10_counts, '#00FF00', '#FF0000');
+
+            rbbt.svg.mark_positions(svg_element, pos_list.map(Number), colors, 'cosmic');
+            if (typeof rbbt.ngl != 'undefined') {
+              var pos_colors = rbbt.ngl.ngl_viewer('color_mutation_density_subset', Object.keys(seq2pdb), cosmic_residue_incidence);
+              rbbt.svg.mark_positions(svg_element, pos_colors['pos_list'].map(Number), pos_colors['colors'], 'cosmic');
+              $checkbox.checkbox('set checked')
+              rbbt.ngl.ngl_viewer('color_mutation_density', cosmic_residue_incidence);
+            }
         } else {
-          if(typeof rbbt.ngl == 'undefined') return
-          rbbt.ngl.ngl_tool('clear')
+          $checkbox.checkbox('set unchecked')
+          rbbt.svg.clear(svg_element, 'cosmic')
+          if(typeof rbbt.ngl == 'undefined') return;
+          rbbt.ngl.ngl_viewer('clear_by_layer', 'cosmic_mutation_density');
         }
-      })
+      });
 
-      body.on('click', '.ui.checkbox.appris', function(){
-        if ($('.ui.checkbox.appris').hasClass('checked')) {
-          rbbt.ngl.ngl_tool('mark_appris_features')
+      $('.item#uniprot, .item#appris').click(function(event){
+        event.stopPropagation()
+        var id = $(this).prop('id')
+        var features = id == 'appris' ? appris_features : uniprot_features
+        var feature_name = id == 'appris' ? 'appris_feature' : 'uniprot_feature'
+        var color = id == 'appris' ? 'deeppink' : 'purple'
+        $(this).toggleClass('on');
+        if ($(this).hasClass('on')) {
+          $('.ui.checkbox#' + id).checkbox('set checked')
+          $('.item.' + feature_name).addClass('on')
+          $('.ui.checkbox.' + feature_name + ':visible').checkbox('set checked')
+          var layers_id = []
+          $('.ui.checkbox.' + feature_name + '.checked').each(function(){layers_id.push($(this).prop('id'))})
+          //var relevant = ["DISULFID", "DNA_BIND", "METAL", "INTRAMEM", "CROSSLNK", "MUTAGEN"];
+          var checked_features = features.filter(feature => layers_id.includes(feature["type"]));
+          layers_id.forEach(function(layer_id){
+            var filtered_features = features.filter(feature => feature['type'] == layer_id)
+            var pos_list = new Set()
+            filtered_features.forEach(function(filtered_feature) {
+              var size = filtered_feature['end'] - filtered_feature['start']
+              for (var i = 0; i <= size; i++) pos_list.add(filtered_feature['start'] + i)
+            });
+            rbbt.svg.mark_positions(svg_element, Array.from(pos_list).map(Number), color, id + layer_id);
+            seq_pos = Array.from(pos_list).filter(pos => seq2pdb[pos])
+            if(typeof rbbt.ngl != 'undefined') rbbt.ngl.ngl_viewer('mark_positions_by_colors', id + layer_id, seq_pos, 'seq', color, false);
+            });
+          if(typeof rbbt.ngl != 'undefined') rbbt.ngl.ngl_viewer('draw')
         } else {
-          var link = $(this);
-          var controls = link.parents('.controls').first();
-          var protein_tool = controls.parents('.protein_tool').first();
-          var sequence_element  = protein_tool.find('.sequence').first();
-          var svg_element  = protein_tool.find('.svg').first();
-
-          rbbt.sequence.clear(sequence_element)
-          rbbt.svg.clear(svg_element)
-
-          if(typeof rbbt.ngl == 'undefined') return
-          rbbt.ngl.ngl_tool('clear')
+          $('.item.' + feature_name).removeClass('on')
+          $('.ui.checkbox#' + id).checkbox('set unchecked')
+          var layers_id = []
+          $('.ui.checkbox.' + feature_name + '.checked').each(function(){layers_id.push(id + $(this).prop('id'))})
+          $('.ui.checkbox.' + feature_name + '.checked').checkbox('set unchecked')
+          for (let layer_id of layers_id) rbbt.svg.clear(svg_element, layer_id)
+          if(typeof rbbt.ngl != 'undefined') {
+          rbbt.ngl.ngl_viewer('clear_by_layers', layers_id)
+          }
         }
-      })
+        $('.ui.dropdown#marks').dropdown('show')
+      });
 
-      $('.clear.submit').click(function(){
+      $('.item.appris_feature, .item.uniprot_feature').click(function(event){
+        event.stopPropagation();
+        var layer_id = $(this).prop('id');
+        var feature_name = $(this).hasClass('appris_feature') ? 'appris_feature' : 'uniprot_feature'
+        var feature_id = $(this).hasClass('appris_feature') ? 'appris' : 'uniprot'
+        var $checkbox = $('.ui.checkbox.' + feature_name + '#' + layer_id)
+        var features = $(this).hasClass('appris_feature') ? appris_features : uniprot_features
+        var color = feature_id == 'appris' ? 'deeppink' : 'purple'
+        $(this).toggleClass('on')
+        if ($(this).hasClass('on')){
+          $checkbox.checkbox('set checked')
+          $('.ui.checkbox#' + feature_id).checkbox('set indeterminate');
+          if ($('.ui.checkbox.' + feature_name  + '.checked').length == $('.ui.checkbox.' + feature_name + ':visible').length) {
+            $('.ui.item#' + feature_id).addClass('on')
+            $('.ui.checkbox#' + feature_id).checkbox('set checked')
+          }
+            var pos_list = new Set();
+            features.filter(feature => feature['type'] == layer_id).forEach(function(feature) {
+            var size = feature['end'] - feature['start']
+            for (var i = 0; i <= size; i++) {
+              pos_list.add(feature['start'] + i)
+            }
+            });
+            rbbt.svg.mark_positions(svg_element, Array.from(pos_list).map(Number), color, feature_id + layer_id);
+            if(typeof rbbt.ngl == 'undefined') return
+            seq_pos = Array.from(pos_list).filter(pos => seq2pdb[pos])
+            rbbt.ngl.ngl_viewer('mark_positions_by_colors', feature_id + layer_id, seq_pos, 'seq', color);
+        } else {
+          $checkbox.checkbox('set unchecked')
+          $('.ui.checkbox#' +  feature_id).checkbox('set indeterminate');
+          if ($('.ui.checkbox.' + feature_name + '.checked').length == 0) {
+            $('.ui.item#' + feature_id).removeClass('on')
+            $('.ui.checkbox#' + feature_id).checkbox('set unchecked')
+          }
+          rbbt.svg.clear(svg_element, feature_id + layer_id)
+          if(typeof rbbt.ngl == 'undefined') return
+          rbbt.ngl.ngl_viewer('clear_by_layer', feature_id + layer_id)
+        }
+      });
+
+      $('.item.interfaces').click(function(event){
+        event.stopPropagation()
+        var $checkbox = $('.ui.checkbox.interfaces')
+        if(typeof rbbt.ngl == 'undefined') {
+          $checkbox.checkbox('set unchecked')
+          $('.dropdown#marks_pdb').dropdown('hide')
+          $('.dropdown#marks_pdb').removeClass('left')
+          return alert("Select a PDB");
+        }
+        $(this).toggleClass('on')
+        if ($(this).hasClass('on')){
+            $checkbox.checkbox('set checked')
+            if(typeof rbbt.ngl == 'undefined') return
+            var pos_interfaces = []
+            rbbt.job("Structure", "neighbour_map", {distance: 5, pdb: url}, 'true').then(function(all_neighbours_pdb){
+              var pos_list = [];
+              for (let pos_pdb of Object.keys(all_neighbours_pdb)) {
+                if (pdb2seq[pos_pdb]) {
+                  var different_chains = new Set(all_neighbours_pdb[pos_pdb].map(p => p.split(':')[0]));
+                  var seq_pos = pdb2seq[pos_pdb]
+                  if (different_chains.size > 1 && seq_pos) {
+                    pos_list.push(seq_pos);
+                  }
+                }
+              }
+              if (pos_list.length == 0) $('.item.interfaces').hide()
+              rbbt.svg.mark_positions(svg_element, Array.from(pos_list).map(Number), default_colors['marks'], 'interfaces');
+              rbbt.ngl.ngl_viewer('mark_positions_by_colors', 'interfaces', pos_list,'seq', default_colors['mark']);
+            });
+        } else {
+          $checkbox.checkbox('set unchecked')
+          rbbt.svg.clear(svg_element, 'interfaces')
+          rbbt.ngl.ngl_viewer('clear_by_layer', 'interfaces');
+        }
+      });
+
+      $('.clear.submit, .item#clear').click(function(){
+        $('.dropdown.item').dropdown('hide')
         var link = $(this);
         var controls = link.parents('.controls').first();
         var protein_tool = controls.parents('.protein_tool').first();
         var sequence_element  = protein_tool.find('.sequence').first();
         var svg_element  = protein_tool.find('.svg').first();
 
-        rbbt.sequence.clear(sequence_element)
-        rbbt.svg.clear(svg_element)
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        rbbt.ngl.ngl_tool('clear')
+        rbbt.sequence.clear(sequence_element);
+        rbbt.svg.clear(svg_element);
+        $('.item').removeClass('active selected');
+        $('.ui.checkbox').checkbox('set unchecked');
+        if(typeof rbbt.ngl == 'undefined') return
+        rbbt.ngl.ngl_viewer('clear_all');
       })
 
-      $('.mark.submit').click(function(){
+      $('.mark.submit, .mark.position').click(function(){
         var link = $(this);
-        var controls = link.parents('.controls').first();
-        var protein_tool = controls.parents('.protein_tool').first();
-        var sequence_element  = protein_tool.find('.sequence').first();
+        var segment = link.parents('.segment').first();
+        var protein_tool = segment.parents('.protein_tool').first();
+        var sequence_element = protein_tool.find('.sequence').first();
         var svg_element  = protein_tool.find('.svg').first();
 
-        var position = parseInt(controls.find('input[name=position]').val());
+        var position = parseInt(segment.find('input[name=position]').val());
 
-        if (! position > 0) return alert("No position specified")
+        if (! position > 0) return alert("No position specified");
 
-        first = Object.keys(seq2pdb)[0]
-        last = Object.keys(seq2pdb)[Object.keys(seq2pdb).length-1]
+        var first = Object.keys(seq2pdb)[0];
+        var last = Object.keys(seq2pdb)[Object.keys(seq2pdb).length-1];
 
-        rbbt.sequence.clear(sequence_element)
-        rbbt.svg.clear(svg_element)
+        rbbt.sequence.clear(sequence_element);
+        rbbt.svg.clear(svg_element);
 
-        rbbt.sequence.mark_position(sequence_element, position)
-        rbbt.svg.mark_position(svg_element, position)
+        rbbt.sequence.mark_position(sequence_element, position);
+        rbbt.svg.mark_position(svg_element, position, 'mark');
 
         if (typeof rbbt.ngl != 'undefined' && seq2pdb[position]) {
-            rbbt.ngl.ngl_tool('mark_position', position, 'seq')
-        } else {
-          alert("Select a PDB")
+          rbbt.ngl.ngl_viewer('mark_positions_by_colors', 'mark', [position], 'seq', default_colors['mark']);
         }
       })
 
-      $('.align.submit').click(function(){
-        var link = $(this);
-        var controls = link.parents('.controls').first();
-        var protein_tool = controls.parents('.protein_tool').first();
-        var svg_element  = protein_tool.find('.svg').first();
-
-        if(typeof rbbt.ngl != 'undefined'){
-          rbbt.svg.mark_aligned_region(svg_element, seq2pdb, 'blue');
-          rbbt.ngl.ngl_tool('align')
-        } else {
-          alert("Select a PDB")
+      $('.item.align').click(function(event){
+        event.stopPropagation()
+        var $checkbox = $('.ui.checkbox.align')
+        if(typeof rbbt.ngl == 'undefined') {
+          $checkbox.checkbox('set unchecked')
+          $('.dropdown#marks_pdb').dropdown('hide')
+          $('.dropdown#marks_pdb').removeClass('left')
+          return alert("Select a PDB");
         }
-        return false;
+        $(this).toggleClass('on')
+        if ($(this).hasClass('on')) {
+          rbbt.svg.mark_positions(svg_element, Object.keys(seq2pdb).map(Number), 'blue', 'align');
+          rbbt.ngl.ngl_viewer('mark_positions_by_colors', 'align', Object.keys(seq2pdb) ,'seq', default_colors['align']);
+          $checkbox.checkbox('set checked')
+        } else {
+          $checkbox.checkbox('set unchecked')
+          rbbt.svg.clear(svg_element, 'align')
+          rbbt.ngl.ngl_viewer('clear_by_layer', 'align');
+        }
       })
 
       $('.mark.neighbours').click(function(){
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+        $('.dropdown#marks_pdb').dropdown('hide')
+        $('.dropdown#marks_pdb').removeClass('left')
+
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB");
 
         var link = $(this);
-        console.log('link')
-        console.log(link)
         var field = link.parents('.segment').first();
         var position = parseInt(field.find('input[name=neighbours]').val());
-        if (! position > 0) return alert("No position specified")
+        if (! position > 0) return alert("No position specified");
         var angstroms = parseInt(field.find('input[name=angstroms]').val());
-        if (! angstroms > 0) angstroms = 5
+        if (! angstroms > 0) angstroms = 5;
 
 
-
-        neighbours_cosmic_residue_incidence = {}
+        var neighbours_cosmic_residue_incidence = {};
         rbbt.job("Structure", "neighbour_map", {distance: angstroms, pdb: pdb}, 'true').then(function(all_neighbours_pdb){
-          pos_pdb = seq2pdb[position][0]
-          neighbours_pdb = all_neighbours_pdb[pos_pdb]
-          neighbours_pdb.push(pos_pdb)
-          neighbours_seq = neighbours_pdb.map((neighbour_pdb) => pdb2seq[neighbour_pdb]).filter((neighbour_seq) => neighbour_seq).map(String)
-          pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
-          rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_colors['pos_list'] ,'seq', pos_colors['colors'])
+          var pos_pdb = seq2pdb[position][0];
+          neighbours_pdb = all_neighbours_pdb[pos_pdb];
+          neighbours_pdb.push(pos_pdb);
+          var neighbours_seq = neighbours_pdb.map(neighbour_pdb => pdb2seq[neighbour_pdb]).filter(neighbour_seq => neighbour_seq).map(String);
+          var pos_colors = rbbt.ngl.ngl_viewer('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence);
+          rbbt.svg.mark_positions(svg_element, pos_colors['pos_list'].map(Number), pos_colors['colors'], 'neighbours');
+          rbbt.ngl.ngl_viewer('mark_positions_by_colors', 'neighbours', pos_colors['pos_list'] ,'seq', pos_colors['colors']);
         })
       })
 
-      $('.mark.clusters').click(function(){
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
+      $('.mark.clusters').click(function(e){
+        $('.dropdown#marks_pdb').dropdown('hide')
+
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB");
 
         var link = $(this);
         var field = link.parents('.segment').first();
         var clusters = parseInt(field.find('input[name=clusters]').val());
-        if (clusters < 1 || clusters > 5) return alert("Bad number of clusters")
+        if (clusters < 1 || clusters > 5) return alert("Bad number of clusters");
         if (! clusters > 0) clusters = 3;
-        if (url.match(/interactome3d/)) pdb = url
+        if (url.match(/interactome3d/)) pdb = url;
 
 
-        protein = "#{protein}"
+        var protein = "#{protein}";
         rbbt.job("SphereClustering", "protein_cluster", {protein: protein, pdbs: [pdb], spheres: clusters, distance: 5}, 'true').then(function(mutated_clusters){
-          keys = Object.keys(mutated_clusters)
-          keys = keys.map(Number);
+          var keys = Object.keys(mutated_clusters).map(Number);
           rbbt.job("Structure", "neighbour_map", {distance: 5, pdb: pdb}, 'true').then(function(all_neighbours_pdb){
             for (let cluster of keys) {
-              pos_pdb = seq2pdb[cluster][0]
-              neighbours_pdb = all_neighbours_pdb[pos_pdb]
-              neighbours_pdb.push(pos_pdb)
-              neighbours_seq = neighbours_pdb.map((neighbour_pdb) => pdb2seq[neighbour_pdb]).filter((neighbour_seq) => neighbour_seq).map(String)
-              pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
-              rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_colors['pos_list'] ,'seq', pos_colors['colors'])
+              var pos_pdb = seq2pdb[cluster][0];
+              var neighbours_pdb = all_neighbours_pdb[pos_pdb];
+              neighbours_pdb.push(pos_pdb);
+              var neighbours_seq = neighbours_pdb.map(neighbour_pdb => pdb2seq[neighbour_pdb]).filter(neighbour_seq => neighbour_seq).map(String);
+              var pos_colors = rbbt.ngl.ngl_viewer('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence);
+              rbbt.svg.mark_positions(svg_element, pos_colors['pos_list'].map(Number), pos_colors['colors'], 'clusters');
+              rbbt.ngl.ngl_viewer('mark_positions_by_colors', 'clusters', pos_colors['pos_list'] ,'seq', pos_colors['colors']);
             }
-          })
-        })
-      })
+          });
+        });
+      });
 
-      $('.screenshot').click(function(){
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        rbbt.ngl.ngl_tool('screenshot')
-      })
+      $('#screenshot').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB");
+        rbbt.ngl.ngl_viewer('screenshot');
+      });
 
-      $('.resize').click(function(){
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        rbbt.ngl.ngl_tool('resize')
-      })
+      $('#resize').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB");
+        rbbt.ngl.ngl_viewer('resize');
+      });
 
-      $('.spin').click(function(){
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        spin  = $('.ui.button.spin')
+      $('#spin').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB");
+        var spin  = $('#spin');
         if (!spin.hasClass('stop')) {
-          spin.addClass('stop')
-          spin.html('Stop')
+          spin.html('Stop');
         } else {
-          spin.removeClass('stop')
-          spin.html('Spin')
+          spin.html('Spin');
         }
-        rbbt.ngl.ngl_tool('spin')
+        spin.toggleClass('stop')
+        rbbt.ngl.ngl_viewer('spin')
       })
 
-      $('.fullscreen').click(function(){
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        rbbt.ngl.ngl_tool('fullscreen')
+      $('#fullscreen').click(function(){
+        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB");
+        rbbt.ngl.ngl_viewer('fullscreen');
       })
-    })
   })
 

@@ -6,26 +6,27 @@
   - colors.each do |c|
     %option(value=c)= c
 
+.segment(style='overflow-x:scroll')
+  - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
+  - header "Residue", "NumericValue"
 
-- header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
-- header "Residue", "NumericValue"
-- filter "Primary site"
-= table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
-  - log :sample_info
+  - filter "Primary site"
+  = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
+    - log :sample_info
 
-  - sample_info = COSMIC.sample_info.tsv
+    - sample_info = COSMIC.sample_info.tsv
 
-  - sample_info.key_field = "Sample"
+    - sample_info.key_field = "Sample"
 
-  - associations = associations.attach(sample_info)
+    - associations = associations.attach(sample_info)
 
-  - associations.add_field "Residue" do |key,values|
-    - values["Change"].first.match(/(\d+)/)[0].to_i
+    - associations.add_field "Residue" do |key,values|
+      - values["Change"].first.match(/(\d+)/)[0].to_i
 
-  - good_fields = ["Genomic Mutation", "Change", "Residue"] + associations.fields - ["Ensembl Protein ID"]
+    - good_fields = ["Genomic Mutation", "Change", "Residue"] + associations.fields - ["Ensembl Protein ID"]
 
-  - log :slice_and_show
-  - associations.slice(good_fields.uniq)
+    - log :slice_and_show
+    - associations.slice(good_fields.uniq)
 
 :deferjs
 
@@ -68,11 +69,10 @@
           }
         })
 
-        var protein_tool = $('.protein_tool#' + '#{id}');
 
         rbbt.svg.mark_positions(svg_element, change_positions, color);
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        rbbt.ngl.ngl_tool('color_mutation_density', change_counts)
+        if(typeof rbbt.ngl == 'undefined') return
+        rbbt.ngl.ngl_viewer('color_mutation_density', change_counts)
       }
     })
     return false;
