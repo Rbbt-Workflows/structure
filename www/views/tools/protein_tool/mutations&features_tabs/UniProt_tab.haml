@@ -1,0 +1,33 @@
+%table.ui.celled.table
+  %thead
+    %tr
+      %th
+        .ui.checkbox.fitted.slider#uniprot
+          %input(type='checkbox')
+          %label
+      %th Type
+      %th Start
+      %th End
+      %th Description
+  %tbody
+    - uniprot_features.each do |uniprot_feature|
+      %tr
+        %td
+          .ui.checkbox.fitted.slider.uf
+            %input(type='checkbox')
+            %label
+        %td= uniprot_feature[:type]
+        %td= uniprot_feature[:start]
+        %td= uniprot_feature[:end]
+        %td= uniprot_feature[:description]
+
+:deferjs
+  $('.ui.checkbox.slider#uniprot').click(function(event){
+    event.stopPropagation()
+    $(this).toggleClass('on')
+    if ($(this).hasClass('on')) {
+      $('.ui.checkbox.slider.uf').checkbox('set checked');
+    } else {
+      $('.ui.checkbox.slider.uf').checkbox('set unchecked');
+    }
+  });

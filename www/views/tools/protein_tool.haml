@@ -1,7 +1,5 @@
 - position = nil unless defined? position
 - sequence = protein.sequence
-- jmol_id = 'Jmol-' << protein
-- select_id = jmol_id + '-select'
 - pdbs = protein.pdbs
 - position = nil unless defined? position
 - colors = %w(red blue green yellow black white purple)
@@ -29,15 +27,30 @@
   - else
     - cosmic_residue_incidence[key] = samples.length
 
+- iso2uni = Organism.protein_identifiers(protein.organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
+- iso2sequence = Organism.protein_sequence(protein.organism).tsv(:type => :single, :persist => true, :unnamed => true)
+- cache_dir = Rbbt.var.Structure
+- CORRECTED_FEATURES = cache_dir.corrected_features.find
+- uniprot = iso2uni[protein]
+- uniprot_features = {}
+- unless uniprot.nil?
+  - sequence = iso2sequence[protein].chomp("*")
+  - unless sequence.nil?
+    - _other = {:uniprot => uniprot, :sequence => protein.sequence}
+
+    - uniprot_features = Misc.insist do
+      - Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do
+        - Structure.corrected_uniprot_features(uniprot, protein.sequence)
+
+- appris_features = Structure.appris_features(protein)
+
 :sass
   .protein_tool
     .controls
       float: right
       margin-bottom: -2px
-      .ui.input, .ui.buttons
+      .ui.buttons
         padding: 0px
-        input
-          width: 100% !important
     .tabular.menu
       width: 300px !important
 
@@ -49,8 +62,47 @@
       %input(placeholder='Position' type='text' name='position')
     .ui.buttons
       .mark.submit.ui.button Mark
+      .ui.dropdown.button.item#marks
+        Marks
+        %i.dropdown.icon
+        .vertical.menu#all
+          .ui.dropdown.item#appris
+            .ui.checkbox#appris
+              %input(name="public" type="checkbox")
+              %label
+                %i.down.caret.icon
+                Appris Features
+            .menu.compact(style='position: relative; right: 100px;')
+              - appris_features.map{|f| f[:type]}.uniq.sort.each do |appris_type|
+                .item.appris_feature(id='#{appris_type}')
+                  .ui.checkbox.toggle.appris_feature(id='#{appris_type}')
+                    %input(name='public' type="checkbox")
+                    %label= appris_type
+          .ui.dropdown.scrolling.item#uniprot
+            .ui.modal.fullscreen#uniprot
+              .header.center
+                Uniprot Features
+              .content
+                Only existing features in PDB are shown
+              .actions
+                .ui.cancel.button Close
+            .ui.checkbox#uniprot
+              %input(name="public" type="checkbox")
+              %label
+                %i.down.caret.icon
+                Uniprot Features
+                %i.icon.blue.help.circle#uniprot
+            .menu.compact(style='position: relative; right: 100px')
+              - uniprot_features.map{|f| f[:type]}.uniq.sort.each do |uniprot_type|
+                .item.uniprot_feature(id='#{uniprot_type}')
+                  .ui.checkbox.toggle.uniprot_feature(id='#{uniprot_type}')
+                    %input(name='public' type="checkbox")
+                    %label= uniprot_type
+          .item.cosmic
+            .ui.checkbox.cosmic
+              %input(name="public" type="checkbox")
+              %label COSMIC mutations
       .clear.submit.ui.button Clear
-      .align.submit.ui.button Align
 
   .ui.tabular.menu.top.attached
     .item.active(data-tab=Sequence) Sequence
@@ -97,24 +149,11 @@
     - tabs.each do |tabfile|
       - name = File.basename(tabfile).sub('_tab.haml','')
       .very.basic.ui.segment.tab(class=name data-tab=name)
-        = partial_render(tabfile, :associations => associations, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
-
-    -#.jmol.very.basic.ui.segment.tab(data-tab='JMol')
-      = fragment do
-        = partial_render('tools/protein_tool/jmol_tab', :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
-
+        = partial_render(tabfile, :associations => associations, :id => id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence, :appris_features => appris_features, :uniprot_features => uniprot_features)
 
     -#.COSMIC.very.basic.ui.segment.tab(data-tab='COSMIC')
       = fragment do
         = partial_render('tools/protein_tool/COSMIC_tab', :protein => protein, :associations => associations, :id => id)
-
-:sass
-  .JMol:not(.active)
-    display: block !important
-    visibility: hidden
-    height: 0px
-    margin: 0px
-    padding: 0px
 
 :deferjs
   $('.tabular.menu .item').tab()
