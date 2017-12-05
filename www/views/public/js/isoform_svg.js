@@ -27,7 +27,7 @@ $.widget("rbbt.isoform_svg_tool", {
     var seq_len = this.options.seq_len;
     var svg = this._svg();
     var width  = parseInt(svg.attr('width'));
-    var start  = parseInt(svg.find('rect.ac').attr('x'));
+    var start  = parseInt(svg.attr('attr-rbbt-xstart'));
 
     if (position.toArray){
       position = position.toArray()
@@ -90,7 +90,7 @@ $.widget("rbbt.isoform_svg_tool", {
     var svg = tool._svg()
     var seq_len = tool.options.seq_len;
     var width  = parseInt(svg.attr('width'));
-    var start  = parseInt(svg.find('rect.ac').attr('x'));
+    var start  = parseInt(svg.attr('attr-rbbt-xstart'));
 
     $(this._position_in_svg($(position), jitter)).each(function(){
       tool._vline(this, color) 
@@ -105,7 +105,7 @@ $.widget("rbbt.isoform_svg_tool", {
   mark_region: function(r_start, r_end, color){
     var svg = this.element.find('.window > svg')
     var width  = parseInt(svg.attr('width'));
-    var start  = parseInt(svg.find('rect.ac').attr('x'));
+    var start  = parseInt(svg.attr('attr-rbbt-xstart'));
     var seq_len = this.options.seq_len;
 
     var offset_start = this._position_in_svg(r_start)

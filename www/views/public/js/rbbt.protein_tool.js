@@ -27,7 +27,7 @@ rbbt.svg.clear = function(element){
 rbbt.svg.position_offset = function(element, position){
   var svg = element.find('svg');
   var width  = parseInt(svg.attr('width'));
-  var start  = parseInt(svg.find('rect.ac').attr('x'));
+  var start  = parseInt(svg.attr('attr-rbbt-xstart'));
   var seq_len  = parseInt(element.attr('data-sequence_length'));
   return start + position * (width - start)/seq_len 
 }
@@ -46,7 +46,7 @@ rbbt.svg.mark_position = function(element, position, color){
   line.setAttributeNS(null, "x2", offset);
   line.setAttributeNS(null, "y2", height - 5);
   line.setAttributeNS(null, "class", 'rbbt-vline');
-  line.setAttributeNS(null, "style", "stroke:" + color + ";opacity:0.5;stroke-width:1;");
+  line.setAttributeNS(null, "style", "stroke:" + color + ";opacity:0.7;stroke-width:1;");
 
   svg.append(line);
 }
@@ -65,7 +65,7 @@ rbbt.svg.mark_region = function(element, first, last, color){
   var svg = element.find('svg')
   var width  = parseInt(svg.attr('width'));
   var height  = parseInt(svg.attr('height'));
-  var start  = parseInt(svg.find('rect.ac').attr('x'));
+  var start  = parseInt(svg.attr('attr-rbbt-xstart'));
   var seq_len  = parseInt(element.attr('data-sequence_length'));
 
   var offset_start = rbbt.svg.position_offset(element, first)

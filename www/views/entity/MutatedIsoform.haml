@@ -59,7 +59,7 @@
         :sass
           .secondary_structure .svg svg
             border: solid 1px #EEE
-        = protein.marked_svg([])
+        = protein.marked_svg
       - rescue Exception
         %p.error.ui.message
           Could not download protein SVG, try again later. 
