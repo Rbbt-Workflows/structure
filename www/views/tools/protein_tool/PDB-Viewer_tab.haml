@@ -63,59 +63,54 @@
 
 .ui.field
 .NGL_viewer
-  .ui.form
-    .inline.fields
-      .field
-        %H1 NGL viewer
-      .field
-        .ui.floating.dropdown.labeled.icon.button#menu_pdb
-          %i.dropdown.icon
-          %span.text#selected_pdb(selected="selected")
-            Select a PDB
-          .menu
-            .ui.icon.input
-              %input#input_pdb(placeholder="PDB | pos | posN..posN+1" type="text")
-              %i.search.icon
-            .scrolling.menu
-              .divider
-              .header
-                RCSB
-              .divider
-              - (pdbs || []).each do |pdb, info|
-                - url = "http://files.rcsb.org/view/#{pdb}.pdb"
-                - map = pdb_alignments[pdb]
-                - next if map.empty?
-                - pos = map.keys.collect{|p| p.to_i}
-                - info[:region] = [pos.min, pos.max] * ".."
-                .item#pdb(attr-url=url attr-pdb=pdb)= "#{pdb} (#{info[:region]}) - #{info[:method]} #{info[:method] != "NMR" ? info[:resolution] : ""}"
-              .divider
-              .header
-                Interactome3D (proteins)
-              .divider
-              - interactome_protein_pdbs.each do |filename, url|
-                - type = filename =~ /EXP/ ? :experimental : :model
-                - info = {}
-                - map = pdb_alignments[filename]
-                - next if map.empty?
-                - pos = map.keys.collect{|p| p.to_i}
-                - info[:region] = [pos.min, pos.max] * ".."
-                .item.protein#pdb(attr-url=url attr-pdb=filename)= "#{filename.match(/-(\w+)\.pdb$/)[1]} (#{info[:region]}) #{type} - #{filename}"
-              .divider
-              .header
-                Interactome3D (interactions)
-              .divider
-              - interactome_interaction_pdbs.each do |filename, url|
-                - type = filename =~ /EXP/ ? :experimental : :model
-                - info = {}
+  .ui.floating.dropdown.labeled.icon.button.float.right#menu_pdb
+    %i.dropdown.icon
+    %span.text#selected_pdb(selected="selected")
+      Select a PDB
+    .menu
+      .ui.icon.input
+        %input#input_pdb(placeholder="PDB | pos | posN..posN+1" type="text")
+        %i.search.icon
+      .scrolling.menu
+        .divider
+        .header
+          RCSB
+        .divider
+        - (pdbs || []).each do |pdb, info|
+          - url = "http://files.rcsb.org/view/#{pdb}.pdb"
+          - map = pdb_alignments[pdb]
+          - next if map.empty?
+          - pos = map.keys.collect{|p| p.to_i}
+          - info[:region] = [pos.min, pos.max] * ".."
+          .item#pdb(attr-url=url attr-pdb=pdb)= "#{pdb} (#{info[:region]}) - #{info[:method]} #{info[:method] != "NMR" ? info[:resolution] : ""}"
+        .divider
+        .header
+          Interactome3D (proteins)
+        .divider
+        - interactome_protein_pdbs.each do |filename, url|
+          - type = filename =~ /EXP/ ? :experimental : :model
+          - info = {}
+          - map = pdb_alignments[filename]
+          - next if map.empty?
+          - pos = map.keys.collect{|p| p.to_i}
+          - info[:region] = [pos.min, pos.max] * ".."
+          .item.protein#pdb(attr-url=url attr-pdb=filename)= "#{filename.match(/-(\w+)\.pdb$/)[1]} (#{info[:region]}) #{type} - #{filename}"
+        .divider
+        .header
+          Interactome3D (interactions)
+        .divider
+        - interactome_interaction_pdbs.each do |filename, url|
+          - type = filename =~ /EXP/ ? :experimental : :model
+          - info = {}
 
-                - map = pdb_alignments[filename]
-                - next if map.empty?
-                - pos = map.keys.collect{|p| p.to_i}
-                - uni1, uni2 = filename.split("-").values_at 0,1
-                - gene1, gene2 = uni2name.values_at uni1, uni2
-                - info[:pair] = [gene1, gene2] * "-"
-                - info[:region] = [pos.min, pos.max] * ".."
-                .item.interaction#pdb(attr-pdb=filename attr-url=url)= "#{info[:pair]} (#{info[:region]}) #{type} - #{filename}"
+          - map = pdb_alignments[filename]
+          - next if map.empty?
+          - pos = map.keys.collect{|p| p.to_i}
+          - uni1, uni2 = filename.split("-").values_at 0,1
+          - gene1, gene2 = uni2name.values_at uni1, uni2
+          - info[:pair] = [gene1, gene2] * "-"
+          - info[:region] = [pos.min, pos.max] * ".."
+          .item.interaction#pdb(attr-pdb=filename attr-url=url)= "#{info[:pair]} (#{info[:region]}) #{type} - #{filename}"
   .window#ngl_viewport{:style => "width:100%; height:800px;"}
   .ui.hidden.divider
   .ui.button.screenshot
@@ -224,7 +219,7 @@
   var pdb_alignments_url = add_parameter(window.location.href, '_fragment', 'pdb_alignments')
   rbbt.ajax({url:pdb_alignments_url}).then(function(pdb_alignments){
 
-    require_js(["/js-find/rbbt.protein_tool.js","/js-find/ngl.js"], function(){
+    require_js(["/js-find/rbbt.protein_tool.js", "/js-find/ngl.js"], function(){
       var position = #{position ?  position : "undefined"}
       var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json}
       var appris_features = {}

@@ -1,9 +1,9 @@
-require_js(["/js-find/ngl/ngl.min.js"], function() {y:
+require_js(["/js-find/ngl/ngl.min.js"], function() {
   $.widget('rbbt.ngl_tool', {
     options: {
       pdb_url: null,
       pdb_url_download: null,
-      pdb: url,
+      //pdb: url,
       component_promise: null,
       stage: null,
       colorScheme: null,

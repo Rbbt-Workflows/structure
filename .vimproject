@@ -62,8 +62,8 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    }
    public=public{
     js=js{
-     jmol.js
      isoform_svg.js
+     ngl.js
      protein_tool.js
      rbbt.protein_tool.js
      secondary_structure.js

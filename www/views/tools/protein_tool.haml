@@ -99,15 +99,6 @@
       .very.basic.ui.segment.tab(class=name data-tab=name)
         = partial_render(tabfile, :associations => associations, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
 
-    -#.jmol.very.basic.ui.segment.tab(data-tab='JMol')
-      = fragment do
-        = partial_render('tools/protein_tool/jmol_tab', :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
-
-
-    -#.COSMIC.very.basic.ui.segment.tab(data-tab='COSMIC')
-      = fragment do
-        = partial_render('tools/protein_tool/COSMIC_tab', :protein => protein, :associations => associations, :id => id)
-
 :sass
   .JMol:not(.active)
     display: block !important
