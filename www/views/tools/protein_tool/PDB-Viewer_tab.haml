@@ -402,7 +402,7 @@
         var clusters = parseInt(field.find('input[name=clusters]').val());
         if (clusters < 1 || clusters > 5) return alert("Bad number of clusters")
         if (! clusters > 0) clusters = 3;
-        if (url.match(/interactome3d/)) pdb = url
+        if (url.match(/interactome3d/)) pdb = rbbt.url_add_script_name(url)
 
 
         protein = "#{protein}"
