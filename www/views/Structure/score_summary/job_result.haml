@@ -102,13 +102,14 @@
   \)
 
 .damage_overview
-  = table :table_id => "dbNSFP annotation (-999 are missing values)", :span => true do
-    - tsv = DbNSFP.job(:score, job.clean_name, :mutations => mis.select{|mi| mi.consequence == "MISS-SENSE"}).run
-    - good_fields = tsv.fields.select{|f| f =~  /(_score|CADD_raw|SVM_score)$/ }
-    - tsv = tsv.slice(good_fields)
-    - tsv.rename_field "RadialSVM_score", "SVM_score"
-    - tsv = scores.attach tsv if scores.any?
-    - tsv
+  - tsv = DbNSFP.job(:score, job.clean_name, :mutations => mis.select{|mi| mi.consequence == "MISS-SENSE"}).run
+  - if tsv.length > 0
+    = table :table_id => "dbNSFP annotation (-999 are missing values)", :span => true do
+      - good_fields = tsv.fields.select{|f| f =~  /(_score|CADD_raw|SVM_score)$/ }
+      - tsv = tsv.slice(good_fields)
+      - tsv.rename_field "RadialSVM_score", "SVM_score"
+      - tsv = scores.attach tsv if scores.any?
+      - tsv
 
 :sass
   .damage_overview
