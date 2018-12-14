@@ -95,6 +95,7 @@
           Scroll horizontaly across the sequence
 
     - tabs.each do |tabfile|
+      - log :tab, tabfile
       - name = File.basename(tabfile).sub('_tab.haml','')
       .very.basic.ui.segment.tab(class=name data-tab=name)
         = partial_render(tabfile, :associations => associations, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
