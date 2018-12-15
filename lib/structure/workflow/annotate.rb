@@ -62,6 +62,7 @@ module Structure
     tmp = {}
     mutations.each do |mutation|
       annot = @cosmic_mutation_annotations[mutation]
+      next if annot.nil?
       Misc.zip_fields(annot).each do |a|
         sample, *rest = a
         sample_isoform = sample + ":" + isoform

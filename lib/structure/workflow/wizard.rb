@@ -243,7 +243,7 @@ module Structure
         count = 0
       end
 
-      if cosmic_neighbours.include? mutation
+      if cosmic_neighbours.include?(mutation) && ! cosmic_neighbours[mutation]["Sample name"].nil?
         begin
           ncount = cosmic_neighbours[mutation]["Sample name"].collect{|l| l.split(";")}.flatten.uniq.length
         rescue Exception

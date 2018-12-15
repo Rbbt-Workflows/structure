@@ -108,8 +108,6 @@
         - annotation_files[database] = job.file(database).tsv
         - annotation_neighbour_files[database] = job.file(database + ' neighbours').tsv
       - databases.each do |database|
-        - log database
-
         - fields = annotation_files[database].fields
         - values = annotation_files[database][mutation]
         - neighbour_values = annotation_neighbour_files[database][mutation]
@@ -148,9 +146,9 @@
                     - row_contents = {}
                     - fields.each_with_index do |field,i|
                       - new_values = {}
-                      - Misc.zip_fields(neighbour_values).each do |n,*nvalues|
+                      - Misc.zip_fields(neighbour_values[2..-1]).each do |n,*nvalues|
                         - Misc.zip_fields(nvalues.collect{|v| v.nil? ? [] : v.split(";")}).each do |nsvalues|
-                          - next if Misc.zip_fields(values).select{|v| v == nsvalues}.any?
+                          -# next if Misc.zip_fields(values).select{|v| v == nsvalues}.any?
                           - new_values[n] ||= []
                           - new_values[n] << nsvalues unless new_values[n].include? nsvalues
                       - new_values.each do |neigh, nvalues|
