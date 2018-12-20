@@ -11,8 +11,6 @@
 - header "Residue", "NumericValue"
 - filter "Primary site"
 = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
-  - log :sample_info
-
   - sample_info = COSMIC.sample_info.tsv :persist => true
 
   - sample_info.key_field = "Sample"
@@ -24,7 +22,6 @@
 
   - good_fields = ["Genomic Mutation", "Change", "Residue"] + associations.fields - ["Ensembl Protein ID"]
 
-  - log :slice_and_show
   - associations.slice(good_fields.uniq)
 
 :deferjs
