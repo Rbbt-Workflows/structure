@@ -6,7 +6,6 @@
 
   :sass
     @import "screen_sizes"
-    @import "compass/css3/columns"
     .wizard 
       ul
         list-style: circle
@@ -21,8 +20,8 @@
       clear: both
       margin-bottom: 4em
       &:not(.short)
-        @include columns(30em 2)
-        @include column-gap(2em)
+        columns: 30em 2
+        column-gap: 2em
         text-align: justify
       &.short
         max-width: 65em
