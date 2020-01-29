@@ -49,7 +49,7 @@
 - iso2uni = Organism.protein_identifiers(protein.organism).index(:target => "UniProt/SwissProt Accession", :persist => true, :unnamed => true)
 - iso2sequence = Organism.protein_sequence(protein.organism).tsv(:type => :single, :persist => true, :unnamed => true)
 - cache_dir = Rbbt.var.Structure
-- CORRECTED_FEATURES = cache_dir.corrected_features.find
+- corrected_features = cache_dir.corrected_features.find
 - uniprot = iso2uni[protein]
 - uniprot_features = {}
 - unless uniprot.nil?
@@ -58,7 +58,7 @@
     - _other = {:uniprot => uniprot, :sequence => protein.sequence}
 
     - uniprot_features = Misc.insist do
-      - Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => CORRECTED_FEATURES, :other => _other) do
+      - Persist.persist("Corrected UniProt features", :marshal,  :persist => true, :lock => {:max_age => 0, :suspend => 0, :refresh => false}, :dir => corrected_features, :other => _other) do
         - Structure.corrected_uniprot_features(uniprot, protein.sequence)
 
 .ui.field
