@@ -51,16 +51,20 @@
         var change_counts = {}
 
         forHash(data, function(mutation, values){
-          var change = values[1][0];
-          var samples = values[3];
-          var m;
-          if (m = change.match(/[A-Z](\d+)[A-Z]/)){
-            var pos = parseInt(m[1])
-            change_positions.push(pos);
-            if (change_counts[pos] === undefined){
-              change_counts[pos] = samples.length
-            }else{
-              change_counts[pos] = change_counts[pos] + samples.length
+          if (mutation.match(/:\d+:/)){
+        
+            var change = values[1][0];
+            var samples = values[3];
+            var m;
+
+            if (m = change.match(/[A-Z](\d+)[A-Z]/)){
+              var pos = parseInt(m[1])
+              change_positions.push(pos);
+              if (change_counts[pos] === undefined){
+                change_counts[pos] = samples.length
+              }else{
+                change_counts[pos] = change_counts[pos] + samples.length
+              }
             }
           }
         })
