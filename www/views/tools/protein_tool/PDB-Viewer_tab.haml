@@ -24,19 +24,16 @@
 - pdb_alignments = {}
 - pdbs = [] if pdbs.nil?
 
-- log :traversing, "Traversing PDBs"
 - TSV.traverse pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |pdb,info|
   - job = Structure.job(:pdb_alignment_map, pdb, :pdb => pdb, :sequence => protein.sequence)
   - res = job.produce.load
   - [pdb,res]
 
-- log :traversing, "Traversing interactome protein models"
 - TSV.traverse interactome_protein_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
   - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
   - res = job.produce.load
   - [filename,res]
 
-- log :traversing, "Traversing interactome interaction models"
 - TSV.traverse interactome_interaction_pdbs, :into => pdb_alignments, :type => :array, :cpus => 10 do |filename,url|
   - job = Structure.job(:pdb_alignment_map, filename, :pdb => url, :sequence => protein.sequence)
   - res = job.produce.load
@@ -221,7 +218,6 @@
 
     require_js(["/js-find/rbbt.protein_tool.js", "/js-find/ngl.js"], function(){
       var position = #{position ?  position : "undefined"}
-      var cosmic_residue_incidence = #{cosmic_residue_incidence.to_json}
       var appris_features = {}
       var pdb2seq = {}
       var seq2pdb = {}
@@ -256,14 +252,14 @@
         rbbt.ngl = $('.NGL_viewer').ngl_tool({pdb_url: url, pdb: pdb, seq2pdb: seq2pdb, pdb2seq: pdb2seq, appris_features: appris_features})
       })
 
-      body.on('click', '.ui.checkbox.cosmic', function(){
-        if ($('.ui.checkbox.cosmic').hasClass('checked')) {
-          rbbt.ngl.ngl_tool('color_mutation_density', cosmic_residue_incidence)
-        } else {
-          if(typeof rbbt.ngl == 'undefined') return
-          rbbt.ngl.ngl_tool('clear')
-        }
-      })
+      //body.on('click', '.ui.checkbox.cosmic', function(){
+      //  if ($('.ui.checkbox.cosmic').hasClass('checked')) {
+      //    rbbt.ngl.ngl_tool('color_mutation_density', cosmic_residue_incidence)
+      //  } else {
+      //    if(typeof rbbt.ngl == 'undefined') return
+      //    rbbt.ngl.ngl_tool('clear')
+      //  }
+      //})
 
       body.on('click', '.ui.checkbox.uniprot', function(){
         if ($('.ui.checkbox.uniprot').hasClass('checked')) {
@@ -373,8 +369,6 @@
         if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
 
         var link = $(this);
-        console.log('link')
-        console.log(link)
         var field = link.parents('.segment').first();
         var position = parseInt(field.find('input[name=neighbours]').val());
         if (! position > 0) return alert("No position specified")
@@ -389,7 +383,7 @@
           neighbours_pdb = all_neighbours_pdb[pos_pdb]
           neighbours_pdb.push(pos_pdb)
           neighbours_seq = neighbours_pdb.map((neighbour_pdb) => pdb2seq[neighbour_pdb]).filter((neighbour_seq) => neighbour_seq).map(String)
-          pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
+          //pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
           rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_colors['pos_list'] ,'seq', pos_colors['colors'])
         })
       })
@@ -415,7 +409,7 @@
               neighbours_pdb = all_neighbours_pdb[pos_pdb]
               neighbours_pdb.push(pos_pdb)
               neighbours_seq = neighbours_pdb.map((neighbour_pdb) => pdb2seq[neighbour_pdb]).filter((neighbour_seq) => neighbour_seq).map(String)
-              pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
+              //pos_colors = rbbt.ngl.ngl_tool('color_mutation_density_subset', neighbours_seq, cosmic_residue_incidence)
               rbbt.ngl.ngl_tool('mark_positions_by_colors', pos_colors['pos_list'] ,'seq', pos_colors['colors'])
             }
           })
