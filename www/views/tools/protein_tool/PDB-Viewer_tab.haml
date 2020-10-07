@@ -6,7 +6,7 @@
   - interactome_protein_pdbs = {}
   - Structure::I3D_PROTEINS[uniprot][filepos].each do |filename|
     - type = filename =~ /EXP/ ? :pdb : :model
-    - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
+    - url = "https://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=proteins&type2=#{ type }&pdb=#{ filename }"
     - interactome_protein_pdbs[filename] = url
 - else
   - interactome_protein_pdbs = []
@@ -16,7 +16,7 @@
   - interactome_interaction_pdbs = {}
   - Structure::I3D_INTERACTIONS[uniprot][filepos].each do |filename|
     - type = filename =~ /EXP/ ? :pdb : :model
-    - url = "http://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
+    - url = "https://interactome3d.irbbarcelona.org/pdb.php?dataset=human&type1=interactions&type2=#{ type }&pdb=#{ filename }"
     - interactome_interaction_pdbs[filename] = url
 - else
   - interactome_interaction_pdbs = []
@@ -77,7 +77,7 @@
           RCSB
         .divider
         - (pdbs || []).each do |pdb, info|
-          - url = "http://files.rcsb.org/view/#{pdb}.pdb"
+          - url = "https://files.rcsb.org/view/#{pdb}.pdb"
           - map = pdb_alignments[pdb]
           - next if map.empty?
           - pos = map.keys.collect{|p| p.to_i}
