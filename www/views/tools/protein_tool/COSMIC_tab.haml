@@ -6,19 +6,38 @@
   - colors.each do |c|
     %option(value=c)= c
 
+- association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
+- associations = association_items.tsv.to_double
+- sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true, :target => "Sample name=~Sample", :source => "Genomic Mutation")
+- sample_mutations.fields = ["Sample"]
+- associations = associations.attach(sample_mutations)
+
+- cosmic_residue_incidence = {}
+- associations.each do |k,values|
+  - genomic_mutation, isoform, mutated_aa, samples = values
+  - mutated_aa = mutated_aa.first
+  - mutated_aa =~ /^([A-Z*])(\d+)([A-Z*]+|Indel|Frameshift)$/
+  - next if $1 == $3
+  - key = $2.to_i
+  - if cosmic_residue_incidence.key? key
+    - cosmic_residue_incidence[key] += samples.length
+  - else
+    - cosmic_residue_incidence[key] = samples.length
 
 - header "Genomic Mutation", "GenomicMutation", {:organism => Organism.default_code("Hsa"), :watson => false}
 - header "Residue", "NumericValue"
 - filter "Primary site"
 = table :table_id => "COSMIC mutations for #{ protein.name || protein }", :row_ids => :consume do
-  - sample_info = COSMIC.sample_info.tsv :persist => true
+  - sample_info = COSMIC.sample_info.tsv :persist => true, :unnamed => true
 
   - sample_info.key_field = "Sample"
 
+  - associations.unnamed = true
   - associations = associations.attach(sample_info)
 
+  - change_pos = associations.fields.index "Change"
   - associations.add_field "Residue" do |key,values|
-    - values["Change"].first.match(/(\d+)/)[0].to_i
+    - values[change_pos].first.match(/(\d+)/)[0].to_i
 
   - good_fields = ["Genomic Mutation", "Change", "Residue"] + associations.fields - ["Ensembl Protein ID"]
 
@@ -26,56 +45,60 @@
 
 :deferjs
 
-  $('.COSMIC .highlight.submit').click(function(){
-    var link = $(this);
-    var COSMIC = link.parents('.COSMIC').first();
-    var protein_tool = COSMIC.parents('.protein_tool').first();
-    var svg_element  = protein_tool.find('.svg').first();
+  require_js(["/js-find/rbbt.protein_tool.js"], function(){
+    $('.COSMIC .highlight.submit').click(function(){
+      var link = $(this);
+      var COSMIC = link.parents('.COSMIC').first();
+      var protein_tool = COSMIC.parents('.protein_tool').first();
+      var svg_element  = protein_tool.find('.svg').first();
 
-    var table = COSMIC.find('table');
-    var url = table.attr('attr-url');
-    var filter = table.attr('attr-filter');
+      var table = COSMIC.find('table');
+      var url = table.attr('attr-url');
+      var filter = table.attr('attr-filter');
 
-    url = add_parameter(url, '_format', 'json')
-    url = add_parameter(url, '_page', 'all')
-    //url = add_parameter(url, '_column', 'Change')
-    if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
+      url = add_parameter(url, '_format', 'json')
+      url = add_parameter(url, '_page', 'all')
+      //url = add_parameter(url, '_column', 'Change')
+      if (undefined != filter){ url = add_parameter(url, '_filter',  escape(filter)) }
 
-    var color = 'red'
+      var color = 'red'
 
-    rbbt.ajax({
-      url: url,
-      success: function(data){
-        //data = JSON.parse(data);
-        var change_positions = [];
-        var change_counts = {}
+      rbbt.ajax({
+        url: url,
+        success: function(data){
+          //data = JSON.parse(data);
+          var change_positions = [];
+          var change_counts = {}
 
-        forHash(data, function(mutation, values){
-          if (mutation.match(/:\d+:/)){
-        
-            var change = values[1][0];
-            var samples = values[3];
-            var m;
+          forHash(data, function(mutation, values){
+            if (mutation.match(/:\d+:/)){
+          
+              var change = values[1][0];
+              var samples = values[3];
+              var m;
 
-            if (m = change.match(/[A-Z](\d+)[A-Z]/)){
-              var pos = parseInt(m[1])
-              change_positions.push(pos);
-              if (change_counts[pos] === undefined){
-                change_counts[pos] = samples.length
-              }else{
-                change_counts[pos] = change_counts[pos] + samples.length
+              if (m = change.match(/[A-Z](\d+)[A-Z]/)){
+                var pos = parseInt(m[1])
+                change_positions.push(pos);
+                if (change_counts[pos] === undefined){
+                  change_counts[pos] = samples.length
+                }else{
+                  change_counts[pos] = change_counts[pos] + samples.length
+                }
               }
             }
-          }
-        })
+          })
 
-        var protein_tool = $('.protein_tool#' + '#{id}');
+          var protein_tool = $('.protein_tool#' + '#{id}');
 
-        rbbt.svg.mark_positions(svg_element, change_positions, color);
-        if(typeof rbbt.ngl == 'undefined') return alert("Select a PDB")
-        rbbt.ngl.ngl_tool('color_mutation_density', change_counts)
-      }
+          rbbt.svg.mark_positions(svg_element, change_positions, color);
+          if(typeof rbbt.ngl == 'undefined') 
+            return 
+          else
+            rbbt.ngl.ngl_tool('color_mutation_density', change_counts)
+        }
+      })
+      return false;
     })
-    return false;
   })
 

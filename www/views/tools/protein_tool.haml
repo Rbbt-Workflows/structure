@@ -10,25 +10,6 @@
 - uni = Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :persist => true
 - uniprot = uni[protein]
 
-- association_items = COSMIC.knowledge_base.subset(:mutation_protein_changes, :target => [protein], :source => :all)
-- associations = association_items.tsv.to_double
-- log :sample_mutations
-- sample_mutations = COSMIC.knowledge_base.get_database(:sample_mutations, :type => :double, :merge => true, :target => "Sample name=~Sample", :source => "Genomic Mutation")
-- sample_mutations.fields = ["Sample"]
-- associations = associations.attach(sample_mutations)
-
-- cosmic_residue_incidence = {}
-- associations.each do |k,values|
-  - genomic_mutation, isoform, mutated_aa, samples = values
-  - mutated_aa = mutated_aa.first
-  - mutated_aa =~ /^([A-Z*])(\d+)([A-Z*]+|Indel|Frameshift)$/
-  - next if $1 == $3
-  - key = $2.to_i
-  - if cosmic_residue_incidence.key? key
-    - cosmic_residue_incidence[key] += samples.length
-  - else
-    - cosmic_residue_incidence[key] = samples.length
-
 :sass
   .protein_tool
     .controls
@@ -95,10 +76,12 @@
           Scroll horizontaly across the sequence
 
     - tabs.each do |tabfile|
-      - log File.basename(tabfile), "Preaparing tab #{tabfile}"
+      - log File.basename(tabfile), "Preparing tab #{File.basename tabfile}"
       - name = File.basename(tabfile).sub('_tab.haml','')
       .very.basic.ui.segment.tab(class=name data-tab=name)
-        = partial_render(tabfile, :associations => associations, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position, :cosmic_residue_incidence => cosmic_residue_incidence)
+        = fragment name do
+          = partial_render(tabfile, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position)
+        -#= partial_render(tabfile, :id => id, :select_id => select_id, :pdbs => pdbs, :uniprot => uniprot, :protein => protein, :position => position)
 
 :sass
   .JMol:not(.active)

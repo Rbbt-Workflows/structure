@@ -95,7 +95,7 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
     }
 
     Study=Study{
-     interfaces.haml
+     PPI_interfaces.haml
     }
    }
    partials=partials{

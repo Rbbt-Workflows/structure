@@ -1,0 +1,42 @@
+= workflow_partial('layout/doctype', Structure, nil, :layout => false)
+
+%head
+  = workflow_partial('layout/header', Structure, nil, :layout => false)
+
+:sass
+
+  .favourite 
+    > .item:empty
+      display: none
+    .dropdown.item  .dropdown.item
+      i.icon.dropdown
+        margin-right: -10px !important
+
+%body.preload
+
+  /{{{ TOP MENU
+  /------------
+  = workflow_partial('layout/top_menu', Structure, nil, :layout => false)
+
+  /{{{ CONTENT
+  /-----------
+  #content.ui.main.container.top.attached
+    - @reload_page = false
+    = yield
+
+  /{{{ MODAL
+  /---------
+  #modal.ui.modal
+
+  /{{{ FOOTER
+  /----------
+  #footer
+    =workflow_partial('layout/footer', Structure, nil, :layout => false)
+
+  /{{{ CODA
+  /--------
+  #coda
+    //= link_js "http://cdnjs.cloudflare.com/ajax/libs/mithril/0.1.28/mithril.min.js"
+    -# ["/js-find/rbbt", "/js-find/rbbt.page", "/js-find/rbbt.entity", "/js-find/rbbt.entity_list", "/js-find/rbbt.knowledge_base", "/js-find/rbbt.favourites"].each do |file|
+      - record_js file
+    =workflow_partial('layout/coda', Structure, nil, :layout => false)
