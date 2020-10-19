@@ -269,7 +269,8 @@ module Structure
   task :mi_interfaces => :tsv do |mis,organism,distance|
     mi_annotations = TSV::Dumper.new :key_field => "Mutated Isoform", :fields => ["Residue", "Partner (Ensembl Protein ID)", "PDB", "Partner Residues"], :type => :double, :namespace => organism
     mi_annotations.init
-    TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Mutated Isoform interfaces"), :into => mi_annotations, :type => :array do |mi|
+    cpus = config :cpus, :mi_interfaces, :structure, :default => $cpus
+    TSV.traverse mis, :cpus => cpus, :bar => self.progress_bar("Mutated Isoform interfaces"), :into => mi_annotations, :type => :array do |mi|
 
       case
       when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
@@ -290,7 +291,7 @@ module Structure
       end
 
       n = Misc.insist do
-        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :persist => false, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
+        Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :persist => true, :other => {:isoform => isoform, :residue => residue, :organism => organism, :distance => distance}) do
           Structure.interface_neighbours_i3d(isoform.dup, [residue], organism, distance)
         end
       end
@@ -479,7 +480,8 @@ module Structure
 
           n =  Misc.insist do
             Persist.persist("Neighbours", :marshal, :dir => NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
-              Structure.neighbours_i3d(isoform, [residue], organism)
+              tsv = Structure.neighbours_i3d(isoform, [residue], organism)
+              tsv.size == 0 ? nil : tsv
             end
           end
           next if n.nil? or n.empty?
@@ -542,7 +544,8 @@ module Structure
 
         n = Misc.insist do
           Persist.persist("Interface neighbours", :marshal, :dir => INTERFACE_NEIGHBOURS, :other => {:isoform => isoform, :residue => residue, :organism => organism}) do
-            Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+            tsv = Structure.interface_neighbours_i3d(isoform.dup, [residue], organism)
+            tsv.size == 0 ? nil : tsv
           end
         end
 
