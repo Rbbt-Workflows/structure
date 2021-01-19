@@ -80,9 +80,19 @@ module Structure
     features = Structure.appris_features(isoform)
     next if features.empty?
 
+    case residue
+    when Fixnum
+      start = eend = residue
+    when /(\d+):(.*)/
+      start = $1.to_i
+      eend = $2.to_i
+    else
+      raise "Format of residue not understood: #{residue.inspect}"
+    end
+
     overlapping = [[],[],[]]
     features.select{|info|
-      info[:start] <= residue and info[:end] >= residue
+      (info[:start].to_i <= eend || eend == -1) and info[:end].to_i >= start
     }.each{|info|
       overlapping[0] << info[:type]
       overlapping[1] << [info[:start], info[:end]] * ":"
@@ -111,9 +121,20 @@ module Structure
     end
     next if features.empty?
 
+    case residue
+    when Fixnum
+      start = eend = residue
+    when /(\d+):(.*)/
+      start = $1.to_i
+      eend = $2.to_i
+    else
+      raise "Format of residue not understood: #{residue.inspect}"
+    end
+
+
     overlapping = [[],[]]
     features.select{|info|
-      info[:start] <= residue and info[:end] >= residue
+      (info[:start].to_i <= eend || eend == -1) and info[:end].to_i >= start
     }.each{|info|
       overlapping[0] << info[:code]
       overlapping[1] << [info[:start], info[:end]] * ":"
@@ -145,14 +166,24 @@ module Structure
 
     overlapping = [[],[],[]]
 
+    case residue
+    when Fixnum
+      start = eend = residue
+    when /(\d+):(.*)/
+      start = $1.to_i
+      eend = $2.to_i
+    else
+      raise "Format of residue not understood: #{residue.inspect}"
+    end
+
     features.select{|info|
       case info[:type]
       when "VAR_SEQ", "CONFLICT", "CHAIN", "UNSURE"
         false
       when "DISULFID", "CROSSLNK", "VARIANT"
-        info[:start] == residue or info[:end] == residue
+        ([info[:start], info[:end]] & [start, eend]).any?
       else
-        info[:start].to_i <= residue and info[:end].to_i >= residue
+        (info[:start].to_i <= eend || eend == -1) and info[:end].to_i >= start
       end
     }.each{|info|
       description = (info[:description] || "").strip.sub(/\.$/,'')
@@ -309,6 +340,31 @@ module Structure
     end
   end
 
+  helper :mi_isoform_residue do |mi|
+    case
+    when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
+      next if m[2] == m[4]
+      isoform = m[1]
+      residue = m[3].to_i
+    when (m = mi.match(/^(.*):(\d+)$/))
+      isoform = m[1]
+      residue = m[2].to_i
+    when (m = mi.match(/^(.*):([A-Z])(\d+)(?:FrameShift|Indel)\(([A-Z*]*)\)$/))
+      isoform = m[1]
+      residue = m[3].to_i
+      substitution = m[4]
+      if substitution[-1] == "*"
+        residue = [residue, -1] * ":"
+      else
+        residue = [residue.to_s, (residue + substitution.length - 1).to_s] * ":"
+      end
+    else
+      next
+    end
+
+    [isoform, residue]
+  end
+
   input :mutated_isoforms, :array, "Mutated Isoform", nil, :stream => true
   input :organism, :string, "Organism code", Organism.default_code("Hsa")
   input :database, :select, "Database of annotations", "UniProt", :select_options => ANNOTATORS.keys
@@ -324,17 +380,7 @@ module Structure
     mi_annotations.init
     TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Annot. #{ database }"), :into => mi_annotations, :type => :array do |mi|
 
-      case
-      when (m = mi.match(/^(.*):([A-Z])(\d+)([A-Z])$/))
-        next if m[2] == m[4]
-        isoform = m[1]
-        residue = m[3].to_i
-      when (m = mi.match(/^(.*):(\d+)$/))
-        isoform = m[1]
-        residue = m[2].to_i
-      else
-        next
-      end
+      isoform, residue = mi_isoform_residue(mi)
 
       if isoform[0..3] != "ENSP"
         mi = Structure.name2pi(mi, organism)
@@ -402,7 +448,7 @@ module Structure
   task :annotate => :tsv do |database, principal|
     mutated_isoforms = step(:mutated_isoforms_fast)
     mutated_isoforms.join
-    organism = mutated_isoforms.info[:inputs][:organism]
+    organism = recursive_inputs[:organism]
 
     annotator = ANNOTATORS[database]
     raise ParameterException, "Database not identified: #{ database }" if annotator.nil?
@@ -416,17 +462,7 @@ module Structure
       all_annots = []
 
       mis.each do |mi|
-        case
-        when mi =~ /^(.*):([A-Z])(\d+)([A-Z])$/
-          next if $2 == $4
-          isoform = $1
-          residue = $3.to_i
-        when mi =~ /^(.*):(\d+)$/
-          isoform = $1
-          residue = $2.to_i
-        else
-          next
-        end
+        isoform, residue = mi_isoform_residue(mi)
 
         annotations = annotator.annotate isoform, residue, organism
         next if annotations.nil?
