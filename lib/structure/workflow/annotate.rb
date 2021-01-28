@@ -381,6 +381,8 @@ module Structure
     TSV.traverse mis, :cpus => $cpus, :bar => self.progress_bar("Annot. #{ database }"), :into => mi_annotations, :type => :array do |mi|
 
       isoform, residue = mi_isoform_residue(mi)
+      
+      next if isoform.nil?
 
       if isoform[0..3] != "ENSP"
         mi = Structure.name2pi(mi, organism)
