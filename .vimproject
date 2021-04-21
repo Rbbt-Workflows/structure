@@ -12,6 +12,8 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
    structure.rb
   }
   structure=structure{
+   identifiers.rb
+
    annotator.rb
    ssw.rb
    alignment.rb
@@ -41,7 +43,11 @@ structure=/$PWD filter="*.rb *.R *.js *.sass *.haml *.tsv" {
  }
  share=share{
   rbbt_commands=rbbt_commands filter="*"{
-   bootstrap
+   bootstrap=bootstrap{
+    pdbs
+   }
+
+   bootstrap_save
    sample_report
   }
   software=software/opt/ssw filter="*"{

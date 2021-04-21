@@ -1,5 +1,6 @@
 require 'rbbt/tsv'
 require 'rbbt/sources/organism'
+require 'structure/identifiers'
 require 'structure/interactome_3d'
 require 'structure/alignment'
 
@@ -7,23 +8,6 @@ module Structure
   I3D_PROTEINS = Interactome3d.proteins_tsv.tsv :merge => true, :unnamed => true, :persist => true
   I3D_INTERACTIONS = Interactome3d.interactions_tsv.tsv :merge => true, :unnamed => true, :persist => true
   I3D_INTERACTIONS_REVERSE = Interactome3d.interactions_tsv.tsv :merge => true, :key_field => "PROT2", :zipped => true, :unnamed => true, :persist => true
-
-  def self.uni2iso(organism = Organism.default_code("Hsa"))
-    @@uni2iso ||= {}
-    #@@uni2iso[organism] ||= Organism.protein_identifiers(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
-    @@uni2iso[organism] ||= Organism.uniprot2ensembl(organism).index :fields => ["UniProt/SwissProt Accession"], :target => "Ensembl Protein ID", :persist => true, :unnamed => true
-  end
-
-  def self.iso2uni(organism = Organism.default_code("Hsa"))
-    @@iso2uni ||= {}
-    #@@iso2uni[organism] ||= Organism.protein_identifiers(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
-    @@iso2uni[organism] ||= Organism.ensembl2uniprot(organism).index :target => "UniProt/SwissProt Accession", :fields => ["Ensembl Protein ID"], :persist => true, :unnamed => true
-  end
-
-  def self.iso2seq(organism = Organism.default_code("Hsa"))
-    @@iso2seq ||= {}
-    @@iso2seq[organism] ||= Organism.protein_sequence(organism).tsv :persist => true, :unnamed => true
-  end
 
   def self.neighbours_uniprot(protein, positions, organism = Organism.default_code("Hsa"), only_pdb = false)
     uniprot = iso2uni(organism)[protein]
