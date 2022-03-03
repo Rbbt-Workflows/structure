@@ -42,10 +42,6 @@ require 'structure/neighbours'
 require 'structure/interactome_3d'
 
 require 'rbbt/util/simpleopt'
-$cpus ||= SOPT.get("--cpus* CPUs to use in map-reduce (Structure workflow)")[:cpus]
-$cpus = $cpus.to_i if $cpus
-
-Log.info "Loading Structure with #{ $cpus.inspect }" unless $cpus.nil?
 
 require 'structure/workflow/alignments'
 require 'structure/workflow/helpers'
